@@ -6,14 +6,18 @@
 #include <ArduinoJson.h>
 #include <WiFiManager.h>
 
-#include "html.h"
+#include "index.h"
 
 ESP8266WebServer server(80);
 WiFiUDP UDP;
 WakeOnLan WOL(UDP);
 
 const char* pcFile = "/pc_list.json";
-String Hostname = "wol";
+const char* networkConfigFile = "/networkConfig.json";
+const char* authenticationFile = "/authentication.json";
+
+const String hostname = "wol";
+const String SSID = "WOL-ESP8266";
 
 // Структура для данных ПК
 struct PC {
@@ -27,13 +31,14 @@ struct NetworkConfig {
   IPAddress staticIP;
   IPAddress staticNetworkMask;
   IPAddress staticGateway;
-} networkConfig = {.staticIP = IPAddress(192, 168, 1, 5), .staticNetworkMask = IPAddress(255, 255, 255, 0), .staticGateway = IPAddress(192, 168, 1, 1)};
+} networkConfig = { .staticIP = IPAddress(192, 168, 1, 5), .staticNetworkMask = IPAddress(255, 255, 255, 0), .staticGateway = IPAddress(192, 168, 1, 1) };
 
 // Структура для Аутентификации
 struct Authentication {
+  bool enable = true;
   String username;
   String password;
-} authentication = {.username = "wake", .password = "funNy@Sheep"};
+} authentication = { .username = "wake", .password = "funNy@Sheep" };
 
 // Вектор для хранения списка ПК
 std::vector<PC> pcList;
@@ -81,12 +86,80 @@ void savePCData() {
   }
 }
 
+// Функция для загрузки конфигурации сети из JSON-файла
+void loadNetworkConfig() {
+  if (LittleFS.begin()) {
+    File file = LittleFS.open(networkConfigFile, "r");
+    if (file) {
+      StaticJsonDocument<256> doc;
+      DeserializationError error = deserializeJson(doc, file);
+      if (!error) {
+        networkConfig.staticIP = IPAddress().fromString(doc["staticIP"].as<String>());
+        networkConfig.staticNetworkMask = IPAddress().fromString(doc["staticNetworkMask"].as<String>());
+        networkConfig.staticGateway = IPAddress().fromString(doc["staticGateway"].as<String>());
+      }
+      file.close();
+    }
+    LittleFS.end();
+  }
+}
+
+// Функция для сохранения конфигурации сети в JSON-файл
+void saveNetworkConfig() {
+  if (LittleFS.begin()) {
+    File file = LittleFS.open(networkConfigFile, "w");
+    if (file) {
+      StaticJsonDocument<256> doc;
+      doc["staticIP"] = networkConfig.staticIP.toString();
+      doc["staticNetworkMask"] = networkConfig.staticNetworkMask.toString();
+      doc["staticGateway"] = networkConfig.staticGateway.toString();
+      serializeJson(doc, file);
+      file.close();
+    }
+    LittleFS.end();
+  }
+}
+
+// Функция для загрузки конфигурации аутентификации из JSON-файла
+void loadAuthentication() {
+  if (LittleFS.begin()) {
+    File file = LittleFS.open(networkConfigFile, "r");
+    if (file) {
+      StaticJsonDocument<1024> doc;
+      DeserializationError error = deserializeJson(doc, file);
+      if (!error) {
+        authentication.username = doc["username"].as<String>();
+        authentication.password = doc["password"].as<String>();
+      }
+      file.close();
+    }
+    LittleFS.end();
+  }
+}
+
+
+// Функция для сохранения конфигурации аутентификации в JSON-файл
+void saveAuthentication() {
+  if (LittleFS.begin()) {
+    File file = LittleFS.open(networkConfigFile, "w");
+    if (file) {
+      StaticJsonDocument<256> doc;
+      doc["username"] = authentication.username;
+      doc["password"] = authentication.password;
+      serializeJson(doc, file);
+      file.close();
+    }
+  }
+  LittleFS.end();
+}
+
+
 // Функция для обработки корневого запроса
 void handleRoot() {
-  if (!server.authenticate("wake", "funNy@Sheep")) {
+  if (!server.authenticate(authentication.username.c_str(), authentication.password.c_str())) {
     return server.requestAuthentication();
   }
-  server.send(200, "text/html", htmlPage);
+  server.send(200, "text/html", (String)index);
 }
 
 // Функция для обработки запроса списка ПК
@@ -177,6 +250,24 @@ void handleWakePC() {
   }
 }
 
+void handleUpdateNetworkSettings() {
+  if (server.method() == HTTP_POST) {
+  }
+}
+
+void handleUpdateAuthentication() {
+  if (server.method() == HTTP_POST) {
+  }
+}
+
+void handleGetNetworkSettings() {
+
+}
+
+void handleGetAuthentication() {
+
+}
+
 // Функция для сброса настроек Wi-Fi
 void resetWiFiSettings() {
   WiFiManager wifiManager;
@@ -186,22 +277,31 @@ void resetWiFiSettings() {
 // Настройка сервера
 void setup() {
   Serial.begin(115200);
-  WiFi.hostname(Hostname.c_str());
-  LittleFS.begin();
-  loadPCData();  // Загрузить данные ПК при старте
+
+  WiFi.hostname(hostname.c_str());
   WiFiManager wifiManager;
-  wifiManager.setSTAStaticIPConfig(IPAddress(networkConfig.staticIP[0], networkConfig.staticIP[1], networkConfig.staticIP[2], networkConfig.staticIP[3]), IPAddress(networkConfig.staticGateway[0], networkConfig.staticGateway[1], networkConfig.staticGateway[2], networkConfig.staticGateway[3]), IPAddress(networkConfig.staticNetworkMask[0], networkConfig.staticNetworkMask[1], networkConfig.staticNetworkMask[2], networkConfig.staticNetworkMask[3]));
-  wifiManager.autoConnect("WOL-ESP8266");  // Авто подключение
+  wifiManager.setSTAStaticIPConfig(networkConfig.staticIP, networkConfig.staticGateway, networkConfig.staticNetworkMask);
+  wifiManager.autoConnect(SSID.c_str());  // Авто подключение
+
+  // LittleFS.begin(); -- @TODO кажется не нужна
+  loadNetworkConfig();
+  loadAuthentication();
+  loadPCData();  // Загрузить данные ПК при старте
+
   server.on("/", handleRoot);
   server.on("/pc_list", handlePCList);
   server.on("/add", handleAddPC);
   server.on("/edit", handleEditPC);
   server.on("/delete", handleDeletePC);
   server.on("/wake", handleWakePC);
+  server.on("/network_settings", handleGetNetworkSettings);
+  server.on("/authentication", handleGetAuthentication);
+  server.on("/update_network_settings", handleUpdateNetworkSettings);
   server.on("/reset_wifi", []() {
     resetWiFiSettings();
     server.send(200, "text/plain", "WiFi settings reset");
   });
+  server.on("/update_authentication", handleUpdateAuthentication);
   server.begin();
 }
 
