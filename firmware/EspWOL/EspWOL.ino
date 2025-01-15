@@ -28,6 +28,7 @@ struct PC {
 
 // Структура для Сети
 struct NetworkConfig {
+  bool enable = true;
   IPAddress staticIP;
   IPAddress staticNetworkMask;
   IPAddress staticGateway;
@@ -94,6 +95,7 @@ void loadNetworkConfig() {
       StaticJsonDocument<256> doc;
       DeserializationError error = deserializeJson(doc, file);
       if (!error) {
+        networkConfig.enable = doc["enable"];
         networkConfig.staticIP = IPAddress().fromString(doc["staticIP"].as<String>());
         networkConfig.staticNetworkMask = IPAddress().fromString(doc["staticNetworkMask"].as<String>());
         networkConfig.staticGateway = IPAddress().fromString(doc["staticGateway"].as<String>());
@@ -110,6 +112,7 @@ void saveNetworkConfig() {
     File file = LittleFS.open(networkConfigFile, "w");
     if (file) {
       StaticJsonDocument<256> doc;
+      doc["enable"] = networkConfig.enable;
       doc["staticIP"] = networkConfig.staticIP.toString();
       doc["staticNetworkMask"] = networkConfig.staticNetworkMask.toString();
       doc["staticGateway"] = networkConfig.staticGateway.toString();
@@ -128,6 +131,7 @@ void loadAuthentication() {
       StaticJsonDocument<1024> doc;
       DeserializationError error = deserializeJson(doc, file);
       if (!error) {
+        authentication.enable = doc["enable"];
         authentication.username = doc["username"].as<String>();
         authentication.password = doc["password"].as<String>();
       }
@@ -144,6 +148,7 @@ void saveAuthentication() {
     File file = LittleFS.open(networkConfigFile, "w");
     if (file) {
       StaticJsonDocument<256> doc;
+      doc["enable"] = authentication.enable;
       doc["username"] = authentication.username;
       doc["password"] = authentication.password;
       serializeJson(doc, file);
@@ -156,10 +161,10 @@ void saveAuthentication() {
 
 // Функция для обработки корневого запроса
 void handleRoot() {
-  if (!server.authenticate(authentication.username.c_str(), authentication.password.c_str())) {
+  if (authentication.enable && !server.authenticate(authentication.username.c_str(), authentication.password.c_str())) {
     return server.requestAuthentication();
   }
-  server.send(200, "text/html", (String)index);
+  server.send(200, "text/html", index);
 }
 
 // Функция для обработки запроса списка ПК
@@ -261,11 +266,9 @@ void handleUpdateAuthentication() {
 }
 
 void handleGetNetworkSettings() {
-
 }
 
 void handleGetAuthentication() {
-
 }
 
 // Функция для сброса настроек Wi-Fi
@@ -280,7 +283,10 @@ void setup() {
 
   WiFi.hostname(hostname.c_str());
   WiFiManager wifiManager;
-  wifiManager.setSTAStaticIPConfig(networkConfig.staticIP, networkConfig.staticGateway, networkConfig.staticNetworkMask);
+  if (networkConfig.enable) {
+    wifiManager.setSTAStaticIPConfig(networkConfig.staticIP, networkConfig.staticGateway, networkConfig.staticNetworkMask);
+  }
+
   wifiManager.autoConnect(SSID.c_str());  // Авто подключение
 
   // LittleFS.begin(); -- @TODO кажется не нужна
