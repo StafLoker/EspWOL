@@ -123,6 +123,45 @@
                 })
                .catch(error => console.error('Fetch error:', error));
         }
+        function updateSettings() {
+            const staticIp = document.getElementById('static-ip').value;
+            const staticGateway = document.getElementById('static-gateway').value;
+
+            fetch('/update_settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ staticIp, staticGateway })
+            })
+            .then(response => response.json())
+            .then(data => {
+                    if (data.success) {
+                        alert('Settings updated successfully!');
+                    } else {
+                        alert('Failed to update settings.');
+                    }
+                })
+            .catch(error => console.error('Fetch error:', error));
+        }
+
+        function updateAuthentication() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            fetch('/update_authentication', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                    if (data.success) {
+                        alert('Authentication updated successfully!');
+                    } else {
+                        alert('Failed to update authentication.');
+                    }
+                })
+            .catch(error => console.error('Fetch error:', error));
+        }
     </script>
 </head>
 <body class='bg-light text-dark'>
@@ -135,7 +174,7 @@
                 <button class='btn btn-success' data-toggle='modal' data-target='#add-pc-modal'>
                     <i class='fas fa-plus'></i>
                 </button>
-                <button class='btn btn-secondary btn-md' title='Settings' data-toggle='modal' data-target='#reset-wifi-modal'>
+                <button class='btn btn-secondary btn-md' title='Settings' data-toggle='modal' data-target='#settings-modal'>
                     <i class='fas fa-cog'></i>
                 </button>
             </div>
@@ -198,6 +237,61 @@
                 <div class='modal-footer'>
                     <button type='button' class='btn btn-primary' onclick='saveEditPC()'>Save changes</button>
                     <button type='button' class='btn btn-danger' onclick='confirmDelete()'>Delete</button>
+                    <button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class='modal fade' id='settings-modal' tabindex='-1' role='dialog' aria-labelledby='settingsLabel' aria-hidden='true'>
+        <div class='modal-dialog' role='document'>
+            <div class='modal-content'>
+                <div class='modal-header'>
+                    <h5 class='modal-title' id='settingsLabel'>Settings</h5>
+                    <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
+                        <span aria-hidden='true'>&times;</span>
+                    </button>
+                </div>
+                <div class='modal-body'>
+                    <div class='card'>
+                        <div class='card-header'>
+                            <h5 class='modal-title'>Network</h5>
+                        </div>
+                        <div class='card-body'>
+                            <div class='form-group'>
+                                <label for='static-ip'>Static IP:</label>
+                                <input type='text' class='form-control' id='static-ip' placeholder='Enter Static IP address'>
+                            </div>
+                            <div class='form-group'>
+                                <label for='static-gateway'>Static Gateway:</label>
+                                <input type='text' class='form-control' id='static-gateway' placeholder='Enter Gateway IP address'>
+                            </div>
+                        </div>
+                        <div class='card-footer'>
+                            <button type='button' class='btn btn-primary' onclick='updateNetworkSettings()'>Update</button>
+                            <button type='button' class='btn btn-danger' title='Reset WiFi' data-toggle='modal' data-target='#reset-wifi-modal'>Reset WiFi</button>
+                        </div>
+                    </div>
+                    <hr/>
+                    <div class='card'>
+                        <div class='card-header'>
+                            <h5 class='modal-title'>Authentication</h5>
+                        </div>
+                        <div class='card-body'>
+                            <div class='form-group'>
+                                <label for='username'>Username:</label>
+                                <input type='text' class='form-control' id='username' placeholder='Enter username'>
+                            </div>
+                            <div class='form-group'>
+                                <label for='password'>Password:</label>
+                                <input type='password' class='form-control' id='password' placeholder='Enter password'>
+                            </div>
+                        </div>
+                        <div class='card-footer'>
+                            <button type='button' class='btn btn-primary' onclick='updateAuthentication()'>Update</button>
+                        </div>
+                    </div>
+                </div>
+                <div class='modal-footer'>
                     <button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>
                 </div>
             </div>
