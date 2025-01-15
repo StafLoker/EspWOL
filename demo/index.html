@@ -125,12 +125,13 @@
         }
         function updateNetworkSettings() {
             const staticIp = document.getElementById('static-ip').value;
+            const staticNetworkMask = document.getElementById('static-network-mask').value;
             const staticGateway = document.getElementById('static-gateway').value;
 
             fetch('/update_settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ staticIp, staticGateway })
+                body: JSON.stringify({ staticIp, staticNetworkMask, staticGateway })
             })
             .then(response => response.json())
             .then(data => {
@@ -259,11 +260,15 @@
                         <div class='card-body'>
                             <div class='form-group'>
                                 <label for='static-ip'>Static IP:</label>
-                                <input type='text' class='form-control' id='static-ip' placeholder='Enter Static IP address'>
+                                <input type='text' class='form-control' id='static-ip' placeholder='192.168.2.9'>
                             </div>
                             <div class='form-group'>
-                                <label for='static-gateway'>Static Gateway:</label>
-                                <input type='text' class='form-control' id='static-gateway' placeholder='Enter Gateway IP address'>
+                                <label for='static-ip'>Network Mask:</label>
+                                <input type='text' class='form-control' id='static-network-mask' placeholder='255.255.255.0'>
+                            </div>
+                            <div class='form-group'>
+                                <label for='static-gateway'>Gateway:</label>
+                                <input type='text' class='form-control' id='static-gateway' placeholder='192.168.2.1'>
                             </div>
                         </div>
                         <div class='card-footer'>
