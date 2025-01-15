@@ -164,7 +164,7 @@ void handleRoot() {
   if (authentication.enable && !server.authenticate(authentication.username.c_str(), authentication.password.c_str())) {
     return server.requestAuthentication();
   }
-  server.send(200, "text/html", index);
+  server.send(200, "text/html", html);
 }
 
 // Функция для обработки запроса списка ПК

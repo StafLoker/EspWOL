@@ -1,5 +1,5 @@
 // HTML-контент
-const char index[] PROGMEM = R"=====(
+const char *html = R"rawR(
 <!DOCTYPE html>
 <html lang='en'>
 <head>
@@ -328,4 +328,4 @@ const char index[] PROGMEM = R"=====(
     </footer>
 </body>
 </html>
-)=====";
+)rawR";
