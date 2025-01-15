@@ -27,10 +27,10 @@
                 pcList.innerHTML = '';
                 data.forEach((pc, index) => {
                     pcList.innerHTML += '<li class="list-group-item d-flex justify-content-between align-items-center">' +
-                        pc.name + ' ' pc.mac + ' ' pc.ip +
+                        pc.name + ' - ' pc.mac + ' - ' pc.ip +
                         '<div class="ml-auto">' +
                         '<button class="btn btn-warning btn-md mr-2" onclick="editPC(' + index + ')"><i class="fas fa-edit"></i></button>' +
-                        '<button class="btn btn-primary btn-md" onclick="wakePC('\\' + pc.mac + '\\')"><i class="fas fa-play"></i></button>' +
+                        '<button class="btn btn-primary btn-md" onclick="wakePC(' + pc.mac + ')"><i class="fas fa-play"></i></button>' +
                         '</div></li>';
                 });
             }).catch(error => {
@@ -52,7 +52,7 @@
                     document.getElementById('pc-name').value = '';
                     document.getElementById('pc-mac').value = '';
                     document.getElementById('pc-ip').value = '';
-                    showNotification('PC added successfully!', 'uccess');
+                    showNotification('PC added successfully!', 'success');
                 }
             });
         }
@@ -78,7 +78,7 @@
                 if (response.ok) {
                     updatePCList();
                     $('#edit-pc-modal').modal('hide');
-                    showNotification('PC updated successfully!', 'uccess');
+                    showNotification('PC updated successfully!', 'success');
                 }
             });
         }
@@ -99,12 +99,12 @@
                 body: JSON.stringify({ mac })
             }).then(response => {
                 if (response.ok) {
-                    showNotification('WOL packet sent to ' mac, 'info');
+                    showNotification('WOL packet sent to ' + mac, 'info');
                 }
             });
         }
         function showNotification(message, type) {
-            const notification = $('<div class="alert alert-' + type + 'lert-dismissible fade show" role="alert">' + message + '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>');
+            const notification = $('<div class="alert alert-' + type + 'alert-dismissible fade show" role="alert">' + message + '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>');
             $('#notification-area').append(notification);
             setTimeout(() => {
                 notification.alert('close');
@@ -114,7 +114,7 @@
             fetch('/reset_wifi', { method: 'POST' })
                .then(response => {
                     if (response.ok) {
-                        showNotification('WiFi settings reset successfully!', 'uccess');
+                        showNotification('WiFi settings reset successfully!', 'success');
                         location.reload();
                     } else {
                         console.error('Failed to reset WiFi settings');
@@ -123,7 +123,7 @@
                 })
                .catch(error => console.error('Fetch error:', error));
         }
-        function updateSettings() {
+        function updateNetworkSettings() {
             const staticIp = document.getElementById('static-ip').value;
             const staticGateway = document.getElementById('static-gateway').value;
 
@@ -135,9 +135,9 @@
             .then(response => response.json())
             .then(data => {
                     if (data.success) {
-                        alert('Settings updated successfully!');
+                        showNotification('Settings updated successfully!', 'success');
                     } else {
-                        alert('Failed to update settings.');
+                        showNotification('Failed to update settings.', 'danger');
                     }
                 })
             .catch(error => console.error('Fetch error:', error));
@@ -155,9 +155,9 @@
             .then(response => response.json())
             .then(data => {
                     if (data.success) {
-                        alert('Authentication updated successfully!');
+                        showNotification('Authentication updated successfully!', 'success');
                     } else {
-                        alert('Failed to update authentication.');
+                        showNotification('Failed to update authentication.', 'danger');
                     }
                 })
             .catch(error => console.error('Fetch error:', error));
