@@ -1,5 +1,5 @@
 // HTML-контент
-const char *html = R"rawR(
+const char htmlPage[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang='en'>
 <head>
@@ -328,4 +328,4 @@ const char *html = R"rawR(
     </footer>
 </body>
 </html>
-)rawR";
+)rawliteral";

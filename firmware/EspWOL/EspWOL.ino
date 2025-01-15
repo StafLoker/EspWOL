@@ -164,7 +164,7 @@ void handleRoot() {
   if (authentication.enable && !server.authenticate(authentication.username.c_str(), authentication.password.c_str())) {
     return server.requestAuthentication();
   }
-  server.send(200, "text/html", html);
+  server.send(200, "text/html", htmlPage);
 }
 
 // Функция для обработки запроса списка ПК
@@ -179,7 +179,7 @@ void handlePCList() {
     obj["ip"] = pc.ip;
   }
   serializeJson(doc, jsonResponse);
-  server.send(200, "application/json", jsonResponse);
+  server.send_P(200, "application/json", htmlPage);
 }
 
 // Функция для добавления нового ПК
