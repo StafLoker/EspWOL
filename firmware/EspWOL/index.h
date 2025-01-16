@@ -192,7 +192,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         }
 
         function updateAuthentication() {
-            const enable = document.getElementById('defaultCheckEnableAuthentication').checked;
+            const enable = document.getElementById('switchEnableAuthentication').checked;
             const username = document.getElementById('fieldUsername').value;
             const password = document.getElementById('fieldPassword').value;
 
@@ -222,6 +222,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                     document.getElementById('fieldIP').value = data.ip;
                     document.getElementById('fieldNetworkMask').value = data.networkMask;
                     document.getElementById('fieldGateway').value = data.gateway;
+
+                    toggleNetworkFields();
                 })
                 .catch(error => console.error('Fetch error (Network Settings):', error));
         }
@@ -230,11 +232,44 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             fetch('/authentication')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('defaultCheckEnableAuthentication').checked = data.enable;
+                    document.getElementById('switchEnableAuthentication').checked = data.enable;
                     document.getElementById('fieldUsername').value = data.username;
                     document.getElementById('fieldPassword').value = data.password;
+
+                    toggleAuthenticationFields();
                 })
                 .catch(error => console.error('Fetch error (Authentication):', error));
+        }
+
+        function toggleAuthenticationFields() {
+            const switchElement = document.getElementById('switchEnableAuthentication');
+            const usernameField = document.getElementById('fieldUsername');
+            const passwordField = document.getElementById('fieldPassword');
+            
+            if (switchElement.checked) {
+                usernameField.removeAttribute('disabled');
+                passwordField.removeAttribute('disabled');
+            } else {
+                usernameField.setAttribute('disabled', '');
+                passwordField.setAttribute('disabled', '');
+            }
+        }
+
+        function toggleNetworkFields() {
+            const isStaticIP = document.getElementById('inlineRadioStaticIP').checked;
+            const ipField = document.getElementById('fieldIP');
+            const networkMaskField = document.getElementById('fieldNetworkMask');
+            const gatewayField = document.getElementById('fieldGateway');
+
+            if (isStaticIP) {
+                ipField.removeAttribute('disabled');
+                networkMaskField.removeAttribute('disabled');
+                gatewayField.removeAttribute('disabled');
+            } else {
+                ipField.setAttribute('disabled', '');
+                networkMaskField.setAttribute('disabled', '');
+                gatewayField.setAttribute('disabled', '');
+            }
         }
     </script>
     <style>
@@ -360,11 +395,11 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                         </div>
                         <div class='card-body'>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadioStaticIP" value="staticIP">
+                                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadioStaticIP" value="staticIP" onchange="toggleNetworkFields()"> 
                                 <label class="form-check-label" for="inlineRadio1">Static IP</label>
                               </div>
                               <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadioDHCP" value="dhcp">
+                                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadioDHCP" value="dhcp" onchange="toggleNetworkFields()">
                                 <label class="form-check-label" for="inlineRadio2">DHCP</label>
                             </div>
                             <div class='form-group'>
@@ -391,10 +426,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                             <h5 class='modal-title'>Authentication</h5>
                         </div>
                         <div class='card-body'>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="defaultCheckEnableAuthentication">
-                                <label class="form-check-label" for="defaultCheck1">Enable</label>
-                              </div>
+                            <div class="custom-control custom-switch">
+                              <input type="checkbox" class="custom-control-input" id="switchEnableAuthentication" onchange="toggleAuthenticationFields()">
+                              <label class="custom-control-label" for="switchEnableAuthentication">Enable</label>
+                            </div>
                             <div class='form-group'>
                                 <label for='username'>Username:</label>
                                 <input type='text' class='form-control' id='fieldUsername' placeholder='Enter username'>
