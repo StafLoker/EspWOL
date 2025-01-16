@@ -150,7 +150,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         function updateAuthentication() {
             const enable = document.getElementById('defaultCheckEnableAuthentication').checked;
             const username = document.getElementById('fieldUsername').value;
-            const password = document.getElementById('password').value;
+            const password = document.getElementById('fieldPassword').value;
 
             fetch('/update_authentication', {
                 method: 'POST',
