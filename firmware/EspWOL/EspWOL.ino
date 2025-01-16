@@ -11,6 +11,7 @@
 ESP8266WebServer server(80);
 WiFiUDP UDP;
 WakeOnLan WOL(UDP);
+WiFiManager wifiManager;
 
 const char* pcFile = "/pc_list.json";
 const char* networkConfigFile = "/networkConfig.json";
@@ -43,6 +44,20 @@ struct Authentication {
 
 // Вектор для хранения списка ПК
 std::vector<PC> pcList;
+
+// Функция для обновление настроек сети
+void updateIPWifiSettings() {
+  if (networkConfig.enable) {
+    wifiManager.setSTAStaticIPConfig(networkConfig.staticIP, networkConfig.staticGateway, networkConfig.staticNetworkMask);
+  } else {
+    WiFi.config(0U, 0U, 0U);
+  }
+}
+
+// Функция для сброса настроек Wi-Fi
+void resetWiFiSettings() {
+  wifiManager.resetSettings();  // Сбросить настройки WiFi
+}
 
 // Функция для загрузки данных ПК из JSON-файла
 void loadPCData() {
@@ -164,7 +179,7 @@ void handleRoot() {
   if (authentication.enable && !server.authenticate(authentication.username.c_str(), authentication.password.c_str())) {
     return server.requestAuthentication();
   }
-  server.send(200, "text/html", htmlPage);
+  server.send_P(200, "text/html", htmlPage);
 }
 
 // Функция для обработки запроса списка ПК
@@ -179,7 +194,7 @@ void handlePCList() {
     obj["ip"] = pc.ip;
   }
   serializeJson(doc, jsonResponse);
-  server.send_P(200, "application/json", htmlPage);
+  server.send(200, "application/json", jsonResponse);
 }
 
 // Функция для добавления нового ПК
@@ -255,26 +270,63 @@ void handleWakePC() {
   }
 }
 
+// Функция для обновления настроек сети
 void handleUpdateNetworkSettings() {
   if (server.method() == HTTP_POST) {
+    String body = server.arg("plain");
+    DynamicJsonDocument doc(1024);
+    deserializeJson(doc, body);
+    networkConfig.enable = doc["enable"];
+    if (networkConfig.enable) {
+      networkConfig.staticIP = IPAddress().fromString(doc["staticIP"].as<String>());
+      networkConfig.staticNetworkMask = IPAddress().fromString(doc["staticNetworkMask"].as<String>());
+      networkConfig.staticGateway = IPAddress().fromString(doc["staticGateway"].as<String>());
+    }
+    saveNetworkConfig();
+    updateIPWifiSettings();
+  } else {
+    server.send(405, "text/plain", "Method Not Allowed");
   }
 }
 
+// Функция для обновления настроек аутентификации
 void handleUpdateAuthentication() {
   if (server.method() == HTTP_POST) {
+    String body = server.arg("plain");
+    DynamicJsonDocument doc(1024);
+    deserializeJson(doc, body);
+    authentication.enable = doc["enable"];
+    if (authentication.enable) {
+      authentication.username = doc["username"].as<String>();
+      authentication.password = doc["password"].as<String>();
+    }
+    saveAuthentication();
+  } else {
+    server.send(405, "text/plain", "Method Not Allowed");
   }
 }
 
+// Функция для отправки настроек сети
 void handleGetNetworkSettings() {
+  String jsonResponse;
+  StaticJsonDocument<256> doc;
+  doc["enable"] = networkConfig.enable;
+  doc["staticIP"] = networkConfig.staticIP.toString();
+  doc["staticNetworkMask"] = networkConfig.staticNetworkMask.toString();
+  doc["staticGateway"] = networkConfig.staticGateway.toString();
+  serializeJson(doc, jsonResponse);
+  server.send(200, "application/json", jsonResponse);
 }
 
+// Функция для отправки настроек аутентификации
 void handleGetAuthentication() {
-}
-
-// Функция для сброса настроек Wi-Fi
-void resetWiFiSettings() {
-  WiFiManager wifiManager;
-  wifiManager.resetSettings();  // Сбросить настройки WiFi
+  String jsonResponse;
+  StaticJsonDocument<256> doc;
+  doc["enable"] = authentication.enable;
+  doc["username"] = authentication.username;
+  doc["password"] = "************";
+  serializeJson(doc, jsonResponse);
+  server.send(200, "application/json", jsonResponse);
 }
 
 // Настройка сервера
@@ -282,14 +334,10 @@ void setup() {
   Serial.begin(115200);
 
   WiFi.hostname(hostname.c_str());
-  WiFiManager wifiManager;
-  if (networkConfig.enable) {
-    wifiManager.setSTAStaticIPConfig(networkConfig.staticIP, networkConfig.staticGateway, networkConfig.staticNetworkMask);
-  }
-
+  updateIPWifiSettings();
   wifiManager.autoConnect(SSID.c_str());  // Авто подключение
 
-  // LittleFS.begin(); -- @TODO кажется не нужна
+  LittleFS.begin();
   loadNetworkConfig();
   loadAuthentication();
   loadPCData();  // Загрузить данные ПК при старте
