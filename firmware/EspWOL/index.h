@@ -121,6 +121,11 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                     statusCircle.classList.add('green');
                     statusCircle.classList.add('blinking');
                     showNotification('Pinging', 'success');
+
+                    setTimeout(() => {
+                        statusCircle.classList.remove('blinking');
+                        statusCircle.classList.remove('green');
+                    }, 10000);
                 } else {
                     statusCircle.classList.remove('green', 'blinking');
                     statusCircle.classList.add('red');
@@ -249,7 +254,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         .status-circle.red {
             background-color: red;
         }
-
     </style>
 </head>
 <body class='bg-light text-dark'>
