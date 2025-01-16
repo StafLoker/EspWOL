@@ -29,7 +29,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 pcList.innerHTML = '';
                 data.forEach((pc, index) => {
                     pcList.innerHTML += '<li class="list-group-item d-flex justify-content-between align-items-center">' +
-                        pc.name + ' - ' pc.mac + ' - ' pc.ip +
+                        pc.name + ' - ' + pc.mac + ' - ' + pc.ip +
                         '<div class="ml-auto">' +
                         '<button class="btn btn-warning btn-md mr-2" onclick="editPC(' + index + ')"><i class="fas fa-edit"></i></button>' +
                         '<button class="btn btn-primary btn-md" onclick="wakePC(' + pc.mac + ')"><i class="fas fa-play"></i></button>' +
