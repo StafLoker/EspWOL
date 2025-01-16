@@ -182,8 +182,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             .then(response => {
                 $('#settings-modal').modal('hide');
                 if (response.ok) {
-                    showNotification('Settings updated successfully!', 'success');
-                    location.reload();
+                    showNotification('Network settings updated successfully!', 'success');
+                    location.replace(`http://${ip}`);
                 } else {
                     showNotification('Failed to update settings.', 'danger');
                 }
@@ -205,6 +205,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 $('#settings-modal').modal('hide');
                 if (response.ok) {
                     showNotification('Authentication updated successfully!', 'success');
+                    location.reload();
                 } else {
                     showNotification('Failed to update authentication.', 'danger');
                 }

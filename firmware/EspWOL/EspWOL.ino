@@ -321,8 +321,9 @@ void handleUpdateNetworkSettings() {
       networkConfig.gateway = gateway;
     }
     saveNetworkConfig();
-    server.send(200, "text/plain", "Settings updated");
     updateIPWifiSettings();
+    server.send(200, "text/plain", "Network settings updated");
+    delay(100);
     ESP.restart();
   } else {
     server.send(405, "text/plain", "Method Not Allowed");
