@@ -5,6 +5,7 @@
 #include <WakeOnLan.h>
 #include <ArduinoJson.h>
 #include <WiFiManager.h>
+#include <ESP8266Ping.h>
 
 #include "index.h"
 
@@ -283,6 +284,24 @@ void handleWakePC() {
   }
 }
 
+// Функция для ping ПК
+void handlePingPC() {
+  if (server.method() == HTTP_POST) {
+    String body = server.arg("plain");
+    DynamicJsonDocument doc(1024);
+    deserializeJson(doc, body);
+    IPAddress ip;
+    ip.fromString(doc["ip"].as<String>());
+    if (Ping.ping(ip)) {
+      server.send(200, "text/plain", "Pinging");
+    } else {
+      server.send(400, "text/plain", "Failed ping");
+    }
+  } else {
+    server.send(405, "text/plain", "Method Not Allowed");
+  }
+}
+
 // Функция для обновления настроек сети
 void handleUpdateNetworkSettings() {
   if (server.method() == HTTP_POST) {
@@ -378,6 +397,7 @@ void setup() {
   server.on("/edit", handleEditPC);
   server.on("/delete", handleDeletePC);
   server.on("/wake", handleWakePC);
+  server.on("/ping", handlePingPC);
   server.on("/network_settings", handleGetNetworkSettings);
   server.on("/authentication", handleGetAuthentication);
   server.on("/update_network_settings", handleUpdateNetworkSettings);
