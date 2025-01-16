@@ -14,6 +14,7 @@ This project provides a web-based interface for starting PCs using an ESP8266 an
 - **Basic HTTP Authentication**: Enable or disable authentication, and update the username or password as needed.
 - **Network Configuration**: Switch seamlessly between static IP and DHCP modes.
 - **Host Ping Utility**: Test connectivity by pinging a specified host.
+- **OTA**: Password: `ber#912NerYi`
 
 ## Requirements
 
@@ -24,6 +25,7 @@ This project provides a web-based interface for starting PCs using an ESP8266 an
 - [WIFI Manager library](https://github.com/tzapu/WiFiManager)
 - [ArduinoJson library](https://github.com/bblanchon/ArduinoJson)
 - [ESP8266Ping library](https://github.com/dancol90/ESP8266Ping)
+- [ArduinoOTA](https://github.com/JAndrassy/ArduinoOTA)
 
 ## Installation
 
