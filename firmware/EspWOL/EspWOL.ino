@@ -29,7 +29,7 @@ struct PC {
 
 // Структура для Сети
 struct NetworkConfig {
-  bool enable = true;
+  bool enable = false;
   IPAddress staticIP;
   IPAddress staticNetworkMask;
   IPAddress staticGateway;
@@ -37,7 +37,7 @@ struct NetworkConfig {
 
 // Структура для Аутентификации
 struct Authentication {
-  bool enable = true;
+  bool enable = false;
   String username;
   String password;
 } authentication = { .username = "wake", .password = "funNy@Sheep" };
@@ -49,8 +49,9 @@ std::vector<PC> pcList;
 void updateIPWifiSettings() {
   if (networkConfig.enable) {
     wifiManager.setSTAStaticIPConfig(networkConfig.staticIP, networkConfig.staticGateway, networkConfig.staticNetworkMask);
-  } else {
-    WiFi.config(0U, 0U, 0U);
+  }
+  else {
+    wifi_station_dhcpc_start();
   }
 }
 
@@ -102,25 +103,6 @@ void savePCData() {
   }
 }
 
-// Функция для загрузки конфигурации сети из JSON-файла
-void loadNetworkConfig() {
-  if (LittleFS.begin()) {
-    File file = LittleFS.open(networkConfigFile, "r");
-    if (file) {
-      StaticJsonDocument<256> doc;
-      DeserializationError error = deserializeJson(doc, file);
-      if (!error) {
-        networkConfig.enable = doc["enable"];
-        networkConfig.staticIP = IPAddress().fromString(doc["staticIP"].as<String>());
-        networkConfig.staticNetworkMask = IPAddress().fromString(doc["staticNetworkMask"].as<String>());
-        networkConfig.staticGateway = IPAddress().fromString(doc["staticGateway"].as<String>());
-      }
-      file.close();
-    }
-    LittleFS.end();
-  }
-}
-
 // Функция для сохранения конфигурации сети в JSON-файл
 void saveNetworkConfig() {
   if (LittleFS.begin()) {
@@ -138,24 +120,28 @@ void saveNetworkConfig() {
   }
 }
 
-// Функция для загрузки конфигурации аутентификации из JSON-файла
-void loadAuthentication() {
+// Функция для загрузки конфигурации сети из JSON-файла
+void loadNetworkConfig() {
   if (LittleFS.begin()) {
-    File file = LittleFS.open(networkConfigFile, "r");
-    if (file) {
-      StaticJsonDocument<1024> doc;
-      DeserializationError error = deserializeJson(doc, file);
-      if (!error) {
-        authentication.enable = doc["enable"];
-        authentication.username = doc["username"].as<String>();
-        authentication.password = doc["password"].as<String>();
+    if (LittleFS.exists(networkConfigFile)) {
+      File file = LittleFS.open(networkConfigFile, "r");
+      if (file) {
+        StaticJsonDocument<256> doc;
+        DeserializationError error = deserializeJson(doc, file);
+        if (!error) {
+          networkConfig.enable = doc["enable"];
+          networkConfig.staticIP = IPAddress().fromString(doc["staticIP"].as<String>());
+          networkConfig.staticNetworkMask = IPAddress().fromString(doc["staticNetworkMask"].as<String>());
+          networkConfig.staticGateway = IPAddress().fromString(doc["staticGateway"].as<String>());
+        }
+        file.close();
       }
-      file.close();
+    } else {
+      saveNetworkConfig();
     }
     LittleFS.end();
   }
 }
-
 
 // Функция для сохранения конфигурации аутентификации в JSON-файл
 void saveAuthentication() {
@@ -171,6 +157,28 @@ void saveAuthentication() {
     }
   }
   LittleFS.end();
+}
+
+// Функция для загрузки конфигурации аутентификации из JSON-файла
+void loadAuthentication() {
+  if (LittleFS.begin()) {
+    if (LittleFS.exists(authenticationFile)) {
+      File file = LittleFS.open(authenticationFile, "r");
+      if (file) {
+        StaticJsonDocument<1024> doc;
+        DeserializationError error = deserializeJson(doc, file);
+        if (!error) {
+          authentication.enable = doc["enable"];
+          authentication.username = doc["username"].as<String>();
+          authentication.password = doc["password"].as<String>();
+        }
+        file.close();
+      }
+    } else {
+      saveAuthentication();
+    }
+    LittleFS.end();
+  }
 }
 
 
@@ -336,13 +344,15 @@ void setup() {
   Serial.begin(115200);
 
   WiFi.hostname(hostname.c_str());
-  updateIPWifiSettings();
-  wifiManager.autoConnect(SSID.c_str());  // Авто подключение
 
+  wifiManager.autoConnect(SSID.c_str());  // Авто подключение
+  updateIPWifiSettings();
+
+  // Загрузить данные при старте
   LittleFS.begin();
-  loadNetworkConfig();
+  // loadNetworkConfig();
   loadAuthentication();
-  loadPCData();  // Загрузить данные ПК при старте
+  loadPCData();
 
   server.on("/", handleRoot);
   server.on("/pc_list", handlePCList);
