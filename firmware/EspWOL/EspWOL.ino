@@ -18,7 +18,7 @@ const char* networkConfigFile = "/networkConfig.json";
 const char* authenticationFile = "/authentication.json";
 
 const String hostname = "wol";
-const String SSID = "WOL-ESP8266";
+const char* SSID = "WOL-ESP8266";
 
 // Структура для данных ПК
 struct PC {
@@ -33,14 +33,14 @@ struct NetworkConfig {
   IPAddress staticIP;
   IPAddress staticNetworkMask;
   IPAddress staticGateway;
-} networkConfig = { .staticIP = IPAddress(192, 168, 1, 5), .staticNetworkMask = IPAddress(255, 255, 255, 0), .staticGateway = IPAddress(192, 168, 1, 1) };
+} networkConfig;
 
 // Структура для Аутентификации
 struct Authentication {
   bool enable = false;
   String username;
   String password;
-} authentication = { .username = "wake", .password = "funNy@Sheep" };
+} authentication;
 
 // Вектор для хранения списка ПК
 std::vector<PC> pcList;
@@ -49,8 +49,7 @@ std::vector<PC> pcList;
 void updateIPWifiSettings() {
   if (networkConfig.enable) {
     wifiManager.setSTAStaticIPConfig(networkConfig.staticIP, networkConfig.staticGateway, networkConfig.staticNetworkMask);
-  }
-  else {
+  } else {
     wifi_station_dhcpc_start();
   }
 }
@@ -130,9 +129,15 @@ void loadNetworkConfig() {
         DeserializationError error = deserializeJson(doc, file);
         if (!error) {
           networkConfig.enable = doc["enable"];
-          networkConfig.staticIP = IPAddress().fromString(doc["staticIP"].as<String>());
-          networkConfig.staticNetworkMask = IPAddress().fromString(doc["staticNetworkMask"].as<String>());
-          networkConfig.staticGateway = IPAddress().fromString(doc["staticGateway"].as<String>());
+          IPAddress staticIP;
+          IPAddress staticNetworkMask;
+          IPAddress staticGateway;
+          staticIP.fromString(doc["staticIP"].as<String>());
+          staticNetworkMask.fromString(doc["staticNetworkMask"].as<String>());
+          staticGateway.fromString(doc["staticGateway"].as<String>());
+          networkConfig.staticIP = staticIP;
+          networkConfig.staticNetworkMask = staticNetworkMask;
+          networkConfig.staticGateway = staticGateway;
         }
         file.close();
       }
@@ -146,7 +151,7 @@ void loadNetworkConfig() {
 // Функция для сохранения конфигурации аутентификации в JSON-файл
 void saveAuthentication() {
   if (LittleFS.begin()) {
-    File file = LittleFS.open(networkConfigFile, "w");
+    File file = LittleFS.open(authenticationFile, "w");
     if (file) {
       StaticJsonDocument<256> doc;
       doc["enable"] = authentication.enable;
@@ -286,9 +291,15 @@ void handleUpdateNetworkSettings() {
     deserializeJson(doc, body);
     networkConfig.enable = doc["enable"];
     if (networkConfig.enable) {
-      networkConfig.staticIP = IPAddress().fromString(doc["staticIP"].as<String>());
-      networkConfig.staticNetworkMask = IPAddress().fromString(doc["staticNetworkMask"].as<String>());
-      networkConfig.staticGateway = IPAddress().fromString(doc["staticGateway"].as<String>());
+      IPAddress staticIP;
+      IPAddress staticNetworkMask;
+      IPAddress staticGateway;
+      staticIP.fromString(doc["staticIp"].as<String>());
+      staticNetworkMask.fromString(doc["staticNetworkMask"].as<String>());
+      staticGateway.fromString(doc["staticGateway"].as<String>());
+      networkConfig.staticIP = staticIP;
+      networkConfig.staticNetworkMask = staticNetworkMask;
+      networkConfig.staticGateway = staticGateway;
     }
     saveNetworkConfig();
     server.send(200, "text/plain", "Settings updated");
@@ -321,9 +332,15 @@ void handleGetNetworkSettings() {
   String jsonResponse;
   StaticJsonDocument<256> doc;
   doc["enable"] = networkConfig.enable;
-  doc["staticIP"] = networkConfig.staticIP.toString();
-  doc["staticNetworkMask"] = networkConfig.staticNetworkMask.toString();
-  doc["staticGateway"] = networkConfig.staticGateway.toString();
+  if (networkConfig.enable) {
+    doc["staticIP"] = networkConfig.staticIP.toString();
+    doc["staticNetworkMask"] = networkConfig.staticNetworkMask.toString();
+    doc["staticGateway"] = networkConfig.staticGateway.toString();
+  } else {
+    doc["staticIP"] = WiFi.localIP().toString();
+    doc["staticNetworkMask"] = WiFi.subnetMask().toString();
+    doc["staticGateway"] = WiFi.gatewayIP().toString();
+  }
   serializeJson(doc, jsonResponse);
   server.send(200, "application/json", jsonResponse);
 }
@@ -346,13 +363,14 @@ void setup() {
   WiFi.hostname(hostname.c_str());
 
   wifiManager.autoConnect(SSID.c_str());  // Авто подключение
-  updateIPWifiSettings();
 
   // Загрузить данные при старте
   LittleFS.begin();
-  // loadNetworkConfig();
+  loadNetworkConfig();
   loadAuthentication();
   loadPCData();
+
+  updateIPWifiSettings();
 
   server.on("/", handleRoot);
   server.on("/pc_list", handlePCList);
