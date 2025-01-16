@@ -30,7 +30,7 @@
                         '<div class="status-circle" id="status-' + index + '"></div>' +
                         pc.name + ' - ' + pc.mac + ' - ' + pc.ip +
                         '<div class="ml-auto">' +
-                        '<button class="btn btn-primary btn-md mr-2" onclick="pingPC(\'' + pc.ip + '\', ' + index + ')"><i class="fas fa-table-tennis"></i></button>' +
+                        '<button id="ping-button-'+ index +'" class="btn btn-primary btn-md mr-2" onclick="pingPC(\'' + pc.ip + '\', ' + index + ')"><i class="fas fa-table-tennis"></i></button>' +
                         '<button class="btn btn-warning btn-md mr-2" onclick="editPC(' + index + ')"><i class="fas fa-edit"></i></button>' +
                         '<button class="btn btn-primary btn-md" onclick="wakePC(\'' + pc.mac + '\')"><i class="fas fa-play"></i></button>' +
                         '</div></li>';
@@ -107,12 +107,17 @@
         }
 
         function pingPC(ip, index) {
+            const button = document.getElementById('ping-button-' + index);
+            button.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"><span class="sr-only">Loading...</span></div>';
+            
             fetch('/ping', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ip })
             }).then(response => {
                 const statusCircle = document.getElementById('status-' + index);
+
+                button.innerHTML = '<i class="fas fa-table-tennis"></i>';
             
                 if (response.ok) {
                     statusCircle.classList.remove('red');
