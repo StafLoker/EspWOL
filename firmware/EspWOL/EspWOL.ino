@@ -323,6 +323,7 @@ void handleUpdateNetworkSettings() {
     saveNetworkConfig();
     server.send(200, "text/plain", "Settings updated");
     updateIPWifiSettings();
+    ESP.restart();
   } else {
     server.send(405, "text/plain", "Method Not Allowed");
   }
@@ -381,8 +382,6 @@ void setup() {
 
   WiFi.hostname(hostname);
 
-  wifiManager.autoConnect(SSID);  // Авто подключение
-
   // Загрузить данные при старте
   LittleFS.begin();
   loadNetworkConfig();
@@ -390,6 +389,8 @@ void setup() {
   loadPCData();
 
   updateIPWifiSettings();
+
+  wifiManager.autoConnect(SSID);  // Авто подключение
 
   server.on("/", handleRoot);
   server.on("/pc_list", handlePCList);
