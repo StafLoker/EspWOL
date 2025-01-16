@@ -283,6 +283,7 @@ void handleUpdateNetworkSettings() {
       networkConfig.staticGateway = IPAddress().fromString(doc["staticGateway"].as<String>());
     }
     saveNetworkConfig();
+    server.send(200, "text/plain", "Settings updated");
     updateIPWifiSettings();
   } else {
     server.send(405, "text/plain", "Method Not Allowed");
@@ -301,6 +302,7 @@ void handleUpdateAuthentication() {
       authentication.password = doc["password"].as<String>();
     }
     saveAuthentication();
+    server.send(200, "text/plain", "Authentication updated");
   } else {
     server.send(405, "text/plain", "Method Not Allowed");
   }
