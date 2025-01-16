@@ -30,9 +30,9 @@
                         '<div class="status-circle" id="status-' + index + '"></div>' +
                         pc.name + ' - ' + pc.mac + ' - ' + pc.ip +
                         '<div class="ml-auto">' +
+                        '<button class="btn btn-primary btn-md" onclick="pingPC(' + pc.ip + ', ' + index + ')"><i class="fas fa-table-tennis"></i></button>' +
                         '<button class="btn btn-warning btn-md mr-2" onclick="editPC(' + index + ')"><i class="fas fa-edit"></i></button>' +
                         '<button class="btn btn-primary btn-md" onclick="wakePC(' + pc.mac + ')"><i class="fas fa-play"></i></button>' +
-                        '<button class="btn btn-primary btn-md" onclick="pingPC(' + pc.ip + ',' + index + ')"><i class="fa-solid fa-table-tennis-paddle-ball"></i></button>' +
                         '</div></li>';
                 });
             }).catch(error => {
@@ -105,19 +105,33 @@
                 }
             });
         }
-        function pingPC(ip) {
+
+        function pingPC(ip, index) {
             fetch('/ping', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ip })
             }).then(response => {
+                const statusCircle = document.getElementById('status-' + index);
+            
                 if (response.ok) {
-                        showNotification('Pinging', 'success');
-                    } else {
-                        showNotification('Not pinging', 'danger');
-                    }
+                    statusCircle.classList.remove('red');
+                    statusCircle.classList.add('green');
+                    statusCircle.classList.add('blinking');
+                    showNotification('Pinging', 'success');
+                } else {
+                    statusCircle.classList.remove('green', 'blinking');
+                    statusCircle.classList.add('red');
+                    showNotification('Not pinging', 'danger');
+                }
+            }).catch(() => {
+                const statusCircle = document.getElementById('status-' + index);
+                statusCircle.classList.remove('green', 'blinking');
+                statusCircle.classList.add('red');
+                showNotification('Not pinging', 'danger');
             });
         }
+
         function showNotification(message, type) {
             const notification = $('<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' + message + '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>');
             $('#notification-area').append(notification);
@@ -227,11 +241,11 @@
         }
 
         .status-circle.green {
-            background-color: green; /* Cuando el ping es exitoso */
+            background-color: green;
         }
 
         .status-circle.red {
-            background-color: red; /* Cuando el ping falla */
+            background-color: red;
         }
 
     </style>

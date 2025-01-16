@@ -29,8 +29,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 pcList.innerHTML = '';
                 data.forEach((pc, index) => {
                     pcList.innerHTML += '<li class="list-group-item d-flex justify-content-between align-items-center">' +
+                        '<div class="status-circle" id="status-' + index + '"></div>' +
                         pc.name + ' - ' + pc.mac + ' - ' + pc.ip +
                         '<div class="ml-auto">' +
+                        '<button class="btn btn-primary btn-md" onclick="pingPC(' + pc.ip + ', ' + index + ')"><i class="fas fa-table-tennis"></i></button>' +
                         '<button class="btn btn-warning btn-md mr-2" onclick="editPC(' + index + ')"><i class="fas fa-edit"></i></button>' +
                         '<button class="btn btn-primary btn-md" onclick="wakePC(' + pc.mac + ')"><i class="fas fa-play"></i></button>' +
                         '</div></li>';
@@ -105,6 +107,33 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 }
             });
         }
+
+        function pingPC(ip, index) {
+            fetch('/ping', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ip })
+            }).then(response => {
+                const statusCircle = document.getElementById('status-' + index);
+            
+                if (response.ok) {
+                    statusCircle.classList.remove('red');
+                    statusCircle.classList.add('green');
+                    statusCircle.classList.add('blinking');
+                    showNotification('Pinging', 'success');
+                } else {
+                    statusCircle.classList.remove('green', 'blinking');
+                    statusCircle.classList.add('red');
+                    showNotification('Not pinging', 'danger');
+                }
+            }).catch(() => {
+                const statusCircle = document.getElementById('status-' + index);
+                statusCircle.classList.remove('green', 'blinking');
+                statusCircle.classList.add('red');
+                showNotification('Not pinging', 'danger');
+            });
+        }
+
         function showNotification(message, type) {
             const notification = $('<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' + message + '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>');
             $('#notification-area').append(notification);
@@ -193,6 +222,35 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 .catch(error => console.error('Fetch error (Authentication):', error));
         }
     </script>
+    <style>
+        .status-circle {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: gray;
+            margin-right: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .blinking {
+            animation: blink-animation 1s infinite;
+        }
+
+        @keyframes blink-animation {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .status-circle.green {
+            background-color: green;
+        }
+
+        .status-circle.red {
+            background-color: red;
+        }
+
+    </style>
 </head>
 <body class='bg-light text-dark'>
     <div class='container mt-5'>
