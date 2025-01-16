@@ -378,8 +378,6 @@ void handleGetAuthentication() {
 
 // Настройка сервера
 void setup() {
-  Serial.begin(115200);
-
   WiFi.hostname(hostname);
 
   // Загрузить данные при старте
