@@ -32,7 +32,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                         '<div class="status-circle" id="status-' + index + '"></div>' +
                         pc.name + ' - ' + pc.mac + ' - ' + pc.ip +
                         '<div class="ml-auto">' +
-                        '<button id="ping-button-'+ index +'" class="btn btn-primary btn-md mr-2" onclick="pingPC(\'' + pc.ip + '\', ' + index + ')"><i class="fas fa-table-tennis"></i></button>' +
+                        '<button id="ping-button-'+ index +'" class="btn btn-info btn-md mr-2" onclick="pingPC(\'' + pc.ip + '\', ' + index + ')"><i class="fas fa-table-tennis"></i></button>' +
                         '<button class="btn btn-warning btn-md mr-2" onclick="editPC(' + index + ')"><i class="fas fa-edit"></i></button>' +
                         '<button class="btn btn-primary btn-md" onclick="wakePC(\'' + pc.mac + '\')"><i class="fas fa-play"></i></button>' +
                         '</div></li>';
@@ -135,6 +135,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                     statusCircle.classList.remove('green', 'blinking');
                     statusCircle.classList.add('red');
                     showNotification('Not pinging', 'danger');
+
+                    setTimeout(() => {
+                        statusCircle.classList.remove('red');
+                    }, 10000);
                 }
             }).catch(() => {
                 const statusCircle = document.getElementById('status-' + index);
