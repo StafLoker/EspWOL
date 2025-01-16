@@ -30,9 +30,9 @@
                         '<div class="status-circle" id="status-' + index + '"></div>' +
                         pc.name + ' - ' + pc.mac + ' - ' + pc.ip +
                         '<div class="ml-auto">' +
-                        '<button class="btn btn-primary btn-md" onclick="pingPC(' + pc.ip + ', ' + index + ')"><i class="fas fa-table-tennis"></i></button>' +
+                        '<button class="btn btn-primary btn-md mr-2" onclick="pingPC(\'' + pc.ip + '\', ' + index + ')"><i class="fas fa-table-tennis"></i></button>' +
                         '<button class="btn btn-warning btn-md mr-2" onclick="editPC(' + index + ')"><i class="fas fa-edit"></i></button>' +
-                        '<button class="btn btn-primary btn-md" onclick="wakePC(' + pc.mac + ')"><i class="fas fa-play"></i></button>' +
+                        '<button class="btn btn-primary btn-md" onclick="wakePC(\'' + pc.mac + '\')"><i class="fas fa-play"></i></button>' +
                         '</div></li>';
                 });
             }).catch(error => {
