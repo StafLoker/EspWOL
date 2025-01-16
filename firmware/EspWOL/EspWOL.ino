@@ -17,7 +17,7 @@ const char* pcFile = "/pc_list.json";
 const char* networkConfigFile = "/networkConfig.json";
 const char* authenticationFile = "/authentication.json";
 
-const String hostname = "wol";
+const char* hostname = "wol";
 const char* SSID = "WOL-ESP8266";
 
 // Структура для данных ПК
@@ -30,9 +30,9 @@ struct PC {
 // Структура для Сети
 struct NetworkConfig {
   bool enable = false;
-  IPAddress staticIP;
-  IPAddress staticNetworkMask;
-  IPAddress staticGateway;
+  IPAddress ip;
+  IPAddress networkMask;
+  IPAddress gateway;
 } networkConfig;
 
 // Структура для Аутентификации
@@ -48,7 +48,7 @@ std::vector<PC> pcList;
 // Функция для обновление настроек сети
 void updateIPWifiSettings() {
   if (networkConfig.enable) {
-    wifiManager.setSTAStaticIPConfig(networkConfig.staticIP, networkConfig.staticGateway, networkConfig.staticNetworkMask);
+    wifiManager.setSTAStaticIPConfig(networkConfig.ip, networkConfig.gateway, networkConfig.networkMask);
   } else {
     wifi_station_dhcpc_start();
   }
@@ -109,9 +109,9 @@ void saveNetworkConfig() {
     if (file) {
       StaticJsonDocument<256> doc;
       doc["enable"] = networkConfig.enable;
-      doc["staticIP"] = networkConfig.staticIP.toString();
-      doc["staticNetworkMask"] = networkConfig.staticNetworkMask.toString();
-      doc["staticGateway"] = networkConfig.staticGateway.toString();
+      doc["ip"] = networkConfig.ip.toString();
+      doc["networkMask"] = networkConfig.networkMask.toString();
+      doc["gateway"] = networkConfig.gateway.toString();
       serializeJson(doc, file);
       file.close();
     }
@@ -129,15 +129,15 @@ void loadNetworkConfig() {
         DeserializationError error = deserializeJson(doc, file);
         if (!error) {
           networkConfig.enable = doc["enable"];
-          IPAddress staticIP;
-          IPAddress staticNetworkMask;
-          IPAddress staticGateway;
-          staticIP.fromString(doc["staticIP"].as<String>());
-          staticNetworkMask.fromString(doc["staticNetworkMask"].as<String>());
-          staticGateway.fromString(doc["staticGateway"].as<String>());
-          networkConfig.staticIP = staticIP;
-          networkConfig.staticNetworkMask = staticNetworkMask;
-          networkConfig.staticGateway = staticGateway;
+          IPAddress ip;
+          IPAddress networkMask;
+          IPAddress gateway;
+          ip.fromString(doc["ip"].as<String>());
+          networkMask.fromString(doc["networkMask"].as<String>());
+          gateway.fromString(doc["gateway"].as<String>());
+          networkConfig.ip = ip;
+          networkConfig.networkMask = networkMask;
+          networkConfig.gateway = gateway;
         }
         file.close();
       }
@@ -291,15 +291,15 @@ void handleUpdateNetworkSettings() {
     deserializeJson(doc, body);
     networkConfig.enable = doc["enable"];
     if (networkConfig.enable) {
-      IPAddress staticIP;
-      IPAddress staticNetworkMask;
-      IPAddress staticGateway;
-      staticIP.fromString(doc["staticIp"].as<String>());
-      staticNetworkMask.fromString(doc["staticNetworkMask"].as<String>());
-      staticGateway.fromString(doc["staticGateway"].as<String>());
-      networkConfig.staticIP = staticIP;
-      networkConfig.staticNetworkMask = staticNetworkMask;
-      networkConfig.staticGateway = staticGateway;
+      IPAddress ip;
+      IPAddress networkMask;
+      IPAddress gateway;
+      ip.fromString(doc["ip"].as<String>());
+      networkMask.fromString(doc["networkMask"].as<String>());
+      gateway.fromString(doc["gateway"].as<String>());
+      networkConfig.ip = ip;
+      networkConfig.networkMask = networkMask;
+      networkConfig.gateway = gateway;
     }
     saveNetworkConfig();
     server.send(200, "text/plain", "Settings updated");
@@ -333,13 +333,13 @@ void handleGetNetworkSettings() {
   StaticJsonDocument<256> doc;
   doc["enable"] = networkConfig.enable;
   if (networkConfig.enable) {
-    doc["staticIP"] = networkConfig.staticIP.toString();
-    doc["staticNetworkMask"] = networkConfig.staticNetworkMask.toString();
-    doc["staticGateway"] = networkConfig.staticGateway.toString();
+    doc["ip"] = networkConfig.ip.toString();
+    doc["networkMask"] = networkConfig.networkMask.toString();
+    doc["gateway"] = networkConfig.gateway.toString();
   } else {
-    doc["staticIP"] = WiFi.localIP().toString();
-    doc["staticNetworkMask"] = WiFi.subnetMask().toString();
-    doc["staticGateway"] = WiFi.gatewayIP().toString();
+    doc["ip"] = WiFi.localIP().toString();
+    doc["networkMask"] = WiFi.subnetMask().toString();
+    doc["gateway"] = WiFi.gatewayIP().toString();
   }
   serializeJson(doc, jsonResponse);
   server.send(200, "application/json", jsonResponse);
@@ -360,9 +360,9 @@ void handleGetAuthentication() {
 void setup() {
   Serial.begin(115200);
 
-  WiFi.hostname(hostname.c_str());
+  WiFi.hostname(hostname);
 
-  wifiManager.autoConnect(SSID.c_str());  // Авто подключение
+  wifiManager.autoConnect(SSID);  // Авто подключение
 
   // Загрузить данные при старте
   LittleFS.begin();

@@ -125,14 +125,14 @@
         }
         function updateNetworkSettings() {
             const enable = document.getElementById('inlineRadioStaticIP').checked;
-            const staticIp = document.getElementById('fieldStaticIP').value;
-            const staticNetworkMask = document.getElementById('fieldNetworkMask').value;
-            const staticGateway = document.getElementById('fieldStaticGateway').value;
+            const ip = document.getElementById('fieldIP').value;
+            const networkMask = document.getElementById('fieldNetworkMask').value;
+            const gateway = document.getElementById('fieldGateway').value;
 
             fetch('/update_network_settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ enable, staticIp, staticNetworkMask, staticGateway })
+                body: JSON.stringify({ enable, ip, networkMask, gateway })
             })
             .then(response => {
                 $('#settings-modal').modal('hide');
@@ -173,9 +173,9 @@
                 .then(data => {
                     document.getElementById('inlineRadioStaticIP').checked = data.enable;
                     document.getElementById('inlineRadioDHCP').checked = !data.enable;
-                    document.getElementById('fieldStaticIP').value = data.staticIP;
-                    document.getElementById('fieldNetworkMask').value = data.staticNetworkMask;
-                    document.getElementById('fieldStaticGateway').value = data.staticGateway;
+                    document.getElementById('fieldIP').value = data.ip;
+                    document.getElementById('fieldNetworkMask').value = data.networkMask;
+                    document.getElementById('fieldGateway').value = data.gateway;
                 })
                 .catch(error => console.error('Fetch error (Network Settings):', error));
         }
@@ -294,16 +294,16 @@
                                 <label class="form-check-label" for="inlineRadio2">DHCP</label>
                             </div>
                             <div class='form-group'>
-                                <label for='static-ip'>Static IP:</label>
-                                <input type='text' class='form-control' id='fieldStaticIP' placeholder='192.168.2.9'>
+                                <label for='ip'>IP:</label>
+                                <input type='text' class='form-control' id='fieldIP' placeholder='192.168.2.9'>
                             </div>
                             <div class='form-group'>
-                                <label for='static-ip'>Network Mask:</label>
+                                <label for='static-network-mask'>Network Mask:</label>
                                 <input type='text' class='form-control' id='fieldNetworkMask' placeholder='255.255.255.0'>
                             </div>
                             <div class='form-group'>
                                 <label for='static-gateway'>Gateway:</label>
-                                <input type='text' class='form-control' id='fieldStaticGateway' placeholder='192.168.2.1'>
+                                <input type='text' class='form-control' id='fieldGateway' placeholder='192.168.2.1'>
                             </div>
                         </div>
                         <div class='card-footer'>
