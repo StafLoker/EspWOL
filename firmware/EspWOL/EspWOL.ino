@@ -7,6 +7,8 @@
 #include <WiFiManager.h>
 #include <ESP8266Ping.h>
 
+#include <ArduinoOTA.h>
+
 #include "index.h"
 
 ESP8266WebServer server(80);
@@ -45,6 +47,13 @@ struct Authentication {
 
 // Вектор для хранения списка ПК
 std::vector<PC> pcList;
+
+// Функция для настройки OTA
+void setupOTA() {
+  ArduinoOTA.setHostname(hostname);
+  ArduinoOTA.setPassword((const char *)"ber#912NerYi");
+  ArduinoOTA.begin();
+}
 
 // Функция для обновление настроек сети
 void updateIPWifiSettings() {
@@ -381,6 +390,8 @@ void handleGetAuthentication() {
 void setup() {
   WiFi.hostname(hostname);
 
+  setupOTA();
+
   // Загрузить данные при старте
   LittleFS.begin();
   loadNetworkConfig();
@@ -411,5 +422,6 @@ void setup() {
 
 void loop() {
   server.handleClient();
+  ArduinoOTA.handle();
   delay(1);  // Уменьшим потребление на 60% добавив делей https://hackaday.com/2022/10/28/esp8266-web-server-saves-60-power-with-a-1-ms-delay/
 }
