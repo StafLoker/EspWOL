@@ -106,7 +106,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             });
         }
         function showNotification(message, type) {
-            const notification = $('<div class="alert alert-' + type + 'alert-dismissible fade show" role="alert">' + message + '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>');
+            const notification = $('<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' + message + '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>');
             $('#notification-area').append(notification);
             setTimeout(() => {
                 notification.alert('close');
@@ -136,14 +136,15 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ enable, staticIp, staticNetworkMask, staticGateway })
             })
-            .then(response => response.json())
-            .then(data => {
-                    if (data.success) {
-                        showNotification('Settings updated successfully!', 'success');
-                    } else {
-                        showNotification('Failed to update settings.', 'danger');
-                    }
-                })
+            .then(response => {
+                $('#settings-modal').modal('hide');
+                if (response.ok) {
+                    showNotification('Settings updated successfully!', 'success');
+                    location.reload();
+                } else {
+                    showNotification('Failed to update settings.', 'danger');
+                }
+            })
             .catch(error => console.error('Fetch error:', error));
         }
 
@@ -157,14 +158,14 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ enable, username, password })
             })
-            .then(response => response.json())
-            .then(data => {
-                    if (data.success) {
-                        showNotification('Authentication updated successfully!', 'success');
-                    } else {
-                        showNotification('Failed to update authentication.', 'danger');
-                    }
-                })
+            .then(response => {
+                $('#settings-modal').modal('hide');
+                if (response.ok) {
+                    showNotification('Authentication updated successfully!', 'success');
+                } else {
+                    showNotification('Failed to update authentication.', 'danger');
+                }
+            })
             .catch(error => console.error('Fetch error:', error));
         }
         
@@ -309,7 +310,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                         </div>
                         <div class='card-footer'>
                             <button type='button' class='btn btn-primary' onclick='updateNetworkSettings()'>Update</button>
-                            <button type='button' class='btn btn-danger' title='Reset WiFi' data-toggle='modal' data-target='#reset-wifi-modal'>Reset WiFi</button>
+                            <button type='button' class='btn btn-danger' title='Reset WiFi' data-toggle='modal' data-target='#reset-wifi-modal'onclick="$('#settings-modal').modal('hide');">Reset WiFi</button>
                         </div>
                     </div>
                     <hr/>
@@ -356,7 +357,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 </div>
                 <div class='modal-footer'>
                     <button type='button' class='btn btn-danger' onclick='resetWiFiSettings()'>Reset</button>
-                    <button type='button' class='btn btn-secondary' data-dismiss='modal'>Cancel</button>
+                    <button type='button' class='btn btn-secondary' data-dismiss='modal' onclick="$('#settings-modal').modal('show');">Cancel</button>
                 </div>
             </div>
         </div>
