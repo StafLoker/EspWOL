@@ -126,6 +126,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                .catch(error => console.error('Fetch error:', error));
         }
         function updateNetworkSettings() {
+            const enable = document.getElementById('inlineRadioStaticIP').checked;
             const staticIp = document.getElementById('fieldStaticIP').value;
             const staticNetworkMask = document.getElementById('fieldNetworkMask').value;
             const staticGateway = document.getElementById('fieldStaticGateway').value;
@@ -133,7 +134,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             fetch('/update_network_settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ staticIp, staticNetworkMask, staticGateway })
+                body: JSON.stringify({ enable, staticIp, staticNetworkMask, staticGateway })
             })
             .then(response => response.json())
             .then(data => {
@@ -147,13 +148,14 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         }
 
         function updateAuthentication() {
+            const enable = document.getElementById('defaultCheckEnableAuthentication').checked;
             const username = document.getElementById('fieldUsername').value;
             const password = document.getElementById('password').value;
 
             fetch('/update_authentication', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ enable, username, password })
             })
             .then(response => response.json())
             .then(data => {
