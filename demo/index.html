@@ -124,9 +124,9 @@
                .catch(error => console.error('Fetch error:', error));
         }
         function updateNetworkSettings() {
-            const staticIp = document.getElementById('static-ip').value;
-            const staticNetworkMask = document.getElementById('static-network-mask').value;
-            const staticGateway = document.getElementById('static-gateway').value;
+            const staticIp = document.getElementById('fieldStaticIP').value;
+            const staticNetworkMask = document.getElementById('fieldNetworkMask').value;
+            const staticGateway = document.getElementById('fieldStaticGateway').value;
 
             fetch('/update_network_settings', {
                 method: 'POST',
@@ -145,7 +145,7 @@
         }
 
         function updateAuthentication() {
-            const username = document.getElementById('username').value;
+            const username = document.getElementById('fieldUsername').value;
             const password = document.getElementById('password').value;
 
             fetch('/update_authentication', {
@@ -163,6 +163,30 @@
                 })
             .catch(error => console.error('Fetch error:', error));
         }
+        
+        function getNetworkSettings() {
+            fetch('/get_network_settings')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('inlineRadioStaticIP').checked = data.enable;
+                    document.getElementById('inlineRadioDHCP').checked = !data.enable;
+                    document.getElementById('fieldStaticIP').value = data.staticIP;
+                    document.getElementById('fieldNetworkMask').value = data.staticNetworkMask;
+                    document.getElementById('fieldStaticGateway').value = data.staticGateway;
+                })
+                .catch(error => console.error('Fetch error (Network Settings):', error));
+        }
+
+        function getAuthentication() {
+            fetch('/get_authentication')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('defaultCheckEnableAuthentication').checked = data.enable;
+                    document.getElementById('fieldUsername').value = data.username;
+                    document.getElementById('fieldPassword').value = data.password;
+                })
+                .catch(error => console.error('Fetch error (Authentication):', error));
+        }
     </script>
 </head>
 <body class='bg-light text-dark'>
@@ -175,7 +199,7 @@
                 <button class='btn btn-success' data-toggle='modal' data-target='#add-pc-modal'>
                     <i class='fas fa-plus'></i>
                 </button>
-                <button class='btn btn-secondary btn-md' title='Settings' data-toggle='modal' data-target='#settings-modal'>
+                <button class='btn btn-secondary btn-md' title='Settings' data-toggle='modal' data-target='#settings-modal' onclick="getNetworkSettings(); getAuthentication();">
                     <i class='fas fa-cog'></i>
                 </button>
             </div>
@@ -258,21 +282,25 @@
                             <h5 class='modal-title'>Network</h5>
                         </div>
                         <div class='card-body'>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="defaultCheckStaticIP">
-                                <label class="form-check-label" for="defaultCheck1">Enable static IP configuration</label>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadioStaticIP" value="staticIP">
+                                <label class="form-check-label" for="inlineRadio1">Static IP</label>
+                              </div>
+                              <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadioDHCP" value="dhcp">
+                                <label class="form-check-label" for="inlineRadio2">DHCP</label>
                             </div>
                             <div class='form-group'>
                                 <label for='static-ip'>Static IP:</label>
-                                <input type='text' class='form-control' id='static-ip' placeholder='192.168.2.9'>
+                                <input type='text' class='form-control' id='fieldStaticIP' placeholder='192.168.2.9'>
                             </div>
                             <div class='form-group'>
                                 <label for='static-ip'>Network Mask:</label>
-                                <input type='text' class='form-control' id='static-network-mask' placeholder='255.255.255.0'>
+                                <input type='text' class='form-control' id='fieldNetworkMask' placeholder='255.255.255.0'>
                             </div>
                             <div class='form-group'>
                                 <label for='static-gateway'>Gateway:</label>
-                                <input type='text' class='form-control' id='static-gateway' placeholder='192.168.2.1'>
+                                <input type='text' class='form-control' id='fieldStaticGateway' placeholder='192.168.2.1'>
                             </div>
                         </div>
                         <div class='card-footer'>
@@ -292,11 +320,11 @@
                               </div>
                             <div class='form-group'>
                                 <label for='username'>Username:</label>
-                                <input type='text' class='form-control' id='username' placeholder='Enter username'>
+                                <input type='text' class='form-control' id='fieldUsername' placeholder='Enter username'>
                             </div>
                             <div class='form-group'>
                                 <label for='password'>Password:</label>
-                                <input type='password' class='form-control' id='password' placeholder='Enter password'>
+                                <input type='password' class='form-control' id='fieldPassword' placeholder='Enter password'>
                             </div>
                         </div>
                         <div class='card-footer'>
