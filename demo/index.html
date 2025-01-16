@@ -165,7 +165,7 @@
         }
         
         function getNetworkSettings() {
-            fetch('/get_network_settings')
+            fetch('/network_settings')
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('inlineRadioStaticIP').checked = data.enable;
@@ -178,7 +178,7 @@
         }
 
         function getAuthentication() {
-            fetch('/get_authentication')
+            fetch('/authentication')
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('defaultCheckEnableAuthentication').checked = data.enable;
