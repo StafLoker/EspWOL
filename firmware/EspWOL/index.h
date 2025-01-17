@@ -6,10 +6,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>Wake on LAN</title>
-    <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css'>
+    <link rel='stylesheet' href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
     <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css'>
-    <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js'></script>
-    <script src='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js'></script>
     <script>
         $(document).ready(function() {
             updatePCList();
@@ -271,6 +271,17 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 gatewayField.setAttribute('disabled', '');
             }
         }
+
+        function getAbout() {
+            fetch('/about')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('version').innerText = data.version;
+                    document.getElementById('hostname').innerText = data.hostname;
+
+                })
+                .catch(error => console.error('Fetch error (About):', error));
+        }
     </script>
     <style>
         .status-circle {
@@ -311,7 +322,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 <button class='btn btn-success' data-toggle='modal' data-target='#add-pc-modal'>
                     <i class='fas fa-plus'></i>
                 </button>
-                <button class='btn btn-secondary btn-md' title='Settings' data-toggle='modal' data-target='#settings-modal' onclick="getNetworkSettings(); getAuthentication();">
+                <button class='btn btn-secondary btn-md' title='Settings' data-toggle='modal' data-target='#settings-modal' onclick="getNetworkSettings(); getAuthentication(); getAbout();">
                     <i class='fas fa-cog'></i>
                 </button>
             </div>
@@ -389,6 +400,20 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                     </button>
                 </div>
                 <div class='modal-body'>
+                    <div class='card'>
+                        <div class='card-header'>
+                            <h5 class='modal-title'>About</h5>
+                        </div>
+                        <div class='card-body'>
+                            <p class="card-text"> Version: 
+                                <a id="version" href="https://github.com/StafLoker/EspWOL" class="badge badge-pill badge-success"></a>
+                            </p>
+                            <p class="card-text"> Hostname: 
+                                <span id="hostname" class="badge badge-info"></span>
+                            </p>
+                        </div>
+                    </div>
+                    <hr/>
                     <div class='card'>
                         <div class='card-header'>
                             <h5 class='modal-title'>Network</h5>
