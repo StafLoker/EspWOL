@@ -11,6 +11,8 @@
 
 #include "index.h"
 
+#define VERSION "1.2.2"
+
 ESP8266WebServer server(80);
 WiFiUDP UDP;
 WakeOnLan WOL(UDP);
@@ -51,7 +53,7 @@ std::vector<PC> pcList;
 // Функция для настройки OTA
 void setupOTA() {
   ArduinoOTA.setHostname(hostname);
-  ArduinoOTA.setPassword((const char *)"ber#912NerYi");
+  ArduinoOTA.setPassword((const char*)"ber#912NerYi");
   ArduinoOTA.begin();
 }
 
@@ -386,6 +388,15 @@ void handleGetAuthentication() {
   server.send(200, "application/json", jsonResponse);
 }
 
+void handleGetAbout() {
+  String jsonResponse;
+  StaticJsonDocument<256> doc;
+  doc["version"] = VERSION;
+  doc["hostname"] = wifiManager.getWiFiHostname();
+  serializeJson(doc, jsonResponse);
+  server.send(200, "application/json", jsonResponse);
+}
+
 // Настройка сервера
 void setup() {
   WiFi.hostname(hostname);
@@ -417,6 +428,7 @@ void setup() {
     server.send(200, "text/plain", "WiFi settings reset");
   });
   server.on("/update_authentication", handleUpdateAuthentication);
+  server.on("/about", handleGetAbout);
   server.begin();
 }
 
