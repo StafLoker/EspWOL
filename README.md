@@ -1,12 +1,23 @@
 <div align="center">
-   <h1>EspWOL</h1>
-   <p><i>Wake & play!</i></p>
+   <!-- <img width="225" height="225" src="logo.png" alt="Logo"> -->
+   <h1><b>EspWOL</b></h1>
+   <p><i>~ Wake & play! ~</i></p>
+   <p align="center">
+      <a href="https://stafloker.github.io/EspWOL/">Demo</a> ·
+      <a href="https://github.com/StafLoker/EspWOL/releases">Releases</a>
+   </p>
 </div>
-<hr>
 
-This project provides a web-based interface for power on hosts using an ESP8266 and Wake On Lan magic packets.
+<div align="center">
+   <a href="https://github.com/StafLoker/EspWOL/releases"><img src="https://img.shields.io/github/downloads/StafLoker/EspWOL/total.svg?style=flat" alt="downloads"/></a>
+   <a href="https://github.com/StafLoker/EspWOL/releases"><img src="https://img.shields.io/github/release-pre/StafLoker/EspWOL.svg?style=flat" alt="latest version"/></a>
+   <a href="https://github.com/StafLoker/EspWOL/blob/main/LICENSE"><img src="https://img.shields.io/github/license/StafLoker/EspWOL.svg?style=flat" alt="license"/></a>
+   <a href="https://github.com/MonitorControl/MonitorControl"><img src="https://img.shields.io/badge/platform-ESP8266-blue.svg?style=flat" alt="platform"/></a>
 
-<img src="ui.png" title="Main Screenshot">
+   <p>This project provides a web-based interface for power on hosts using an ESP8266 and Wake On Lan magic packets.</p>
+
+<img src="ui.png" width="824" alt="Screenshot">
+</div>
 
 ## Features
 
@@ -44,5 +55,3 @@ This project provides a web-based interface for power on hosts using an ESP8266 
    - Click the `+` button next to the **Registered hosts** title to add a new host.
    - Click the **settings** button next to any host to edit its details.
    - Use the **play** button to send a Wake-on-LAN request to a host.
-
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
