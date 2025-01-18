@@ -21,155 +21,155 @@
     ></script>
     <script>
       document.addEventListener('DOMContentLoaded', function () {
-        updatePCList();
+        getAllHost();
       });
 
-      async function updatePCList() {
+      async function getAllHost() {
         try {
-          const response = await fetch('/pc_list');
+          const response = await fetch('/hosts', { method: 'GET' });
           if (!response.ok) throw new Error('Network response was not ok');
 
           const data = await response.json();
           if (!Array.isArray(data)) throw new Error('Expected an array');
 
-          const pcList = document.getElementById('pc-list');
-          pcList.innerHTML = '';
-          data.forEach((pc, index) => {
+          const hosts = document.getElementById('hosts');
+          hosts.innerHTML = '';
+          data.forEach((host, index) => {
             const listItem = document.createElement('li');
             listItem.className =
               'list-group-item d-flex justify-content-between align-items-center';
-            listItem.id = `pc-item-${index}`;
+            listItem.id = `host-item-${index}`;
             listItem.innerHTML = `
                         <div class="d-flex align-items-center">
                             <div class="status-circle" id="status-${index}"></div>
-                            ${pc.name} - ${pc.mac} - ${pc.ip}
+                            ${host.name} - ${host.mac} - ${host.ip}
                         </div>
                         <div>
-                            <button id="ping-button-${index}" class="btn btn-info btn-sm me-2" onclick="pingPC('${pc.ip}', ${index})">
+                            <button id="ping-button-${index}" class="btn btn-info btn-sm me-2" onclick="pingHost('${host.ip}', ${index})">
                                 <i class="fas fa-table-tennis"></i>
                             </button>
-                            <button class="btn btn-warning btn-sm me-2" onclick="editPC()" data-index="${index}">
+                            <button class="btn btn-warning btn-sm me-2" onclick="editHost()" data-index="${index}">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn btn-primary btn-sm" onclick="wakePC('${pc.mac}')">
+                            <button class="btn btn-primary btn-sm" onclick="wakeHost('${host.mac}')">
                                 <i class="fas fa-play"></i>
                             </button>
                         </div>`;
-            pcList.appendChild(listItem);
+            hosts.appendChild(listItem);
           });
         } catch (error) {
-          console.error('Error fetching PC list:', error);
+          console.error('Error fetching host list:', error);
         }
       }
 
-      async function addPC() {
-        const name = document.getElementById('pc-name').value;
-        const mac = document.getElementById('pc-mac').value;
-        const ip = document.getElementById('pc-ip').value;
+      async function addHost() {
+        const name = document.getElementById('host-name').value;
+        const mac = document.getElementById('host-mac').value;
+        const ip = document.getElementById('host-ip').value;
 
         try {
-          const response = await fetch('/add', {
+          const response = await fetch('/hosts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, mac, ip })
           });
 
           const data = await response.json();
-          if (response.ok) {
-            updatePCList();
+          if (data.success) {
+            getAllHost();
             bootstrap.Modal.getInstance(
-              document.getElementById('add-pc-modal')
+              document.getElementById('add-host-modal')
             ).hide();
-            document.getElementById('pc-name').value = '';
-            document.getElementById('pc-mac').value = '';
-            document.getElementById('pc-ip').value = '';
+            document.getElementById('host-name').value = '';
+            document.getElementById('host-mac').value = '';
+            document.getElementById('host-ip').value = '';
           }
-          showNotification(data.text, response.ok ? 'success' : 'danger');
+          showNotification(data.message, data.success ? 'success' : 'danger');
         } catch (error) {
-          showNotification('Error adding PC', 'danger');
-          console.error('Error adding PC:', error);
+          showNotification('Error adding HOST', 'danger');
+          console.error('Error adding HOST:', error);
         }
       }
 
-      async function editPC(index) {
-        const pc = document.getElementById(`pc-item-${index}`);
+      async function editHost(index) {
+        const host = document.getElementById(`host-item-${index}`);
         document
-          .getElementById('edit-pc-modal')
+          .getElementById('edit-host-modal')
           .setAttribute('data-index', index);
         try {
-          const response = await fetch('/pc?index=' + index);
+          const response = await fetch('/hosts/' + index, { method: 'GET' });
           const data = await response.json();
-          document.getElementById('edit-pc-name').value = data.name;
-          document.getElementById('edit-pc-mac').value = data.mac;
-          document.getElementById('edit-pc-ip').value = data.ip;
+          document.getElementById('edit-host-name').value = data.name;
+          document.getElementById('edit-host-mac').value = data.mac;
+          document.getElementById('edit-host-ip').value = data.ip;
           bootstrap.Modal.getInstance(
-            document.getElementById('edit-pc-modal')
+            document.getElementById('edit-host-modal')
           ).show();
         } catch (error) {
-          showNotification('Error edit PC', 'danger');
-          console.error('Error edit PC:', error);
+          showNotification('Error edit HOST', 'danger');
+          console.error('Error edit HOST:', error);
         }
       }
 
-      async function saveEditPC() {
+      async function saveEditHost() {
         const index = document
-          .getElementById('edit-pc-modal')
+          .getElementById('edit-host-modal')
           .modal.getAttribute('data-index');
-        const name = document.getElementById('edit-pc-name').value;
-        const mac = document.getElementById('edit-pc-mac').value;
-        const ip = document.getElementById('edit-pc-ip').value;
+        const name = document.getElementById('edit-host-name').value;
+        const mac = document.getElementById('edit-host-mac').value;
+        const ip = document.getElementById('edit-host-ip').value;
 
         try {
-          const response = await fetch('/edit?index=' + index, {
-            method: 'POST',
+          const response = await fetch('/hosts/' + index, {
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, mac, ip })
           });
           const data = await response.json();
-          if (response.ok) {
-            updatePCList();
+          if (data.success) {
+            getAllHost();
           }
           bootstrap.Modal.getInstance(
-            document.getElementById('edit-pc-modal')
+            document.getElementById('edit-host-modal')
           ).hide();
-          showNotification(data.text, response.ok ? 'success' : 'danger');
+          showNotification(data.message, data.success ? 'success' : 'danger');
         } catch (error) {
           bootstrap.Modal.getInstance(
-            document.getElementById('edit-pc-modal')
+            document.getElementById('edit-host-modal')
           ).hide();
-          showNotification('Error edit PC', 'danger');
-          console.error('Error edit PC:', error);
+          showNotification('Error edit HOST', 'danger');
+          console.error('Error edit HOST:', error);
         }
       }
 
       async function confirmDelete() {
         const index = document
-          .getElementById('edit-pc-modal')
+          .getElementById('edit-host-modal')
           .modal.getAttribute('data-index');
         try {
-          const response = await fetch('/delete?index=' + index, {
-            method: 'POST'
+          const response = await fetch('/hosts/' + index + index, {
+            method: 'DELETE'
           });
           const data = await response.json();
-          if (response.ok) {
-            updatePCList();
+          if (data.success) {
+            getAllHost();
           }
 
           bootstrap.Modal.getInstance(
-            document.getElementById('edit-pc-modal')
+            document.getElementById('edit-host-modal')
           ).hide();
 
-          showNotification(data.text, response.ok ? 'success' : 'danger');
+          showNotification(data.message, data.success ? 'success' : 'danger');
         } catch (error) {
           bootstrap.Modal.getInstance(
-            document.getElementById('edit-pc-modal')
+            document.getElementById('edit-host-modal')
           ).hide();
-          showNotification('Error delete PC', 'danger');
-          console.error('Error delete PC:', error);
+          showNotification('Error delete HOST', 'danger');
+          console.error('Error delete HOST:', error);
         }
       }
 
-      async function pingPC(ip, index) {
+      async function pingHost(ip, index) {
         const button = document.getElementById(`ping-button-${index}`);
         button.setAttribute('disabled', '');
         button.innerHTML =
@@ -187,12 +187,12 @@
           ipField.removeAttribute('disabled');
           button.innerHTML = '<i class="fas fa-table-tennis"></i>';
 
-          if (response.ok) {
+          if (data.success) {
             statusCircle.classList.remove('red');
             statusCircle.classList.add('green');
             statusCircle.classList.add('blinking');
 
-            showNotification(data.text, 'success');
+            showNotification(data.message, 'success');
             setTimeout(() => {
               statusCircle.classList.remove('blinking');
               statusCircle.classList.remove('green');
@@ -200,7 +200,7 @@
           } else {
             statusCircle.classList.remove('green', 'blinking');
             statusCircle.classList.add('red');
-            showNotification(data.text, 'danger');
+            showNotification(data.message, 'danger');
 
             setTimeout(() => {
               statusCircle.classList.remove('red');
@@ -212,7 +212,7 @@
         }
       }
 
-      async function wakePC(mac) {
+      async function wakeHost(mac) {
         try {
           const response = await fetch('/wake', {
             method: 'POST',
@@ -220,7 +220,7 @@
             body: JSON.stringify({ mac })
           });
           const data = await response.json();
-          showNotification(data.text, response.ok ? 'info' : 'danger');
+          showNotification(data.message, data.success ? 'info' : 'danger');
         } catch (error) {
           showNotification("WOL packet don't sent", 'danger');
           console.error('Ping failed:', error);
@@ -229,7 +229,7 @@
 
       async function getAbout() {
         try {
-          const response = await fetch('/about');
+          const response = await fetch('/about', { method: 'GET' });
           const data = await response.json();
 
           document.getElementById('version').innerText = data.version;
@@ -242,7 +242,7 @@
 
       async function getNetworkSettings() {
         try {
-          const response = await fetch('/network_settings');
+          const response = await fetch('/networkSettings', { method: 'GET' });
           const data = await response.json();
 
           document.getElementById('inlineRadioStaticIP').checked = data.enable;
@@ -260,7 +260,7 @@
 
       async function getAuthentication() {
         try {
-          const response = await fetch('/authentication');
+          const response = await fetch('/authentication', { method: 'GET' });
           const data = await response.json();
 
           document.getElementById('switchEnableAuthentication').checked =
@@ -288,8 +288,8 @@
         const gateway = document.getElementById('fieldGateway').value;
 
         try {
-          const response = await fetch('/update_network_settings', {
-            method: 'POST',
+          const response = await fetch('/networkSettings', {
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ enable, ip, networkMask, gateway })
           });
@@ -297,11 +297,9 @@
           bootstrap.Modal.getInstance(
             document.getElementById('settings-modal')
           ).hide();
-          if (response.ok) {
-            showNotification(data.text, 'success');
+          showNotification(data.message, data.success ? 'success' : 'danger');
+          if (data.success) {
             location.replace(`http://${ip}`);
-          } else {
-            showNotification(data.text, 'danger');
           }
         } catch {
           bootstrap.Modal.getInstance(
@@ -320,8 +318,8 @@
         const password = document.getElementById('fieldPassword').value;
 
         try {
-          const response = await fetch('/update_authentication', {
-            method: 'POST',
+          const response = await fetch('/authentication', {
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ enable, username, password })
           });
@@ -329,11 +327,9 @@
           bootstrap.Modal.getInstance(
             document.getElementById('settings-modal')
           ).hide();
-          if (response.ok) {
-            showNotification(data.text, 'success');
+          showNotification(data.message, data.success ? 'success' : 'danger');
+          if (data.success) {
             location.reload();
-          } else {
-            showNotification(data.text, 'danger');
           }
         } catch {
           bootstrap.Modal.getInstance(
@@ -346,13 +342,11 @@
 
       async function resetWiFiSettings() {
         try {
-          const response = await fetch('/reset_wifi', { method: 'POST' });
+          const response = await fetch('/resetWifi', { method: 'POST' });
           const data = await response.json();
-          if (response.ok) {
-            showNotification(data.text, 'success');
+          showNotification(data.message, data.success ? 'success' : 'danger');
+          if (data.success) {
             location.reload();
-          } else {
-            showNotification(data.text, 'danger');
           }
         } catch (error) {
           console.error('Fetch reset WIFI settings error:', error);
@@ -444,407 +438,413 @@
         background-color: red;
       }
     </style>
+    <body class="bg-light text-dark">
+      <div class="container mt-5">
+        <h1 class="text-center">Wake on LAN</h1>
+        <!-- Notification Area -->
+        <div id="notification-area"></div>
+        <!-- Main -->
+        <h2 class="mt-4 d-flex justify-content-between align-items-center">
+          <span>Hosts</span>
+          <div class="ml-auto">
+            <button
+              class="btn btn-success"
+              data-toggle="modal"
+              data-target="#add-host-modal"
+            >
+              <i class="fas fa-plus"></i>
+            </button>
+            <button
+              class="btn btn-secondary btn-md"
+              title="Settings"
+              data-toggle="modal"
+              data-target="#settings-modal"
+              onclick="getSettings()"
+            >
+              <i class="fas fa-cog"></i>
+            </button>
+          </div>
+        </h2>
+        <!-- HOST List -->
+        <ul id="host-list" class="list-group mt-3"></ul>
+      </div>
+
+      <!-- Add host modal -->
+      <div
+        class="modal fade"
+        id="add-host-modal"
+        tabindex="-1"
+        role="dialog"
+        aria-labelledby="addHostLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="addHostLabel">Add host</h5>
+              <button
+                type="button"
+                class="close"
+                data-dismiss="modal"
+                aria-label="Close"
+              >
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="host-name">Name</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="host-name"
+                  placeholder="Enter HOST name"
+                />
+              </div>
+              <div class="form-group">
+                <label for="host-mac">MAC Address</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="host-mac"
+                  placeholder="Enter MAC address"
+                />
+              </div>
+              <div class="form-group">
+                <label for="host-ip">IP Address</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="host-ip"
+                  placeholder="Enter IP address"
+                />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-primary" onclick="addHost()">
+                Add
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-dismiss="modal"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="modal fade"
+        id="edit-host-modal"
+        tabindex="-1"
+        role="dialog"
+        aria-labelledby="editHostLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="editHostLabel">Edit HOST</h5>
+              <button
+                type="button"
+                class="close"
+                data-dismiss="modal"
+                aria-label="Close"
+              >
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="edit-host-name">Name</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="edit-host-name"
+                  placeholder="Enter HOST name"
+                />
+              </div>
+              <div class="form-group">
+                <label for="edit-host-mac">MAC Address</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="edit-host-mac"
+                  placeholder="Enter MAC address"
+                />
+              </div>
+              <div class="form-group">
+                <label for="edit-host-ip">IP Address</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="edit-host-ip"
+                  placeholder="Enter IP address"
+                />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-primary"
+                onclick="saveEditHost()"
+              >
+                Save changes
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger"
+                onclick="confirmDelete()"
+              >
+                Delete
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-dismiss="modal"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="modal fade"
+        id="settings-modal"
+        tabindex="-1"
+        role="dialog"
+        aria-labelledby="settingsLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="settingsLabel">Settings</h5>
+              <button
+                type="button"
+                class="close"
+                data-dismiss="modal"
+                aria-label="Close"
+              >
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="card">
+                <div class="card-header">
+                  <h5 class="modal-title">About</h5>
+                </div>
+                <div class="card-body">
+                  <p class="card-text">
+                    Version:
+                    <a
+                      id="version"
+                      href="https://github.com/StafLoker/EspWOL"
+                      class="badge badge-pill badge-success"
+                    ></a>
+                  </p>
+                  <p class="card-text">
+                    Hostname:
+                    <span id="hostname" class="badge badge-info"></span>
+                  </p>
+                </div>
+              </div>
+              <hr />
+              <div class="card">
+                <div class="card-header">
+                  <h5 class="modal-title">Network</h5>
+                </div>
+                <div class="card-body">
+                  <div class="form-check form-check-inline">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      name="inlineRadioOptions"
+                      id="inlineRadioStaticIP"
+                      value="staticIP"
+                      onchange="toggleNetworkFields()"
+                    />
+                    <label class="form-check-label" for="inlineRadio1"
+                      >Static IP</label
+                    >
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      name="inlineRadioOptions"
+                      id="inlineRadioDHCP"
+                      value="dhcp"
+                      onchange="toggleNetworkFields()"
+                    />
+                    <label class="form-check-label" for="inlineRadio2"
+                      >DHCP</label
+                    >
+                  </div>
+                  <div class="form-group">
+                    <label for="ip">IP:</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="fieldIP"
+                      placeholder="192.168.2.9"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label for="static-network-mask">Network Mask:</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="fieldNetworkMask"
+                      placeholder="255.255.255.0"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label for="static-gateway">Gateway:</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="fieldGateway"
+                      placeholder="192.168.2.1"
+                    />
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    onclick="updateNetworkSettings()"
+                  >
+                    Update
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-danger"
+                    title="Reset WiFi"
+                    data-toggle="modal"
+                    data-target="#reset-wifi-modal"
+                    onclick="$('#settings-modal').modal('hide');"
+                  >
+                    Reset WiFi
+                  </button>
+                </div>
+              </div>
+              <hr />
+              <div class="card">
+                <div class="card-header">
+                  <h5 class="modal-title">Authentication</h5>
+                </div>
+                <div class="card-body">
+                  <div class="custom-control custom-switch">
+                    <input
+                      type="checkbox"
+                      class="custom-control-input"
+                      id="switchEnableAuthentication"
+                      onchange="toggleAuthenticationFields()"
+                    />
+                    <label
+                      class="custom-control-label"
+                      for="switchEnableAuthentication"
+                      >Enable</label
+                    >
+                  </div>
+                  <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="fieldUsername"
+                      placeholder="Enter username"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input
+                      type="password"
+                      class="form-control"
+                      id="fieldPassword"
+                      placeholder="Enter password"
+                    />
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    onclick="updateAuthentication()"
+                  >
+                    Update
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-dismiss="modal"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="modal fade"
+        id="reset-wifi-modal"
+        tabindex="-1"
+        role="dialog"
+        aria-labelledby="resetWiFiLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="resetWiFiLabel">
+                Reset WiFi Settings
+              </h5>
+              <button
+                type="button"
+                class="close"
+                data-dismiss="modal"
+                aria-label="Close"
+              >
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p>
+                Are you sure you want to reset WiFi settings? This will clear
+                saved credentials.
+              </p>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-danger"
+                onclick="resetWiFiSettings()"
+              >
+                Reset
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-dismiss="modal"
+                onclick="$('#settings-modal').modal('show');"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <footer class="text-center mt-5">
+        <p>&copy; 2025 StafLoker</p>
+      </footer>
+    </body>
   </head>
-  <body class="bg-light text-dark">
-    <div class="container mt-5">
-      <h1 class="text-center">Wake on LAN</h1>
-      <div id="notification-area"></div>
-      <h2 class="mt-4 d-flex justify-content-between align-items-center">
-        <span>PC List</span>
-        <div class="ml-auto">
-          <button
-            class="btn btn-success"
-            data-toggle="modal"
-            data-target="#add-pc-modal"
-          >
-            <i class="fas fa-plus"></i>
-          </button>
-          <button
-            class="btn btn-secondary btn-md"
-            title="Settings"
-            data-toggle="modal"
-            data-target="#settings-modal"
-            onclick="getNetworkSettings(); getAuthentication(); getAbout();"
-          >
-            <i class="fas fa-cog"></i>
-          </button>
-        </div>
-      </h2>
-      <ul id="pc-list" class="list-group mt-3"></ul>
-    </div>
-    <div
-      class="modal fade"
-      id="add-pc-modal"
-      tabindex="-1"
-      role="dialog"
-      aria-labelledby="addPCLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="addPCLabel">Add PC</h5>
-            <button
-              type="button"
-              class="close"
-              data-dismiss="modal"
-              aria-label="Close"
-            >
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <div class="form-group">
-              <label for="pc-name">Name</label>
-              <input
-                type="text"
-                class="form-control"
-                id="pc-name"
-                placeholder="Enter PC name"
-              />
-            </div>
-            <div class="form-group">
-              <label for="pc-mac">MAC Address</label>
-              <input
-                type="text"
-                class="form-control"
-                id="pc-mac"
-                placeholder="Enter MAC address"
-              />
-            </div>
-            <div class="form-group">
-              <label for="pc-ip">IP Address</label>
-              <input
-                type="text"
-                class="form-control"
-                id="pc-ip"
-                placeholder="Enter IP address"
-              />
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-primary" onclick="addPC()">
-              Add
-            </button>
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-dismiss="modal"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div
-      class="modal fade"
-      id="edit-pc-modal"
-      tabindex="-1"
-      role="dialog"
-      aria-labelledby="editPCLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="editPCLabel">Edit PC</h5>
-            <button
-              type="button"
-              class="close"
-              data-dismiss="modal"
-              aria-label="Close"
-            >
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <div class="form-group">
-              <label for="edit-pc-name">Name</label>
-              <input
-                type="text"
-                class="form-control"
-                id="edit-pc-name"
-                placeholder="Enter PC name"
-              />
-            </div>
-            <div class="form-group">
-              <label for="edit-pc-mac">MAC Address</label>
-              <input
-                type="text"
-                class="form-control"
-                id="edit-pc-mac"
-                placeholder="Enter MAC address"
-              />
-            </div>
-            <div class="form-group">
-              <label for="edit-pc-ip">IP Address</label>
-              <input
-                type="text"
-                class="form-control"
-                id="edit-pc-ip"
-                placeholder="Enter IP address"
-              />
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-primary"
-              onclick="saveEditPC()"
-            >
-              Save changes
-            </button>
-            <button
-              type="button"
-              class="btn btn-danger"
-              onclick="confirmDelete()"
-            >
-              Delete
-            </button>
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-dismiss="modal"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div
-      class="modal fade"
-      id="settings-modal"
-      tabindex="-1"
-      role="dialog"
-      aria-labelledby="settingsLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="settingsLabel">Settings</h5>
-            <button
-              type="button"
-              class="close"
-              data-dismiss="modal"
-              aria-label="Close"
-            >
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <div class="card">
-              <div class="card-header">
-                <h5 class="modal-title">About</h5>
-              </div>
-              <div class="card-body">
-                <p class="card-text">
-                  Version:
-                  <a
-                    id="version"
-                    href="https://github.com/StafLoker/EspWOL"
-                    class="badge badge-pill badge-success"
-                    >1.2.2</a
-                  >
-                </p>
-                <p class="card-text">
-                  Hostname:
-                  <span id="hostname" class="badge badge-info">wol</span>
-                </p>
-              </div>
-            </div>
-            <hr />
-            <div class="card">
-              <div class="card-header">
-                <h5 class="modal-title">Network</h5>
-              </div>
-              <div class="card-body">
-                <div class="form-check form-check-inline">
-                  <input
-                    class="form-check-input"
-                    type="radio"
-                    name="inlineRadioOptions"
-                    id="inlineRadioStaticIP"
-                    value="staticIP"
-                    onchange="toggleNetworkFields()"
-                  />
-                  <label class="form-check-label" for="inlineRadio1"
-                    >Static IP</label
-                  >
-                </div>
-                <div class="form-check form-check-inline">
-                  <input
-                    class="form-check-input"
-                    type="radio"
-                    name="inlineRadioOptions"
-                    id="inlineRadioDHCP"
-                    value="dhcp"
-                    onchange="toggleNetworkFields()"
-                  />
-                  <label class="form-check-label" for="inlineRadio2"
-                    >DHCP</label
-                  >
-                </div>
-                <div class="form-group">
-                  <label for="ip">IP:</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="fieldIP"
-                    placeholder="192.168.2.9"
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="static-network-mask">Network Mask:</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="fieldNetworkMask"
-                    placeholder="255.255.255.0"
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="static-gateway">Gateway:</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="fieldGateway"
-                    placeholder="192.168.2.1"
-                  />
-                </div>
-              </div>
-              <div class="card-footer">
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  onclick="updateNetworkSettings()"
-                >
-                  Update
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-danger"
-                  title="Reset WiFi"
-                  data-toggle="modal"
-                  data-target="#reset-wifi-modal"
-                  onclick="$('#settings-modal').modal('hide');"
-                >
-                  Reset WiFi
-                </button>
-              </div>
-            </div>
-            <hr />
-            <div class="card">
-              <div class="card-header">
-                <h5 class="modal-title">Authentication</h5>
-              </div>
-              <div class="card-body">
-                <div class="custom-control custom-switch">
-                  <input
-                    type="checkbox"
-                    class="custom-control-input"
-                    id="switchEnableAuthentication"
-                    onchange="toggleAuthenticationFields()"
-                  />
-                  <label
-                    class="custom-control-label"
-                    for="switchEnableAuthentication"
-                    >Enable</label
-                  >
-                </div>
-                <div class="form-group">
-                  <label for="username">Username:</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="fieldUsername"
-                    placeholder="Enter username"
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="password">Password:</label>
-                  <input
-                    type="password"
-                    class="form-control"
-                    id="fieldPassword"
-                    placeholder="Enter password"
-                  />
-                </div>
-              </div>
-              <div class="card-footer">
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  onclick="updateAuthentication()"
-                >
-                  Update
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-dismiss="modal"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div
-      class="modal fade"
-      id="reset-wifi-modal"
-      tabindex="-1"
-      role="dialog"
-      aria-labelledby="resetWiFiLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="resetWiFiLabel">Reset WiFi Settings</h5>
-            <button
-              type="button"
-              class="close"
-              data-dismiss="modal"
-              aria-label="Close"
-            >
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <p>
-              Are you sure you want to reset WiFi settings? This will clear
-              saved credentials.
-            </p>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-danger"
-              onclick="resetWiFiSettings()"
-            >
-              Reset
-            </button>
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-dismiss="modal"
-              onclick="$('#settings-modal').modal('show');"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <footer class="text-center mt-5">
-      <p>&copy; 2025 StafLoker</p>
-    </footer>
-  </body>
 </html>
