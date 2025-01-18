@@ -43,6 +43,12 @@
                     case 'addHostForm':
                       addHost();
                       break;
+                    case 'editHostForm':
+                      saveEditHost();
+                      break;
+                    case '':
+                      break;
+                    case '':
                   }
                 }
 
@@ -557,19 +563,15 @@
               </form>
             </div>
             <div class="modal-footer">
+              <button type="submit" class="btn btn-primary" form="addHostForm">
+                Add
+              </button>
               <button
                 type="button"
                 class="btn btn-secondary"
                 data-bs-dismiss="modal"
               >
                 Close
-              </button>
-              <button
-                type="submit"
-                class="btn btn-primary"
-                form="addHostForm"
-              >
-                Add
               </button>
             </div>
           </div>
@@ -581,58 +583,59 @@
         class="modal fade"
         id="edit-host-modal"
         tabindex="-1"
-        role="dialog"
         aria-labelledby="editHostLabel"
         aria-hidden="true"
       >
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title" id="editHostLabel">Edit HOST</h5>
               <button
                 type="button"
-                class="close"
-                data-dismiss="modal"
+                class="btn-close"
+                data-bs-dismiss="modal"
                 aria-label="Close"
-              >
-                <span aria-hidden="true">&times;</span>
-              </button>
+              ></button>
             </div>
             <div class="modal-body">
-              <div class="form-group">
-                <label for="edit-host-name">Name</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="edit-host-name"
-                  placeholder="Enter HOST name"
-                />
-              </div>
-              <div class="form-group">
-                <label for="edit-host-mac">MAC Address</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="edit-host-mac"
-                  placeholder="Enter MAC address"
-                />
-              </div>
-              <div class="form-group">
-                <label for="edit-host-ip">IP Address</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="edit-host-ip"
-                  placeholder="Enter IP address"
-                />
-              </div>
+              <form class="needs-validation" novalidate id="editHostForm">
+                <div class="form-group">
+                  <label for="edit-host-name">Name</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="edit-host-name"
+                    placeholder="Enter hostname"
+                    required
+                  />
+                  <div class="invalid-feedback">Please enter hostname.</div>
+                </div>
+                <div class="form-group">
+                  <label for="edit-host-mac">MAC Address</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="edit-host-mac"
+                    placeholder="Enter MAC address"
+                    required
+                  />
+                  <div class="invalid-feedback">Please enter MAC address.</div>
+                </div>
+                <div class="form-group">
+                  <label for="edit-host-ip">IP Address</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="edit-host-ip"
+                    placeholder="Enter IP address"
+                    required
+                  />
+                </div>
+                <div class="invalid-feedback">Please enter IP address.</div>
+              </form>
             </div>
             <div class="modal-footer">
-              <button
-                type="button"
-                class="btn btn-primary"
-                onclick="saveEditHost()"
-              >
+              <button type="submit" class="btn btn-primary" form="editHostForm">
                 Save changes
               </button>
               <button
@@ -645,7 +648,7 @@
               <button
                 type="button"
                 class="btn btn-secondary"
-                data-dismiss="modal"
+                data-bs-dismiss="modal"
               >
                 Close
               </button>
@@ -659,7 +662,6 @@
         class="modal fade"
         id="settings-modal"
         tabindex="-1"
-        role="dialog"
         aria-labelledby="settingsLabel"
         aria-hidden="true"
       >
@@ -669,12 +671,10 @@
               <h5 class="modal-title" id="settingsLabel">Settings</h5>
               <button
                 type="button"
-                class="close"
-                data-dismiss="modal"
+                class="btn-close"
+                data-bs-dismiss="modal"
                 aria-label="Close"
-              >
-                <span aria-hidden="true">&times;</span>
-              </button>
+              ></button>
             </div>
             <div class="modal-body">
               <div class="card">
@@ -829,7 +829,7 @@
               <button
                 type="button"
                 class="btn btn-secondary"
-                data-dismiss="modal"
+                data-bs-dismiss="modal"
               >
                 Close
               </button>
@@ -855,12 +855,10 @@
               </h5>
               <button
                 type="button"
-                class="close"
-                data-dismiss="modal"
+                class="btn-close"
+                data-bs-dismiss="modal"
                 aria-label="Close"
-              >
-                <span aria-hidden="true">&times;</span>
-              </button>
+              ></button>
             </div>
             <div class="modal-body">
               <p>
@@ -879,7 +877,7 @@
               <button
                 type="button"
                 class="btn btn-secondary"
-                data-dismiss="modal"
+                data-bs-dismiss="modal"
                 onclick="$('#settings-modal').modal('show');"
               >
                 Cancel
