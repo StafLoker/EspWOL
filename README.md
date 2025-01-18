@@ -42,3 +42,5 @@ This project provides a web-based interface for power on hosts using an ESP8266 
    - Click the `+` button next to the **Registered hosts** title to add a new host.
    - Click the **settings** button next to any host to edit its details.
    - Use the **play** button to send a Wake-on-LAN request to a host.
+
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
