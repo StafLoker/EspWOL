@@ -296,7 +296,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
       async function getAuthentication() {
         try {
-          const response = await fetch('/authentication', { method: 'GET' });
+          const response = await fetch('/authenticationSettings', { method: 'GET' });
           const data = await response.json();
 
           document.getElementById('switchEnableAuthentication').checked =
@@ -366,7 +366,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const password = document.getElementById('fieldPassword').value;
 
         try {
-          const response = await fetch('/authentication', {
+          const response = await fetch('/authenticationSettings', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ enable, username, password })
