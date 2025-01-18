@@ -22,6 +22,36 @@
     <script>
       document.addEventListener('DOMContentLoaded', function () {
         getAllHost();
+
+        (() => {
+          'use strict';
+
+          // Fetch all the forms we want to apply custom Bootstrap validation styles to
+          const forms = document.querySelectorAll('.needs-validation');
+
+          // Loop over them and prevent submission
+          Array.from(forms).forEach((form) => {
+            form.addEventListener(
+              'submit',
+              (event) => {
+                if (!form.checkValidity()) {
+                  event.preventDefault();
+                  event.stopPropagation();
+                } else {
+                  const formId = form.id;
+                  switch (formId) {
+                    case 'addHostForm':
+                      addHost();
+                      break;
+                  }
+                }
+
+                form.classList.add('was-validated');
+              },
+              false
+            );
+          });
+        })();
       });
 
       async function getAllHost() {
@@ -450,16 +480,16 @@
           <div class="ml-auto">
             <button
               class="btn btn-success"
-              data-toggle="modal"
-              data-target="#add-host-modal"
+              data-bs-toggle="modal"
+              data-bs-target="#add-host-modal"
             >
               <i class="fas fa-plus"></i>
             </button>
             <button
               class="btn btn-secondary btn-md"
               title="Settings"
-              data-toggle="modal"
-              data-target="#settings-modal"
+              data-bs-toggle="modal"
+              data-bs-target="#settings-modal"
               onclick="getSettings()"
             >
               <i class="fas fa-cog"></i>
@@ -475,69 +505,78 @@
         class="modal fade"
         id="add-host-modal"
         tabindex="-1"
-        role="dialog"
         aria-labelledby="addHostLabel"
         aria-hidden="true"
       >
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title" id="addHostLabel">Add host</h5>
               <button
                 type="button"
-                class="close"
-                data-dismiss="modal"
+                class="btn-close"
+                data-bs-dismiss="modal"
                 aria-label="Close"
-              >
-                <span aria-hidden="true">&times;</span>
-              </button>
+              ></button>
             </div>
             <div class="modal-body">
-              <div class="form-group">
-                <label for="host-name">Name</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="host-name"
-                  placeholder="Enter HOST name"
-                />
-              </div>
-              <div class="form-group">
-                <label for="host-mac">MAC Address</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="host-mac"
-                  placeholder="Enter MAC address"
-                />
-              </div>
-              <div class="form-group">
-                <label for="host-ip">IP Address</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="host-ip"
-                  placeholder="Enter IP address"
-                />
-              </div>
+              <form class="needs-validation" novalidate id="addHostForm">
+                <div class="mb-3">
+                  <label for="host-name" class="form-label">Name</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="host-name"
+                    placeholder="Enter hostname"
+                    required
+                  />
+                  <div class="invalid-feedback">Please enter hostname.</div>
+                </div>
+                <div class="mb-3">
+                  <label for="host-mac" class="form-label">MAC Address</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="host-mac"
+                    placeholder="Enter MAC address"
+                    required
+                  />
+                  <div class="invalid-feedback">Please enter MAC address.</div>
+                </div>
+                <div class="mb-3">
+                  <label for="host-ip" class="form-label">IP Address</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="host-ip"
+                    placeholder="Enter IP address"
+                    required
+                  />
+                  <div class="invalid-feedback">Please enter IP address.</div>
+                </div>
+              </form>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-primary" onclick="addHost()">
-                Add
-              </button>
               <button
                 type="button"
                 class="btn btn-secondary"
-                data-dismiss="modal"
+                data-bs-dismiss="modal"
               >
                 Close
+              </button>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                form="addHostForm"
+              >
+                Add
               </button>
             </div>
           </div>
         </div>
       </div>
 
-       <!-- Edit host modal -->
+      <!-- Edit host modal -->
       <div
         class="modal fade"
         id="edit-host-modal"
@@ -729,8 +768,8 @@
                     type="button"
                     class="btn btn-danger"
                     title="Reset WiFi"
-                    data-toggle="modal"
-                    data-target="#reset-wifi-modal"
+                    data-bs-toggle="modal"
+                    data-bs-target="#reset-wifi-modal"
                     onclick="$('#settings-modal').modal('hide');"
                   >
                     Reset WiFi
