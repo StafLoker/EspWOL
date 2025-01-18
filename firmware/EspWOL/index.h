@@ -82,16 +82,16 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             listItem.innerHTML = `
                         <div class="d-flex align-items-center">
                             <div class="status-circle" id="status-${index}"></div>
-                            ${host.name} - ${host.mac} - ${host.ip}
+                            ${host.name} - ${host.ip}
                         </div>
                         <div>
-                            <button id="ping-button-${index}" class="btn btn-info btn-sm me-2" onclick="pingHost('${host.ip}', ${index})">
+                            <button id="ping-button-${index}" class="btn btn-info btn-sm me-2" onclick="pingHost(${index})">
                                 <i class="fas fa-table-tennis"></i>
                             </button>
                             <button class="btn btn-warning btn-sm me-2" onclick="editHost()" data-index="${index}">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn btn-primary btn-sm" onclick="wakeHost('${host.mac}')">
+                            <button class="btn btn-primary btn-sm" onclick="wakeHost(${index})">
                                 <i class="fas fa-play"></i>
                             </button>
                         </div>`;
@@ -137,7 +137,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           .getElementById('edit-host-modal')
           .setAttribute('data-index', index);
         try {
-          const response = await fetch('/hosts/' + index, { method: 'GET' });
+          const response = await fetch('/hosts?id=' + index, { method: 'GET' });
           const data = await response.json();
           document.getElementById('edit-host-name').value = data.name;
           document.getElementById('edit-host-mac').value = data.mac;
@@ -160,7 +160,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const ip = document.getElementById('edit-host-ip').value;
 
         try {
-          const response = await fetch('/hosts/' + index, {
+          const response = await fetch('/hosts?id=' + index, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, mac, ip })
@@ -187,7 +187,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           .getElementById('edit-host-modal')
           .modal.getAttribute('data-index');
         try {
-          const response = await fetch('/hosts/' + index + index, {
+          const response = await fetch('/hosts?id=' + index, {
             method: 'DELETE'
           });
           const data = await response.json();
@@ -209,17 +209,15 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         }
       }
 
-      async function pingHost(ip, index) {
+      async function pingHost(index) {
         const button = document.getElementById(`ping-button-${index}`);
         button.setAttribute('disabled', '');
         button.innerHTML =
           '<span class="spinner-border spinner-border-sm" role="status"></span>';
 
         try {
-          const response = await fetch('/ping', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ip })
+          const response = await fetch('/ping?id=' + index, {
+            method: 'POST'
           });
 
           const data = await response.json();
@@ -252,12 +250,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         }
       }
 
-      async function wakeHost(mac) {
+      async function wakeHost(index) {
         try {
-          const response = await fetch('/wake', {
+          const response = await fetch('/wake?id=' + index, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mac })
           });
           const data = await response.json();
           showNotification(data.message, data.success ? 'info' : 'danger');
