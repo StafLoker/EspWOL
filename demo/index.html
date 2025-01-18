@@ -1,194 +1,414 @@
 <!DOCTYPE html>
-<html lang='en'>
-<head>
-    <meta charset='UTF-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Wake on LAN</title>
-    <link rel='stylesheet' href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
-    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css'>
-    <script src='https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js'></script>
-    <script src='https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js'></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
     <script>
-        $(document).ready(function() {
-            updatePCList();
-        });
+      document.addEventListener("DOMContentLoaded", function () {
+        updatePCList()
+      })
 
-        let pcList = [
-            { name: 'Server', mac: '00:14:fe:01:23:93', ip: '192.168.1.10' },
-            { name: 'Pc', mac: '76:14:22:af:23:46', ip: '192.168.1.11' },
-        ];
+      async function updatePCList() {
+        try {
+          const response = await fetch("/pc_list")
+          if (!response.ok) throw new Error("Network response was not ok")
 
-        function updatePCList() {
-            const pcListElement = document.getElementById('pc-list');
-            pcListElement.innerHTML = '';
-            pcList.forEach((pc, index) => {
-                pcListElement.innerHTML += '<li class="list-group-item d-flex justify-content-between align-items-center">' +
-                    '<div class="status-circle" id="status-' + index + '"></div>' +
-                    pc.name + ' - ' + pc.mac + ' - ' + pc.ip +
-                    '<div class="ml-auto">' +
-                    '<button id="ping-button-'+ index +'" class="btn btn-info btn-md mr-2" onclick="pingPC(\'' + pc.ip + '\', ' + index + ')"><i class="fas fa-table-tennis"></i></button>' +
-                    '<button class="btn btn-warning btn-md mr-2" onclick="editPC(' + index + ')"><i class="fas fa-edit"></i></button>' +
-                    '<button class="btn btn-primary btn-md" onclick="wakePC(\'' + pc.mac + '\')"><i class="fas fa-play"></i></button>' +
-                    '</div></li>';
-            });
+          const data = await response.json()
+          if (!Array.isArray(data)) throw new Error("Expected an array")
+
+          const pcList = document.getElementById("pc-list")
+          pcList.innerHTML = ""
+          data.forEach((pc, index) => {
+            const listItem = document.createElement("li")
+            listItem.className =
+              "list-group-item d-flex justify-content-between align-items-center"
+            listItem.id = `pc-item-${index}`
+            listItem.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <div class="status-circle" id="status-${index}"></div>
+                            ${pc.name} - ${pc.mac} - ${pc.ip}
+                        </div>
+                        <div>
+                            <button id="ping-button-${index}" class="btn btn-info btn-sm me-2" onclick="pingPC('${pc.ip}', ${index})">
+                                <i class="fas fa-table-tennis"></i>
+                            </button>
+                            <button class="btn btn-warning btn-sm me-2" onclick="editPC()" data-index="${index}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-primary btn-sm" onclick="wakePC('${pc.mac}')">
+                                <i class="fas fa-play"></i>
+                            </button>
+                        </div>`
+            pcList.appendChild(listItem)
+          })
+        } catch (error) {
+          console.error("Error fetching PC list:", error)
         }
+      }
 
-        function addPC() {
-            const name = document.getElementById('pc-name').value;
-            const mac = document.getElementById('pc-mac').value;
-            const ip = document.getElementById('pc-ip').value;
+      async function addPC() {
+        const name = document.getElementById("pc-name").value
+        const mac = document.getElementById("pc-mac").value
+        const ip = document.getElementById("pc-ip").value
 
-            pcList.push({ name, mac, ip });
-            updatePCList();
-            $('#add-pc-modal').modal('hide');
-            document.getElementById('pc-name').value = '';
-            document.getElementById('pc-mac').value = '';
-            document.getElementById('pc-ip').value = '';
-            showNotification('PC added successfully!', 'success');
+        try {
+          const response = await fetch("/add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, mac, ip })
+          })
+
+          const data = await response.json()
+          if (response.ok) {
+            updatePCList()
+            bootstrap.Modal.getInstance(
+              document.getElementById("add-pc-modal")
+            ).hide()
+            document.getElementById("pc-name").value = ""
+            document.getElementById("pc-mac").value = ""
+            document.getElementById("pc-ip").value = ""
+          }
+          showNotification(data.text, response.ok ? "success" : "danger")
+        } catch (error) {
+          showNotification("Error adding PC", "danger")
+          console.error("Error adding PC:", error)
         }
-        function editPC(index) {
-            const pc = pcList[index];
-            document.getElementById('edit-pc-name').value = pc.name;
-            document.getElementById('edit-pc-mac').value = pc.mac;
-            document.getElementById('edit-pc-ip').value = pc.ip;
-            $('#edit-pc-modal').data('index', index).modal('show');
-        }
+      }
 
-        function saveEditPC() {
-            const index = $('#edit-pc-modal').data('index');
-            const name = document.getElementById('edit-pc-name').value;
-            const mac = document.getElementById('edit-pc-mac').value;
-            const ip = document.getElementById('edit-pc-ip').value;
-
-            pcList[index] = { name, mac, ip };
-            updatePCList();
-            $('#edit-pc-modal').modal('hide');
-            showNotification('PC updated successfully!', 'success');
+      async function editPC(index) {
+        const pc = document.getElementById(`pc-item-${index}`)
+        document
+          .getElementById("edit-pc-modal")
+          .setAttribute("data-index", index)
+        try {
+          const response = await fetch("/pc?index=" + index)
+          const data = await response.json()
+          document.getElementById("edit-pc-name").value = data.name
+          document.getElementById("edit-pc-mac").value = data.mac
+          document.getElementById("edit-pc-ip").value = data.ip
+          bootstrap.Modal.getInstance(
+            document.getElementById("edit-pc-modal")
+          ).show()
+        } catch (error) {
+          showNotification("Error edit PC", "danger")
+          console.error("Error edit PC:", error)
         }
-        
-        function confirmDelete() {
-            const index = $('#edit-pc-modal').data('index');
-            pcList.splice(index, 1);
-            updatePCList();
-            showNotification('PC deleted successfully!', 'danger');
-            $('#edit-pc-modal').modal('hide');
-        }
+      }
 
-        function wakePC(mac) {
-            showNotification('WOL packet sent to ' + mac, 'info');
-        }
+      async function saveEditPC() {
+        const index = document
+          .getElementById("edit-pc-modal")
+          .modal.getAttribute("data-index")
+        const name = document.getElementById("edit-pc-name").value
+        const mac = document.getElementById("edit-pc-mac").value
+        const ip = document.getElementById("edit-pc-ip").value
 
-        function pingPC(ip, index) {
-            const button = document.getElementById('ping-button-' + index);
-            button.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"><span class="sr-only">Loading...</span></div>';
-        
+        try {
+          const response = await fetch("/edit?index=" + index, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, mac, ip })
+          })
+          const data = await response.json()
+          if (response.ok) {
+            updatePCList()
+          }
+          bootstrap.Modal.getInstance(
+            document.getElementById("edit-pc-modal")
+          ).hide()
+          showNotification(data.text, response.ok ? "success" : "danger")
+        } catch (error) {
+          bootstrap.Modal.getInstance(
+            document.getElementById("edit-pc-modal")
+          ).hide()
+          showNotification("Error edit PC", "danger")
+          console.error("Error edit PC:", error)
+        }
+      }
+
+      async function confirmDelete() {
+        const index = document
+          .getElementById("edit-pc-modal")
+          .modal.getAttribute("data-index")
+        try {
+          const response = await fetch("/delete?index=" + index, {
+            method: "POST"
+          })
+          const data = await response.json()
+          if (response.ok) {
+            updatePCList()
+          }
+
+          bootstrap.Modal.getInstance(
+            document.getElementById("edit-pc-modal")
+          ).hide()
+
+          showNotification(data.text, response.ok ? "success" : "danger")
+        } catch (error) {
+          bootstrap.Modal.getInstance(
+            document.getElementById("edit-pc-modal")
+          ).hide()
+          showNotification("Error delete PC", "danger")
+          console.error("Error delete PC:", error)
+        }
+      }
+
+      async function pingPC(ip, index) {
+        const button = document.getElementById(`ping-button-${index}`)
+        button.setAttribute("disabled", "")
+        button.innerHTML =
+          '<span class="spinner-border spinner-border-sm" role="status"></span>'
+
+        try {
+          const response = await fetch("/ping", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ip })
+          })
+
+          const data = await response.json()
+          const statusCircle = document.getElementById(`status-${index}`)
+          ipField.removeAttribute("disabled")
+          button.innerHTML = '<i class="fas fa-table-tennis"></i>'
+
+          if (response.ok) {
+            statusCircle.classList.remove("red")
+            statusCircle.classList.add("green")
+            statusCircle.classList.add("blinking")
+
+            showNotification(data.text, "success")
             setTimeout(() => {
-                const statusCircle = document.getElementById('status-' + index);
-                button.innerHTML = '<i class="fas fa-table-tennis"></i>';
-                if (Math.random() < 0.5) {
-                    statusCircle.classList.remove('red');
-                    statusCircle.classList.add('green');
-                    statusCircle.classList.add('blinking');
-                    showNotification('Pinging', 'success');
-                    setTimeout(() => {
-                        statusCircle.classList.remove('blinking');
-                        statusCircle.classList.remove('green');
-                    }, 10000);
-                } else {
-                    statusCircle.classList.remove('green', 'blinking');
-                    statusCircle.classList.add('red');
-                    showNotification('Not pinging', 'danger');
-                    setTimeout(() => {
-                        statusCircle.classList.remove('red');
-                    }, 10000);
-                }
-            }, 3000);
-        }
+              statusCircle.classList.remove("blinking")
+              statusCircle.classList.remove("green")
+            }, 10000)
+          } else {
+            statusCircle.classList.remove("green", "blinking")
+            statusCircle.classList.add("red")
+            showNotification(data.text, "danger")
 
-        function showNotification(message, type) {
-            const notification = $('<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' + message + '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>');
-            $('#notification-area').append(notification);
             setTimeout(() => {
-                notification.alert('close');
-            }, 3000);
+              statusCircle.classList.remove("red")
+            }, 10000)
+          }
+        } catch (error) {
+          showNotification("Ping failed", "danger")
+          console.error("Ping failed:", error)
         }
+      }
 
-        function resetWiFiSettings() {
-            showNotification('WiFi settings reset successfully!', 'success');
-            location.reload();
+      async function wakePC(mac) {
+        try {
+          const response = await fetch("/wake", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mac })
+          })
+          const data = await response.json()
+          showNotification(data.text, response.ok ? "info" : "danger")
+        } catch (error) {
+          showNotification("WOL packet don't sent", "danger")
+          console.error("Ping failed:", error)
         }
+      }
 
-        function updateNetworkSettings() {
-            const enable = document.getElementById('inlineRadioStaticIP').checked;
-            const ip = document.getElementById('fieldIP').value;
-            const networkMask = document.getElementById('fieldNetworkMask').value;
-            const gateway = document.getElementById('fieldGateway').value;
+      async function getAbout() {
+        try {
+          const response = await fetch("/about")
+          const data = await response.json()
 
-            $('#settings-modal').modal('hide');
-            showNotification('Network settings updated successfully!', 'success');
+          document.getElementById("version").innerText = data.version
+          document.getElementById("hostname").innerText = data.hostname
+        } catch (error) {
+          showNotification("Error to get about information", "danger")
+          console.error("Fetch error (About):", error)
         }
+      }
 
-        function updateAuthentication() {
-            const enable = document.getElementById('switchEnableAuthentication').checked;
-            const username = document.getElementById('fieldUsername').value;
-            const password = document.getElementById('fieldPassword').value;
+      async function getNetworkSettings() {
+        try {
+          const response = await fetch("/network_settings")
+          const data = await response.json()
 
-            $('#settings-modal').modal('hide');
-            showNotification('Authentication updated successfully!', 'success');
+          document.getElementById("inlineRadioStaticIP").checked = data.enable
+          document.getElementById("inlineRadioDHCP").checked = !data.enable
+          document.getElementById("fieldIP").value = data.ip
+          document.getElementById("fieldNetworkMask").value = data.networkMask
+          document.getElementById("fieldGateway").value = data.gateway
+
+          toggleNetworkFields()
+        } catch {
+          showNotification("Error to get network settings", "danger")
+          console.error("Fetch error (Network Settings):", error)
         }
-        
-        function getNetworkSettings() {
-            const isStatic = Math.random() < 0.5;
-            document.getElementById('inlineRadioStaticIP').checked = isStatic;
-            document.getElementById('inlineRadioDHCP').checked = !isStatic;
-            document.getElementById('fieldIP').value = isStatic ? "192.168.1.8" : "192.168.1.76";
-            document.getElementById('fieldNetworkMask').value = "255.255.255.0";
-            document.getElementById('fieldGateway').value = "191.168.1.1";
-            toggleNetworkFields();
+      }
+
+      async function getAuthentication() {
+        try {
+          const response = await fetch("/authentication")
+          const data = await response.json()
+
+          document.getElementById("switchEnableAuthentication").checked =
+            data.enable
+          document.getElementById("fieldUsername").value = data.username
+          document.getElementById("fieldPassword").value = data.password
+
+          toggleAuthenticationFields()
+        } catch (error) {
+          showNotification("Error to get authentication settings", "danger")
+          console.error("Fetch error (Authentication):", error)
         }
+      }
 
-        function getAuthentication() {
-            const isAuth = Math.random() < 0.5;
-            document.getElementById('switchEnableAuthentication').checked = isAuth;
-            document.getElementById('fieldUsername').value = isAuth ? "kety" : "";
-            document.getElementById('fieldPassword').value = "*************";
-            toggleAuthenticationFields();
+      async function getSettings() {
+        getAbout()
+        getNetworkSettings()
+        getAuthentication()
+      }
+
+      async function updateNetworkSettings() {
+        const enable = document.getElementById("inlineRadioStaticIP").checked
+        const ip = document.getElementById("fieldIP").value
+        const networkMask = document.getElementById("fieldNetworkMask").value
+        const gateway = document.getElementById("fieldGateway").value
+
+        try {
+          const response = await fetch("/update_network_settings", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ enable, ip, networkMask, gateway })
+          })
+          const data = await response.json()
+          bootstrap.Modal.getInstance(
+            document.getElementById("settings-modal")
+          ).hide()
+          if (response.ok) {
+            showNotification(data.text, "success")
+            location.replace(`http://${ip}`)
+          } else {
+            showNotification(data.text, "danger")
+          }
+        } catch {
+          bootstrap.Modal.getInstance(
+            document.getElementById("settings-modal")
+          ).hide()
+          showNotification("Error to update network settings", "danger")
+          console.error("Fetch error:", error)
         }
+      }
 
-        function toggleAuthenticationFields() {
-            const switchElement = document.getElementById('switchEnableAuthentication');
-            const usernameField = document.getElementById('fieldUsername');
-            const passwordField = document.getElementById('fieldPassword');
-            
-            if (switchElement.checked) {
-                usernameField.removeAttribute('disabled');
-                passwordField.removeAttribute('disabled');
-            } else {
-                usernameField.setAttribute('disabled', '');
-                passwordField.setAttribute('disabled', '');
-            }
+      async function updateAuthentication() {
+        const enable = document.getElementById(
+          "switchEnableAuthentication"
+        ).checked
+        const username = document.getElementById("fieldUsername").value
+        const password = document.getElementById("fieldPassword").value
+
+        try {
+          const response = await fetch("/update_authentication", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ enable, username, password })
+          })
+          const data = await response.json()
+          bootstrap.Modal.getInstance(
+            document.getElementById("settings-modal")
+          ).hide()
+          if (response.ok) {
+            showNotification(data.text, "success")
+            location.reload()
+          } else {
+            showNotification(data.text, "danger")
+          }
+        } catch {
+          bootstrap.Modal.getInstance(
+            document.getElementById("settings-modal")
+          ).hide()
+          showNotification("Error to update authentication settings", "danger")
+          console.error("Fetch error:", error)
         }
+      }
 
-        function toggleNetworkFields() {
-            const isStaticIP = document.getElementById('inlineRadioStaticIP').checked;
-            const ipField = document.getElementById('fieldIP');
-            const networkMaskField = document.getElementById('fieldNetworkMask');
-            const gatewayField = document.getElementById('fieldGateway');
-
-            if (isStaticIP) {
-                ipField.removeAttribute('disabled');
-                networkMaskField.removeAttribute('disabled');
-                gatewayField.removeAttribute('disabled');
-            } else {
-                ipField.setAttribute('disabled', '');
-                networkMaskField.setAttribute('disabled', '');
-                gatewayField.setAttribute('disabled', '');
-            }
+      async function resetWiFiSettings() {
+        try {
+          const response = await fetch("/reset_wifi", { method: "POST" })
+          const data = await response.json()
+          if (response.ok) {
+            showNotification(data.text, "success")
+            location.reload()
+          } else {
+            showNotification(data.text, "danger")
+          }
+        } catch (error) {
+          console.error("Fetch reset WIFI settings error:", error)
         }
+      }
 
-        function getAbout() {
+      function showNotification(message, type) {
+        const notification = document.createElement("div")
+        notification.className = `alert alert-${type} alert-dismissible fade show`
+        notification.role = "alert"
+        notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`
 
+        const notificationArea = document.getElementById("notification-area")
+        notificationArea.appendChild(notification)
+
+        setTimeout(() => {
+          notification.remove()
+        }, 3000)
+      }
+
+      function toggleAuthenticationFields() {
+        const switchElement = document.getElementById(
+          "switchEnableAuthentication"
+        )
+        const usernameField = document.getElementById("fieldUsername")
+        const passwordField = document.getElementById("fieldPassword")
+
+        if (switchElement.checked) {
+          usernameField.removeAttribute("disabled")
+          passwordField.removeAttribute("disabled")
+        } else {
+          usernameField.setAttribute("disabled", "")
+          passwordField.setAttribute("disabled", "")
         }
+      }
+
+      function toggleNetworkFields() {
+        const isStaticIP = document.getElementById(
+          "inlineRadioStaticIP"
+        ).checked
+        const ipField = document.getElementById("fieldIP")
+        const networkMaskField = document.getElementById("fieldNetworkMask")
+        const gatewayField = document.getElementById("fieldGateway")
+
+        if (isStaticIP) {
+          ipField.removeAttribute("disabled")
+          networkMaskField.removeAttribute("disabled")
+          gatewayField.removeAttribute("disabled")
+        } else {
+          ipField.setAttribute("disabled", "")
+          networkMaskField.setAttribute("disabled", "")
+          gatewayField.setAttribute("disabled", "")
+        }
+      }
     </script>
     <style>
         .status-circle {
