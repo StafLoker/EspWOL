@@ -21,10 +21,10 @@
     ></script>
     <script>
       document.addEventListener('DOMContentLoaded', function () {
-        updatePCList();
+        getAllHost();
       });
 
-      async function updatePCList() {
+      async function getAllHost() {
         try {
           const response = await fetch('/hosts', { method: 'GET' });
           if (!response.ok) throw new Error('Network response was not ok');
@@ -32,40 +32,40 @@
           const data = await response.json();
           if (!Array.isArray(data)) throw new Error('Expected an array');
 
-          const pcList = document.getElementById('hosts');
-          pcList.innerHTML = '';
-          data.forEach((pc, index) => {
+          const hosts = document.getElementById('hosts');
+          hosts.innerHTML = '';
+          data.forEach((host, index) => {
             const listItem = document.createElement('li');
             listItem.className =
               'list-group-item d-flex justify-content-between align-items-center';
-            listItem.id = `pc-item-${index}`;
+            listItem.id = `host-item-${index}`;
             listItem.innerHTML = `
                         <div class="d-flex align-items-center">
                             <div class="status-circle" id="status-${index}"></div>
-                            ${pc.name} - ${pc.mac} - ${pc.ip}
+                            ${host.name} - ${host.mac} - ${host.ip}
                         </div>
                         <div>
-                            <button id="ping-button-${index}" class="btn btn-info btn-sm me-2" onclick="pingPC('${pc.ip}', ${index})">
+                            <button id="ping-button-${index}" class="btn btn-info btn-sm me-2" onclick="pingHost('${host.ip}', ${index})">
                                 <i class="fas fa-table-tennis"></i>
                             </button>
-                            <button class="btn btn-warning btn-sm me-2" onclick="editPC()" data-index="${index}">
+                            <button class="btn btn-warning btn-sm me-2" onclick="editHost()" data-index="${index}">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn btn-primary btn-sm" onclick="wakeHost('${pc.mac}')">
+                            <button class="btn btn-primary btn-sm" onclick="wakeHost('${host.mac}')">
                                 <i class="fas fa-play"></i>
                             </button>
                         </div>`;
-            pcList.appendChild(listItem);
+            hosts.appendChild(listItem);
           });
         } catch (error) {
-          console.error('Error fetching PC list:', error);
+          console.error('Error fetching host list:', error);
         }
       }
 
-      async function addPC() {
-        const name = document.getElementById('pc-name').value;
-        const mac = document.getElementById('pc-mac').value;
-        const ip = document.getElementById('pc-ip').value;
+      async function addHost() {
+        const name = document.getElementById('host-name').value;
+        const mac = document.getElementById('host-mac').value;
+        const ip = document.getElementById('host-ip').value;
 
         try {
           const response = await fetch('/hosts', {
@@ -76,48 +76,48 @@
 
           const data = await response.json();
           if (data.success) {
-            updatePCList();
+            getAllHost();
             bootstrap.Modal.getInstance(
-              document.getElementById('add-pc-modal')
+              document.getElementById('add-host-modal')
             ).hide();
-            document.getElementById('pc-name').value = '';
-            document.getElementById('pc-mac').value = '';
-            document.getElementById('pc-ip').value = '';
+            document.getElementById('host-name').value = '';
+            document.getElementById('host-mac').value = '';
+            document.getElementById('host-ip').value = '';
           }
           showNotification(data.message, data.success ? 'success' : 'danger');
         } catch (error) {
-          showNotification('Error adding PC', 'danger');
-          console.error('Error adding PC:', error);
+          showNotification('Error adding HOST', 'danger');
+          console.error('Error adding HOST:', error);
         }
       }
 
-      async function editPC(index) {
-        const pc = document.getElementById(`pc-item-${index}`);
+      async function editHost(index) {
+        const host = document.getElementById(`host-item-${index}`);
         document
-          .getElementById('edit-pc-modal')
+          .getElementById('edit-host-modal')
           .setAttribute('data-index', index);
         try {
           const response = await fetch('/hosts/' + index, { method: 'GET' });
           const data = await response.json();
-          document.getElementById('edit-pc-name').value = data.name;
-          document.getElementById('edit-pc-mac').value = data.mac;
-          document.getElementById('edit-pc-ip').value = data.ip;
+          document.getElementById('edit-host-name').value = data.name;
+          document.getElementById('edit-host-mac').value = data.mac;
+          document.getElementById('edit-host-ip').value = data.ip;
           bootstrap.Modal.getInstance(
-            document.getElementById('edit-pc-modal')
+            document.getElementById('edit-host-modal')
           ).show();
         } catch (error) {
-          showNotification('Error edit PC', 'danger');
-          console.error('Error edit PC:', error);
+          showNotification('Error edit HOST', 'danger');
+          console.error('Error edit HOST:', error);
         }
       }
 
-      async function saveEditPC() {
+      async function saveEditHost() {
         const index = document
-          .getElementById('edit-pc-modal')
+          .getElementById('edit-host-modal')
           .modal.getAttribute('data-index');
-        const name = document.getElementById('edit-pc-name').value;
-        const mac = document.getElementById('edit-pc-mac').value;
-        const ip = document.getElementById('edit-pc-ip').value;
+        const name = document.getElementById('edit-host-name').value;
+        const mac = document.getElementById('edit-host-mac').value;
+        const ip = document.getElementById('edit-host-ip').value;
 
         try {
           const response = await fetch('/hosts/' + index, {
@@ -127,24 +127,24 @@
           });
           const data = await response.json();
           if (data.success) {
-            updatePCList();
+            getAllHost();
           }
           bootstrap.Modal.getInstance(
-            document.getElementById('edit-pc-modal')
+            document.getElementById('edit-host-modal')
           ).hide();
           showNotification(data.message, data.success ? 'success' : 'danger');
         } catch (error) {
           bootstrap.Modal.getInstance(
-            document.getElementById('edit-pc-modal')
+            document.getElementById('edit-host-modal')
           ).hide();
-          showNotification('Error edit PC', 'danger');
-          console.error('Error edit PC:', error);
+          showNotification('Error edit HOST', 'danger');
+          console.error('Error edit HOST:', error);
         }
       }
 
       async function confirmDelete() {
         const index = document
-          .getElementById('edit-pc-modal')
+          .getElementById('edit-host-modal')
           .modal.getAttribute('data-index');
         try {
           const response = await fetch('/hosts/' + index + index, {
@@ -152,24 +152,24 @@
           });
           const data = await response.json();
           if (data.success) {
-            updatePCList();
+            getAllHost();
           }
 
           bootstrap.Modal.getInstance(
-            document.getElementById('edit-pc-modal')
+            document.getElementById('edit-host-modal')
           ).hide();
 
           showNotification(data.message, data.success ? 'success' : 'danger');
         } catch (error) {
           bootstrap.Modal.getInstance(
-            document.getElementById('edit-pc-modal')
+            document.getElementById('edit-host-modal')
           ).hide();
-          showNotification('Error delete PC', 'danger');
-          console.error('Error delete PC:', error);
+          showNotification('Error delete HOST', 'danger');
+          console.error('Error delete HOST:', error);
         }
       }
 
-      async function pingPC(ip, index) {
+      async function pingHost(ip, index) {
         const button = document.getElementById(`ping-button-${index}`);
         button.setAttribute('disabled', '');
         button.innerHTML =
@@ -450,7 +450,7 @@
             <button
               class="btn btn-success"
               data-toggle="modal"
-              data-target="#add-pc-modal"
+              data-target="#add-host-modal"
             >
               <i class="fas fa-plus"></i>
             </button>
@@ -465,21 +465,23 @@
             </button>
           </div>
         </h2>
-        <!-- PC List -->
-        <ul id="pc-list" class="list-group mt-3"></ul>
+        <!-- HOST List -->
+        <ul id="host-list" class="list-group mt-3"></ul>
       </div>
+
+      <!-- Add host modal -->
       <div
         class="modal fade"
-        id="add-pc-modal"
+        id="add-host-modal"
         tabindex="-1"
         role="dialog"
-        aria-labelledby="addPCLabel"
+        aria-labelledby="addHostLabel"
         aria-hidden="true"
       >
         <div class="modal-dialog" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="addPCLabel">Add PC</h5>
+              <h5 class="modal-title" id="addHostLabel">Add host</h5>
               <button
                 type="button"
                 class="close"
@@ -491,35 +493,35 @@
             </div>
             <div class="modal-body">
               <div class="form-group">
-                <label for="pc-name">Name</label>
+                <label for="host-name">Name</label>
                 <input
                   type="text"
                   class="form-control"
-                  id="pc-name"
-                  placeholder="Enter PC name"
+                  id="host-name"
+                  placeholder="Enter HOST name"
                 />
               </div>
               <div class="form-group">
-                <label for="pc-mac">MAC Address</label>
+                <label for="host-mac">MAC Address</label>
                 <input
                   type="text"
                   class="form-control"
-                  id="pc-mac"
+                  id="host-mac"
                   placeholder="Enter MAC address"
                 />
               </div>
               <div class="form-group">
-                <label for="pc-ip">IP Address</label>
+                <label for="host-ip">IP Address</label>
                 <input
                   type="text"
                   class="form-control"
-                  id="pc-ip"
+                  id="host-ip"
                   placeholder="Enter IP address"
                 />
               </div>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-primary" onclick="addPC()">
+              <button type="button" class="btn btn-primary" onclick="addHost()">
                 Add
               </button>
               <button
@@ -535,16 +537,16 @@
       </div>
       <div
         class="modal fade"
-        id="edit-pc-modal"
+        id="edit-host-modal"
         tabindex="-1"
         role="dialog"
-        aria-labelledby="editPCLabel"
+        aria-labelledby="editHostLabel"
         aria-hidden="true"
       >
         <div class="modal-dialog" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="editPCLabel">Edit PC</h5>
+              <h5 class="modal-title" id="editHostLabel">Edit HOST</h5>
               <button
                 type="button"
                 class="close"
@@ -556,29 +558,29 @@
             </div>
             <div class="modal-body">
               <div class="form-group">
-                <label for="edit-pc-name">Name</label>
+                <label for="edit-host-name">Name</label>
                 <input
                   type="text"
                   class="form-control"
-                  id="edit-pc-name"
-                  placeholder="Enter PC name"
+                  id="edit-host-name"
+                  placeholder="Enter HOST name"
                 />
               </div>
               <div class="form-group">
-                <label for="edit-pc-mac">MAC Address</label>
+                <label for="edit-host-mac">MAC Address</label>
                 <input
                   type="text"
                   class="form-control"
-                  id="edit-pc-mac"
+                  id="edit-host-mac"
                   placeholder="Enter MAC address"
                 />
               </div>
               <div class="form-group">
-                <label for="edit-pc-ip">IP Address</label>
+                <label for="edit-host-ip">IP Address</label>
                 <input
                   type="text"
                   class="form-control"
-                  id="edit-pc-ip"
+                  id="edit-host-ip"
                   placeholder="Enter IP address"
                 />
               </div>
@@ -587,7 +589,7 @@
               <button
                 type="button"
                 class="btn btn-primary"
-                onclick="saveEditPC()"
+                onclick="saveEditHost()"
               >
                 Save changes
               </button>
