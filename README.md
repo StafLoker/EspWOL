@@ -1,5 +1,7 @@
-<h1 align="center">EspWOL</h1>
-<i style="display: block;" align="center">Wake & play!</i>
+<div align="center">
+   <h1>EspWOL</h1>
+   <p><i>Wake & play!</i></p>
+</div>
 <hr>
 
 This project provides a web-based interface for power on hosts using an ESP8266 and Wake On Lan magic packets.
