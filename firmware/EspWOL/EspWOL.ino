@@ -10,6 +10,7 @@
 #include <ArduinoOTA.h>
 
 #include "index.h"
+#include "memory.h"
 
 #define VERSION "2.0.0"
 
@@ -18,7 +19,7 @@ WiFiUDP UDP;
 WakeOnLan WOL(UDP);
 WiFiManager wifiManager;
 
-const char* pcFile = "/pc_list.json";
+const char* hostsFile = "/hosts.json";
 const char* networkConfigFile = "/networkConfig.json";
 const char* authenticationFile = "/authentication.json";
 
@@ -26,7 +27,7 @@ const char* hostname = "wol";
 const char* SSID = "WOL-ESP8266";
 
 // Структура для данных ПК
-struct PC {
+struct Host {
   String name;
   String mac;
   String ip;
@@ -48,7 +49,7 @@ struct Authentication {
 } authentication;
 
 // Вектор для хранения списка ПК
-std::vector<PC> pcList;
+std::vector<Host> hosts;
 
 // Функция для настройки OTA
 void setupOTA() {
@@ -71,133 +72,6 @@ void resetWiFiSettings() {
   wifiManager.resetSettings();  // Сбросить настройки WiFi
 }
 
-// Функция для загрузки данных ПК из JSON-файла
-void loadPCData() {
-  if (LittleFS.begin()) {
-    File file = LittleFS.open(pcFile, "r");
-    if (file) {
-      StaticJsonDocument<1024> doc;
-      DeserializationError error = deserializeJson(doc, file);
-      if (!error) {
-        pcList.clear();  // Очистить существующий список перед загрузкой новых данных
-        for (JsonVariant v : doc.as<JsonArray>()) {
-          PC pc;
-          pc.name = v["name"].as<String>();
-          pc.mac = v["mac"].as<String>();
-          pc.ip = v["ip"].as<String>();
-          pcList.push_back(pc);
-        }
-      }
-      file.close();
-    }
-    LittleFS.end();
-  }
-}
-
-// Функция для сохранения данных ПК в JSON-файл
-void savePCData() {
-  if (LittleFS.begin()) {
-    File file = LittleFS.open(pcFile, "w");
-    if (file) {
-      StaticJsonDocument<1024> doc;
-      JsonArray array = doc.to<JsonArray>();
-      for (const PC& pc : pcList) {
-        JsonObject obj = array.createNestedObject();
-        obj["name"] = pc.name;
-        obj["mac"] = pc.mac;
-        obj["ip"] = pc.ip;  // Сохранить IP
-      }
-      serializeJson(doc, file);
-      file.close();
-    }
-    LittleFS.end();
-  }
-}
-
-// Функция для сохранения конфигурации сети в JSON-файл
-void saveNetworkConfig() {
-  if (LittleFS.begin()) {
-    File file = LittleFS.open(networkConfigFile, "w");
-    if (file) {
-      StaticJsonDocument<256> doc;
-      doc["enable"] = networkConfig.enable;
-      doc["ip"] = networkConfig.ip.toString();
-      doc["networkMask"] = networkConfig.networkMask.toString();
-      doc["gateway"] = networkConfig.gateway.toString();
-      serializeJson(doc, file);
-      file.close();
-    }
-    LittleFS.end();
-  }
-}
-
-// Функция для загрузки конфигурации сети из JSON-файла
-void loadNetworkConfig() {
-  if (LittleFS.begin()) {
-    if (LittleFS.exists(networkConfigFile)) {
-      File file = LittleFS.open(networkConfigFile, "r");
-      if (file) {
-        StaticJsonDocument<256> doc;
-        DeserializationError error = deserializeJson(doc, file);
-        if (!error) {
-          networkConfig.enable = doc["enable"];
-          IPAddress ip;
-          IPAddress networkMask;
-          IPAddress gateway;
-          ip.fromString(doc["ip"].as<String>());
-          networkMask.fromString(doc["networkMask"].as<String>());
-          gateway.fromString(doc["gateway"].as<String>());
-          networkConfig.ip = ip;
-          networkConfig.networkMask = networkMask;
-          networkConfig.gateway = gateway;
-        }
-        file.close();
-      }
-    } else {
-      saveNetworkConfig();
-    }
-    LittleFS.end();
-  }
-}
-
-// Функция для сохранения конфигурации аутентификации в JSON-файл
-void saveAuthentication() {
-  if (LittleFS.begin()) {
-    File file = LittleFS.open(authenticationFile, "w");
-    if (file) {
-      StaticJsonDocument<256> doc;
-      doc["enable"] = authentication.enable;
-      doc["username"] = authentication.username;
-      doc["password"] = authentication.password;
-      serializeJson(doc, file);
-      file.close();
-    }
-  }
-  LittleFS.end();
-}
-
-// Функция для загрузки конфигурации аутентификации из JSON-файла
-void loadAuthentication() {
-  if (LittleFS.begin()) {
-    if (LittleFS.exists(authenticationFile)) {
-      File file = LittleFS.open(authenticationFile, "r");
-      if (file) {
-        StaticJsonDocument<1024> doc;
-        DeserializationError error = deserializeJson(doc, file);
-        if (!error) {
-          authentication.enable = doc["enable"];
-          authentication.username = doc["username"].as<String>();
-          authentication.password = doc["password"].as<String>();
-        }
-        file.close();
-      }
-    } else {
-      saveAuthentication();
-    }
-    LittleFS.end();
-  }
-}
-
 
 // Функция для обработки корневого запроса
 void handleRoot() {
@@ -212,7 +86,7 @@ void handlePCList() {
   String jsonResponse;
   StaticJsonDocument<1024> doc;
   JsonArray array = doc.to<JsonArray>();
-  for (const PC& pc : pcList) {
+  for (const PC& pc : hosts) {
     JsonObject obj = array.createNestedObject();
     obj["name"] = pc.name;
     obj["mac"] = pc.mac;
@@ -232,7 +106,7 @@ void handleAddPC() {
     pc.name = doc["name"].as<String>();
     pc.mac = doc["mac"].as<String>();
     pc.ip = doc["ip"].as<String>();
-    pcList.push_back(pc);
+    hosts.push_back(pc);
     savePCData();
     server.send(200, "text/plain", "PC added");
   } else {
@@ -247,8 +121,8 @@ void handleEditPC() {
     DynamicJsonDocument doc(1024);
     deserializeJson(doc, body);
     int index = doc["index"];
-    if (index >= 0 && index < pcList.size()) {
-      PC& pc = pcList[index];
+    if (index >= 0 && index < hosts.size()) {
+      PC& pc = hosts[index];
       pc.name = doc["name"].as<String>();
       pc.mac = doc["mac"].as<String>();
       pc.ip = doc["ip"].as<String>();
@@ -266,8 +140,8 @@ void handleEditPC() {
 void handleDeletePC() {
   if (server.method() == HTTP_POST) {
     int index = server.arg("index").toInt();
-    if (index >= 0 && index < pcList.size()) {
-      pcList.erase(pcList.begin() + index);
+    if (index >= 0 && index < hosts.size()) {
+      hosts.erase(hosts.begin() + index);
       savePCData();
       server.send(200, "text/plain", "PC deleted");
     } else {
