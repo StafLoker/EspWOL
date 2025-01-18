@@ -1,0 +1,17 @@
+{
+  "printWidth": 80,
+  "tabWidth": 2,
+  "semi": true,
+  "singleQuote": true,
+  "trailingComma": "none",
+  "bracketSpacing": true,
+  "bracketSameLine": false,
+  "arrowParens": "always",
+  "pugWrapAttributesThreshold": 0,
+  "pugAttributeSeparator": "as-needed",
+  "pugFramework": "vue",
+  "pugClassNotation": "as-is",
+  "pugIdNotation": "as-is",
+  "pugPreserveAttributeBrackets": true,
+  "pugSingleQuote": false
+}

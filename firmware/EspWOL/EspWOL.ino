@@ -11,7 +11,7 @@
 
 #include "index.h"
 
-#define VERSION "1.2.2"
+#define VERSION "2.0.0"
 
 ESP8266WebServer server(80);
 WiFiUDP UDP;
