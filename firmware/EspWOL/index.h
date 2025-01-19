@@ -314,8 +314,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             'editAuthenticationSettingsForm'
           );
           if (data.enable) {
-            form.classList.add('needs-validation', '');
-            form.classList.add('novalidate', '');
+            form.classList.add('needs-validation');
+            form.classList.add('novalidate');
           }
 
           toggleAuthenticationFields();
@@ -326,9 +326,9 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       }
 
       async function getSettings() {
-        // await getAbout();
-        // await getNetworkSettings();
-        // await getAuthentication();
+        await getAbout();
+        await getNetworkSettings();
+        await getAuthentication();
 
         const modal = new bootstrap.Modal(
           document.getElementById('settings-modal')
@@ -447,8 +447,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           networkMaskField.removeAttribute('disabled');
           gatewayField.removeAttribute('disabled');
 
-          form.classList.add('needs-validation', '');
-          form.classList.add('novalidate', '');
+          form.classList.add('needs-validation');
+          form.classList.add('novalidate');
           ipField.setAttribute('required', '');
           networkMaskField.setAttribute('required', '');
           gatewayField.setAttribute('required', '');
@@ -488,8 +488,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           usernameField.removeAttribute('disabled');
           passwordField.removeAttribute('disabled');
 
-          form.classList.add('needs-validation', '');
-          form.classList.add('novalidate', '');
+          form.classList.add('needs-validation');
+          form.classList.add('novalidate');
           usernameField.setAttribute('required', '');
           passwordField.setAttribute('required', '');
 
