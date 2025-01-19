@@ -72,7 +72,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           const data = await response.json();
           if (!Array.isArray(data)) throw new Error('Expected an array');
 
-          const hosts = document.getElementById('hosts');
+          const hosts = document.getElementById('host-list');
           hosts.innerHTML = '';
           data.forEach((host, index) => {
             const listItem = document.createElement('li');
@@ -136,15 +136,16 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         document
           .getElementById('edit-host-modal')
           .setAttribute('data-index', index);
+        const modal = new bootstrap.Modal(
+          document.getElementById('edit-host-modal')
+        );
         try {
           const response = await fetch('/hosts?id=' + index, { method: 'GET' });
           const data = await response.json();
           document.getElementById('edit-host-name').value = data.name;
           document.getElementById('edit-host-mac').value = data.mac;
           document.getElementById('edit-host-ip').value = data.ip;
-          bootstrap.Modal.getInstance(
-            document.getElementById('edit-host-modal')
-          ).show();
+          modal.show();
         } catch (error) {
           showNotification('Error edit HOST', 'danger');
           console.error('Error edit HOST:', error);
@@ -159,6 +160,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const mac = document.getElementById('edit-host-mac').value;
         const ip = document.getElementById('edit-host-ip').value;
 
+        const modal = new bootstrap.Modal(
+          document.getElementById('edit-host-modal')
+        );
+
         try {
           const response = await fetch('/hosts?id=' + index, {
             method: 'PUT',
@@ -169,14 +174,13 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           if (data.success) {
             getAllHost();
           }
-          bootstrap.Modal.getInstance(
-            document.getElementById('edit-host-modal')
-          ).hide();
+
+          modal.hide();
+
           showNotification(data.message, data.success ? 'success' : 'danger');
         } catch (error) {
-          bootstrap.Modal.getInstance(
-            document.getElementById('edit-host-modal')
-          ).hide();
+          modal.hide();
+
           showNotification('Error edit HOST', 'danger');
           console.error('Error edit HOST:', error);
         }
@@ -186,6 +190,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const index = document
           .getElementById('edit-host-modal')
           .modal.getAttribute('data-index');
+        const modal = new bootstrap.Modal(
+          document.getElementById('edit-host-modal')
+        );
+
         try {
           const response = await fetch('/hosts?id=' + index, {
             method: 'DELETE'
@@ -195,15 +203,11 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             getAllHost();
           }
 
-          bootstrap.Modal.getInstance(
-            document.getElementById('edit-host-modal')
-          ).hide();
+          modal.hide();
 
           showNotification(data.message, data.success ? 'success' : 'danger');
         } catch (error) {
-          bootstrap.Modal.getInstance(
-            document.getElementById('edit-host-modal')
-          ).hide();
+          modal.hide();
           showNotification('Error delete HOST', 'danger');
           console.error('Error delete HOST:', error);
         }
@@ -253,7 +257,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       async function wakeHost(index) {
         try {
           const response = await fetch('/wake?id=' + index, {
-            method: 'POST',
+            method: 'POST'
           });
           const data = await response.json();
           showNotification(data.message, data.success ? 'info' : 'danger');
@@ -296,7 +300,9 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
       async function getAuthentication() {
         try {
-          const response = await fetch('/authenticationSettings', { method: 'GET' });
+          const response = await fetch('/authenticationSettings', {
+            method: 'GET'
+          });
           const data = await response.json();
 
           document.getElementById('switchEnableAuthentication').checked =
@@ -320,13 +326,14 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       }
 
       async function getSettings() {
-        await getAbout();
-        await getNetworkSettings();
-        await getAuthentication();
+        // await getAbout();
+        // await getNetworkSettings();
+        // await getAuthentication();
 
-        bootstrap.Modal.getInstance(
+        const modal = new bootstrap.Modal(
           document.getElementById('settings-modal')
-        ).show();
+        );
+        modal.show();
       }
 
       async function updateNetworkSettings() {
@@ -335,6 +342,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const networkMask = document.getElementById('fieldNetworkMask').value;
         const gateway = document.getElementById('fieldGateway').value;
 
+        const modal = new bootstrap.Modal(
+          document.getElementById('settings-modal')
+        );
+
         try {
           const response = await fetch('/networkSettings', {
             method: 'PUT',
@@ -342,17 +353,16 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             body: JSON.stringify({ enable, ip, networkMask, gateway })
           });
           const data = await response.json();
-          bootstrap.Modal.getInstance(
-            document.getElementById('settings-modal')
-          ).hide();
+
+          modal.hide();
+
           showNotification(data.message, data.success ? 'success' : 'danger');
           if (data.success) {
             location.replace(`http://${ip}`);
           }
         } catch {
-          bootstrap.Modal.getInstance(
-            document.getElementById('settings-modal')
-          ).hide();
+          modal.hide();
+
           showNotification('Error to update network settings', 'danger');
           console.error('Fetch error:', error);
         }
@@ -365,6 +375,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const username = document.getElementById('fieldUsername').value;
         const password = document.getElementById('fieldPassword').value;
 
+        const modal = new bootstrap.Modal(
+          document.getElementById('settings-modal')
+        );
+
         try {
           const response = await fetch('/authenticationSettings', {
             method: 'PUT',
@@ -372,17 +386,16 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             body: JSON.stringify({ enable, username, password })
           });
           const data = await response.json();
-          bootstrap.Modal.getInstance(
-            document.getElementById('settings-modal')
-          ).hide();
+
+          modal.hide();
+
           showNotification(data.message, data.success ? 'success' : 'danger');
           if (data.success) {
             location.reload();
           }
         } catch {
-          bootstrap.Modal.getInstance(
-            document.getElementById('settings-modal')
-          ).hide();
+          modal.hide();
+
           showNotification('Error to update authentication settings', 'danger');
           console.error('Fetch error:', error);
         }
@@ -845,7 +858,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                     title="Reset WiFi"
                     data-bs-toggle="modal"
                     data-bs-target="#reset-wifi-modal"
-                    onclick="bootstrap.Modal.getInstance(document.getElementById('settings-modal')).hide();"
+                    data-bs-dismiss="modal"
                   >
                     Reset WiFi
                   </button>
@@ -959,7 +972,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 type="button"
                 class="btn btn-secondary"
                 data-bs-dismiss="modal"
-                onclick="bootstrap.Modal.getInstance(document.getElementById('settings-modal')).show();"
+                data-bs-toggle="modal"
+                data-bs-target="#settings-modal"
               >
                 Cancel
               </button>
