@@ -35,24 +35,24 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           Array.from(forms).forEach((form) => {
             form.addEventListener(
               'submit',
-              (event) => {
-                if (!form.checkValidity()) {
-                  event.preventDefault();
-                  event.stopPropagation();
-                } else {
+              async (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                if (form.checkValidity()) {
                   const formId = form.id;
                   switch (formId) {
                     case 'addHostForm':
-                      addHost();
+                      await addHost();
                       break;
                     case 'editHostForm':
-                      saveEditHost();
+                      await saveEditHost();
                       break;
                     case 'editNetworkSettingsForm':
-                      updateNetworkSettings;
+                      await updateNetworkSettings();
                       break;
                     case 'editAuthenticationSettingsForm':
-                      updateAuthentication();
+                      await updateAuthentication();
                   }
                 }
 
@@ -107,6 +107,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const mac = document.getElementById('host-mac').value;
         const ip = document.getElementById('host-ip').value;
 
+        const modal = new bootstrap.Modal(
+          document.getElementById('add-host-modal')
+        );
+
         try {
           const response = await fetch('/hosts', {
             method: 'POST',
@@ -117,9 +121,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           const data = await response.json();
           if (data.success) {
             getAllHost();
-            bootstrap.Modal.getInstance(
-              document.getElementById('add-host-modal')
-            ).hide();
+            modal.hide();
             document.getElementById('host-name').value = '';
             document.getElementById('host-mac').value = '';
             document.getElementById('host-ip').value = '';
@@ -758,11 +760,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 <div class="card-body">
                   <p class="card-text">
                     Version:
-                    <a
+                    <span
                       id="version"
-                      href="https://github.com/StafLoker/EspWOL"
                       class="badge rounded-pill text-bg-success"
-                    ></a>
+                    ></span>
                   </p>
                   <p class="card-text">
                     Hostname:
