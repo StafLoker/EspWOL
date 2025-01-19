@@ -88,7 +88,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                             <button id="ping-button-${index}" class="btn btn-info btn-sm me-2" onclick="pingHost(${index})">
                                 <i class="fas fa-table-tennis"></i>
                             </button>
-                            <button class="btn btn-warning btn-sm me-2" onclick="editHost()" data-index="${index}">
+                            <button class="btn btn-warning btn-sm me-2" onclick="editHost(${index})" data-index="${index}">
                                 <i class="fas fa-edit"></i>
                             </button>
                             <button class="btn btn-primary btn-sm" onclick="wakeHost(${index})">
@@ -120,7 +120,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
           const data = await response.json();
           if (data.success) {
-            getAllHost();
+            await getAllHost();
             modal.hide();
             document.getElementById('host-name').value = '';
             document.getElementById('host-mac').value = '';
@@ -155,16 +155,12 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       }
 
       async function saveEditHost() {
-        const index = document
-          .getElementById('edit-host-modal')
-          .modal.getAttribute('data-index');
+        const modalElement = document.getElementById('edit-host-modal');
+        const modal = new bootstrap.Modal(modalElement);
+        const index = modalElement.getAttribute('data-index');
         const name = document.getElementById('edit-host-name').value;
         const mac = document.getElementById('edit-host-mac').value;
         const ip = document.getElementById('edit-host-ip').value;
-
-        const modal = new bootstrap.Modal(
-          document.getElementById('edit-host-modal')
-        );
 
         try {
           const response = await fetch('/hosts?id=' + index, {
@@ -174,7 +170,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           });
           const data = await response.json();
           if (data.success) {
-            getAllHost();
+            await getAllHost();
           }
 
           modal.hide();
@@ -189,12 +185,9 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       }
 
       async function confirmDelete() {
-        const index = document
-          .getElementById('edit-host-modal')
-          .modal.getAttribute('data-index');
-        const modal = new bootstrap.Modal(
-          document.getElementById('edit-host-modal')
-        );
+        const modalElement = document.getElementById('edit-host-modal');
+        const modal = new bootstrap.Modal(modalElement);
+        const index = modalElement.getAttribute('data-index');
 
         try {
           const response = await fetch('/hosts?id=' + index, {
@@ -202,7 +195,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           });
           const data = await response.json();
           if (data.success) {
-            getAllHost();
+            await getAllHost();
           }
 
           modal.hide();
@@ -228,7 +221,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
           const data = await response.json();
           const statusCircle = document.getElementById(`status-${index}`);
-          ipField.removeAttribute('disabled');
           button.innerHTML = '<i class="fas fa-table-tennis"></i>';
 
           if (data.success) {
@@ -660,7 +652,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="editHostLabel">Edit HOST</h5>
+              <h5 class="modal-title" id="editHostLabel">Edit host</h5>
               <button
                 type="button"
                 class="btn-close"

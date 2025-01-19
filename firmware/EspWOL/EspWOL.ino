@@ -158,8 +158,7 @@ void deleteHost(const String& id) {
 }
 
 void handleHosts() {
-  int totalArgs = server.args();
-  if (totalArgs < 4) {
+  if (!server.hasArg("id")) {
     if (server.method() == HTTP_GET) {
       getHostList();
     } else if (server.method() == HTTP_POST) {
@@ -210,7 +209,7 @@ void handlePingHost() {
       if (Ping.ping(ip)) {
         server.send(200, "application/json", "{ \"success\": true, \"message\": \"Pinging\" }");
       } else {
-        server.send(200, "application/json", "{ \"success\": true, \"message\": \"Failed ping\" }");
+        server.send(200, "application/json", "{ \"success\": false, \"message\": \"Failed ping\" }");
       }
     } else {
       server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
