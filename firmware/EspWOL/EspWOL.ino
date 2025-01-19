@@ -26,14 +26,14 @@ const char* authenticationFile = "/authentication.json";
 const char* hostname = "wol";
 const char* SSID = "WOL-ESP8266";
 
-// Структура для данных ПК
+// Structure for PC data
 struct Host {
   String name;
   String mac;
   String ip;
 };
 
-// Структура для Сети
+// Structure for Network settings
 struct NetworkConfig {
   bool enable = false;
   IPAddress ip;
@@ -41,24 +41,24 @@ struct NetworkConfig {
   IPAddress gateway;
 } networkConfig;
 
-// Структура для Аутентификации
+// Structure for Authentication settings
 struct Authentication {
   bool enable = false;
   String username;
   String password;
 } authentication;
 
-// Вектор для хранения списка ПК
+// Vector for storing the list of PCs
 std::vector<Host> hosts;
 
-// Функция для настройки OTA
+// Function to setup OTA
 void setupOTA() {
   ArduinoOTA.setHostname(hostname);
   ArduinoOTA.setPassword((const char*)"ber#912NerYi");
   ArduinoOTA.begin();
 }
 
-// Функция для обновление настроек сети
+// Function to update WiFi settings
 void updateIPWifiSettings() {
   if (networkConfig.enable) {
     wifiManager.setSTAStaticIPConfig(networkConfig.ip, networkConfig.gateway, networkConfig.networkMask);
@@ -67,13 +67,13 @@ void updateIPWifiSettings() {
   }
 }
 
-// Функция для сброса настроек Wi-Fi
+// Function to reset WiFi settings
 void resetWiFiSettings() {
-  wifiManager.resetSettings();  // Сбросить настройки WiFi
+  wifiManager.resetSettings();  // Reset WiFi settings
 }
 
 
-// Функция для обработки корневого запроса
+// API: '/'
 void handleRoot() {
   if (authentication.enable && !server.authenticate(authentication.username.c_str(), authentication.password.c_str())) {
     return server.requestAuthentication();
@@ -81,160 +81,185 @@ void handleRoot() {
   server.send_P(200, "text/html", htmlPage);
 }
 
-// Функция для обработки запроса списка ПК
-void handlePCList() {
+// API: GET '/hosts'
+void getHostList() {
   String jsonResponse;
   StaticJsonDocument<1024> doc;
   JsonArray array = doc.to<JsonArray>();
-  for (const PC& pc : hosts) {
+  for (const Host& host : hosts) {
     JsonObject obj = array.createNestedObject();
-    obj["name"] = pc.name;
-    obj["mac"] = pc.mac;
-    obj["ip"] = pc.ip;
+    obj["name"] = host.name;
+    obj["mac"] = host.mac;
+    obj["ip"] = host.ip;
   }
   serializeJson(doc, jsonResponse);
   server.send(200, "application/json", jsonResponse);
 }
 
-// Функция для добавления нового ПК
-void handleAddPC() {
-  if (server.method() == HTTP_POST) {
-    String body = server.arg("plain");
-    DynamicJsonDocument doc(1024);
-    deserializeJson(doc, body);
-    PC pc;
-    pc.name = doc["name"].as<String>();
-    pc.mac = doc["mac"].as<String>();
-    pc.ip = doc["ip"].as<String>();
-    hosts.push_back(pc);
-    savePCData();
-    server.send(200, "text/plain", "PC added");
+// API: GET '/hosts?id={index}'
+void getHost(const String& id) {
+  int index = id.toInt();
+  if (index >= 0 && index < hosts.size()) {
+    Host& host = hosts[index];
+    String jsonResponse;
+    StaticJsonDocument<256> doc;
+    doc["name"] = host.name;
+    doc["mac"] = host.mac;
+    doc["ip"] = host.ip;
+    serializeJson(doc, jsonResponse);
+    server.send(200, "application/json", jsonResponse);
   } else {
-    server.send(405, "text/plain", "Method Not Allowed");
+    server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
   }
 }
 
-// Функция для редактирования ПК
-void handleEditPC() {
-  if (server.method() == HTTP_POST) {
-    String body = server.arg("plain");
-    DynamicJsonDocument doc(1024);
-    deserializeJson(doc, body);
-    int index = doc["index"];
+// API: POST '/hosts'
+void addHost() {
+  String body = server.arg("plain");
+  DynamicJsonDocument doc(1024);
+  deserializeJson(doc, body);
+  Host host;
+  host.name = doc["name"].as<String>();
+  host.mac = doc["mac"].as<String>();
+  host.ip = doc["ip"].as<String>();
+  hosts.push_back(host);
+  saveHostsData();
+  server.send(200, "application/json", "{ \"success\": true, \"message\": \"Host added\" }");
+}
+
+// API: PUT '/hosts?id={index}'
+void editHost(const String& id) {
+  int index = id.toInt();
+  String body = server.arg("plain");
+  DynamicJsonDocument doc(1024);
+  deserializeJson(doc, body);
+  if (index >= 0 && index < hosts.size()) {
+    Host& host = hosts[index];
+    host.name = doc["name"].as<String>();
+    host.mac = doc["mac"].as<String>();
+    host.ip = doc["ip"].as<String>();
+    saveHostsData();
+    server.send(200, "application/json", "{ \"success\": true, \"message\": \"Host updated\" }");
+  } else {
+    server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
+  }
+}
+
+// API: DELETE '/hosts?id={index}'
+void deleteHost(const String& id) {
+  int index = id.toInt();
+  if (index >= 0 && index < hosts.size()) {
+    hosts.erase(hosts.begin() + index);
+    saveHostsData();
+    server.send(200, "application/json", "{ \"success\": true, \"message\": \"Host deleted\" }");
+  } else {
+    server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
+  }
+}
+
+void handleHosts() {
+  int totalArgs = server.args();
+  if (totalArgs < 4) {
+    if (server.method() == HTTP_GET) {
+      getHostList();
+    } else if (server.method() == HTTP_POST) {
+      addHost();
+    } else {
+      server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
+    }
+  } else {
+    if (server.hasArg("id") && server.method() == HTTP_GET) {
+      getHost(server.arg("id"));
+    } else if (server.hasArg("id") && server.method() == HTTP_PUT) {
+      editHost(server.arg("id"));
+    } else if (server.hasArg("id") && server.method() == HTTP_DELETE) {
+      deleteHost(server.arg("id"));
+    } else {
+      server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
+    }
+  }
+}
+
+// API: POST '/ping?id={index}'
+void handleWakeHost() {
+  if (server.hasArg("id")) {
+    int index = server.arg("id").toInt();
     if (index >= 0 && index < hosts.size()) {
-      PC& pc = hosts[index];
-      pc.name = doc["name"].as<String>();
-      pc.mac = doc["mac"].as<String>();
-      pc.ip = doc["ip"].as<String>();
-      savePCData();
-      server.send(200, "text/plain", "PC updated");
+      Host& host = hosts[index];
+      if (WOL.sendMagicPacket(host.mac.c_str())) {
+        server.send(200, "application/json", "{ \"success\": true, \"message\": \"WOL packet sent\" }");
+      } else {
+        server.send(200, "application/json", "{ \"success\": true, \"message\": \"Failed to send WOL packet\" }");
+      }
     } else {
-      server.send(404, "text/plain", "PC not found");
+      server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
     }
   } else {
-    server.send(405, "text/plain", "Method Not Allowed");
+    server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
   }
 }
 
-// Функция для удаления ПК
-void handleDeletePC() {
-  if (server.method() == HTTP_POST) {
-    int index = server.arg("index").toInt();
+// API: POST '/wake?id={index}'
+void handlePingHost() {
+  if (server.hasArg("id")) {
+    int index = server.arg("id").toInt();
     if (index >= 0 && index < hosts.size()) {
-      hosts.erase(hosts.begin() + index);
-      savePCData();
-      server.send(200, "text/plain", "PC deleted");
-    } else {
-      server.send(404, "text/plain", "PC not found");
-    }
-  } else {
-    server.send(405, "text/plain", "Method Not Allowed");
-  }
-}
-
-// Функция для пробуждения ПК
-void handleWakePC() {
-  if (server.method() == HTTP_POST) {
-    String body = server.arg("plain");
-    DynamicJsonDocument doc(1024);
-    deserializeJson(doc, body);
-    String mac = doc["mac"].as<String>();
-    if (WOL.sendMagicPacket(mac.c_str())) {
-      server.send(200, "text/plain", "WOL packet sent");
-    } else {
-      server.send(400, "text/plain", "Failed to send WOL packet");
-    }
-  } else {
-    server.send(405, "text/plain", "Method Not Allowed");
-  }
-}
-
-// Функция для ping ПК
-void handlePingPC() {
-  if (server.method() == HTTP_POST) {
-    String body = server.arg("plain");
-    DynamicJsonDocument doc(1024);
-    deserializeJson(doc, body);
-    IPAddress ip;
-    ip.fromString(doc["ip"].as<String>());
-    if (Ping.ping(ip)) {
-      server.send(200, "text/plain", "Pinging");
-    } else {
-      server.send(400, "text/plain", "Failed ping");
-    }
-  } else {
-    server.send(405, "text/plain", "Method Not Allowed");
-  }
-}
-
-// Функция для обновления настроек сети
-void handleUpdateNetworkSettings() {
-  if (server.method() == HTTP_POST) {
-    String body = server.arg("plain");
-    DynamicJsonDocument doc(1024);
-    deserializeJson(doc, body);
-    networkConfig.enable = doc["enable"];
-    if (networkConfig.enable) {
+      Host& host = hosts[index];
       IPAddress ip;
-      IPAddress networkMask;
-      IPAddress gateway;
-      ip.fromString(doc["ip"].as<String>());
-      networkMask.fromString(doc["networkMask"].as<String>());
-      gateway.fromString(doc["gateway"].as<String>());
-      networkConfig.ip = ip;
-      networkConfig.networkMask = networkMask;
-      networkConfig.gateway = gateway;
+      ip.fromString(host.ip);
+      if (Ping.ping(ip)) {
+        server.send(200, "application/json", "{ \"success\": true, \"message\": \"Pinging\" }");
+      } else {
+        server.send(200, "application/json", "{ \"success\": true, \"message\": \"Failed ping\" }");
+      }
+    } else {
+      server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
     }
-    saveNetworkConfig();
-    updateIPWifiSettings();
-    server.send(200, "text/plain", "Network settings updated");
-    delay(100);
-    ESP.restart();
   } else {
-    server.send(405, "text/plain", "Method Not Allowed");
+    server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
   }
 }
 
-// Функция для обновления настроек аутентификации
-void handleUpdateAuthentication() {
-  if (server.method() == HTTP_POST) {
-    String body = server.arg("plain");
-    DynamicJsonDocument doc(1024);
-    deserializeJson(doc, body);
-    authentication.enable = doc["enable"];
-    if (authentication.enable) {
-      authentication.username = doc["username"].as<String>();
-      authentication.password = doc["password"].as<String>();
-    }
-    saveAuthentication();
-    server.send(200, "text/plain", "Authentication updated");
-  } else {
-    server.send(405, "text/plain", "Method Not Allowed");
+// API: PUT '/networkSettings'
+void updateNetworkSettings() {
+  String body = server.arg("plain");
+  DynamicJsonDocument doc(1024);
+  deserializeJson(doc, body);
+  networkConfig.enable = doc["enable"];
+  if (networkConfig.enable) {
+    IPAddress ip;
+    IPAddress networkMask;
+    IPAddress gateway;
+    ip.fromString(doc["ip"].as<String>());
+    networkMask.fromString(doc["networkMask"].as<String>());
+    gateway.fromString(doc["gateway"].as<String>());
+    networkConfig.ip = ip;
+    networkConfig.networkMask = networkMask;
+    networkConfig.gateway = gateway;
   }
+  saveNetworkConfig();
+  updateIPWifiSettings();
+  server.send(200, "application/json", "{ \"success\": true, \"message\": \"Network settings updated\" }");
+  delay(100);
+  ESP.restart();
 }
 
-// Функция для отправки настроек сети
-void handleGetNetworkSettings() {
+// API: PUT '/authenticationSettings'
+void updateAuthenticationSettings() {
+  String body = server.arg("plain");
+  DynamicJsonDocument doc(1024);
+  deserializeJson(doc, body);
+  authentication.enable = doc["enable"];
+  if (authentication.enable) {
+    authentication.username = doc["username"].as<String>();
+    authentication.password = doc["password"].as<String>();
+  }
+  saveAuthentication();
+  server.send(200, "application/json", "{ \"success\": true, \"message\": \"Authentication updated\" }");
+}
+
+// API: GET '/networkSettings'
+void getNetworkSettings() {
   String jsonResponse;
   StaticJsonDocument<256> doc;
   doc["enable"] = networkConfig.enable;
@@ -251,8 +276,8 @@ void handleGetNetworkSettings() {
   server.send(200, "application/json", jsonResponse);
 }
 
-// Функция для отправки настроек аутентификации
-void handleGetAuthentication() {
+// API: GET '/authenticationSettings'
+void getAuthenticationSettings() {
   String jsonResponse;
   StaticJsonDocument<256> doc;
   doc["enable"] = authentication.enable;
@@ -262,6 +287,27 @@ void handleGetAuthentication() {
   server.send(200, "application/json", jsonResponse);
 }
 
+void handleNetworkSettings() {
+  if (server.method() == HTTP_GET) {
+    getNetworkSettings();
+  } else if (server.method() == HTTP_PUT) {
+    updateNetworkSettings();
+  } else {
+    server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
+  }
+}
+
+void handleAuthenticationSettings() {
+  if (server.method() == HTTP_GET) {
+    getAuthenticationSettings();
+  } else if (server.method() == HTTP_PUT) {
+    updateAuthenticationSettings();
+  } else {
+    server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
+  }
+}
+
+// API: GET '/about'
 void handleGetAbout() {
   String jsonResponse;
   StaticJsonDocument<256> doc;
@@ -271,43 +317,41 @@ void handleGetAbout() {
   server.send(200, "application/json", jsonResponse);
 }
 
-// Настройка сервера
+// Server setup
 void setup() {
   WiFi.hostname(hostname);
 
   setupOTA();
 
-  // Загрузить данные при старте
+  // Load data at startup
   LittleFS.begin();
   loadNetworkConfig();
   loadAuthentication();
-  loadPCData();
+  loadHostsData();
 
   updateIPWifiSettings();
 
-  wifiManager.autoConnect(SSID);  // Авто подключение
+  wifiManager.autoConnect(SSID);  // Auto connect
 
-  server.on("/", handleRoot);
-  server.on("/pc_list", handlePCList);
-  server.on("/add", handleAddPC);
-  server.on("/edit", handleEditPC);
-  server.on("/delete", handleDeletePC);
-  server.on("/wake", handleWakePC);
-  server.on("/ping", handlePingPC);
-  server.on("/network_settings", handleGetNetworkSettings);
-  server.on("/authentication", handleGetAuthentication);
-  server.on("/update_network_settings", handleUpdateNetworkSettings);
-  server.on("/reset_wifi", []() {
+  server.on("/", HTTP_GET, handleRoot);
+  server.on("/hosts", HTTP_ANY, handleHosts);
+  server.on("/ping", HTTP_POST, handlePingHost);
+  server.on("/wake", HTTP_POST, handleWakeHost);
+  server.on("/about", HTTP_GET, handleGetAbout);
+  server.on("/networkSettings", HTTP_ANY, handleNetworkSettings);
+  server.on("/authenticationSettings", HTTP_ANY, handleAuthenticationSettings);
+  server.on("/resetWifi", HTTP_POST, []() {
     resetWiFiSettings();
-    server.send(200, "text/plain", "WiFi settings reset");
+    server.send(200, "application/json", "{ \"success\": true, \"message\": \"WiFi settings reset\" }");
   });
-  server.on("/update_authentication", handleUpdateAuthentication);
-  server.on("/about", handleGetAbout);
+  server.onNotFound([]() {
+    server.send(404, "text/plain", "404: Not found");
+  });
   server.begin();
 }
 
 void loop() {
   server.handleClient();
   ArduinoOTA.handle();
-  delay(1);  // Уменьшим потребление на 60% добавив делей https://hackaday.com/2022/10/28/esp8266-web-server-saves-60-power-with-a-1-ms-delay/
+  delay(1);  // Reduce power consumption by 60% with a delay https://hackaday.com/2022/10/28/esp8266-web-server-saves-60-power-with-a-1-ms-delay/
 }

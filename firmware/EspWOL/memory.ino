@@ -1,5 +1,5 @@
-// Function to load PC data from a JSON file
-void loadPCData() {
+// Function to load hosts data from a JSON file
+void loadHostsData() {
   if (LittleFS.begin()) {
     File file = LittleFS.open(hostsFile, "r");
     if (file) {
@@ -21,18 +21,18 @@ void loadPCData() {
   }
 }
 
-// Function to save PC data to a JSON file
-void savePCData() {
+// Function to save hosts data to a JSON file
+void saveHostsData() {
   if (LittleFS.begin()) {
     File file = LittleFS.open(hostsFile, "w");
     if (file) {
       StaticJsonDocument<1024> doc;
       JsonArray array = doc.to<JsonArray>();
-      for (const PC& pc : hosts) {
+      for (const Host& host : hosts) {
         JsonObject obj = array.createNestedObject();
-        obj["name"] = pc.name;
-        obj["mac"] = pc.mac;
-        obj["ip"] = pc.ip;  // Save IP
+        obj["name"] = host.name;
+        obj["mac"] = host.mac;
+        obj["ip"] = host.ip;
       }
       serializeJson(doc, file);
       file.close();

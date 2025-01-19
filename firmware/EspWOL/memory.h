@@ -1,8 +1,8 @@
-// Function to load PC data from a JSON file
-void loadPCData();
+// Function to load hosts data from a JSON file
+void loadHostsData();
 
-// Function to save PC data to a JSON file
-void savePCData();
+// Function to save hosts data to a JSON file
+void saveHostsData();
 
 // Function to save network configuration to a JSON file
 void saveNetworkConfig();
