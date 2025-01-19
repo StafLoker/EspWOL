@@ -167,11 +167,11 @@ void handleHosts() {
       server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
     }
   } else {
-    if (server.hasArg("id") && server.method() == HTTP_GET) {
+    if (server.method() == HTTP_GET) {
       getHost(server.arg("id"));
-    } else if (server.hasArg("id") && server.method() == HTTP_PUT) {
+    } else if (server.method() == HTTP_PUT) {
       editHost(server.arg("id"));
-    } else if (server.hasArg("id") && server.method() == HTTP_DELETE) {
+    } else if (server.method() == HTTP_DELETE) {
       deleteHost(server.arg("id"));
     } else {
       server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
