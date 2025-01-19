@@ -27,54 +27,45 @@
     <script>
       document.addEventListener('DOMContentLoaded', async function () {
         await getAllHost();
+
+        const forms = document.querySelectorAll('.needs-validation');
+        forms.forEach((form) => {
+          form.addEventListener('submit', handleFormSubmit);
+        });
       });
 
-      (() => {
-        'use strict';
+      async function handleFormSubmit(event) {
+        event.preventDefault();
+        event.stopPropagation();
 
-        // Fetch all the forms we want to apply custom Bootstrap validation styles to
-        const forms = document.querySelectorAll('.needs-validation');
+        const form = event.target;
 
-        // Loop over them and prevent submission
-        Array.from(forms).forEach((form) => {
-          form.addEventListener(
-            'submit',
-            async (event) => {
-              event.preventDefault(); // This should stop the form from submitting
+        if (!form.checkValidity()) {
+          form.classList.add('was-validated');
+          return;
+        }
 
-              if (!form.checkValidity()) {
-                event.stopPropagation();
-                form.classList.add('was-validated');
-                return; // Add this to prevent execution if form is invalid
-              }
+        try {
+          switch (form.id) {
+            case 'addHostForm':
+              await addHost();
+              break;
+            case 'editHostForm':
+              await saveEditHost();
+              break;
+            case 'editNetworkSettingsForm':
+              await updateNetworkSettings();
+              break;
+            case 'editAuthenticationSettingsForm':
+              await updateAuthentication();
+              break;
+          }
 
-              form.classList.add('was-validated');
-              const formId = form.id;
-
-              try {
-                switch (formId) {
-                  case 'addHostForm':
-                    await addHost();
-                    break;
-                  case 'editHostForm':
-                    await saveEditHost();
-                    break;
-                  case 'editNetworkSettingsForm':
-                    await updateNetworkSettings();
-                    break;
-                  case 'editAuthenticationSettingsForm':
-                    await updateAuthentication();
-                    break;
-                }
-              } catch (error) {
-                console.error('Form submission error:', error);
-                showNotification('Error submitting form', 'danger');
-              }
-            },
-            false
-          );
-        });
-      })();
+          form.classList.add('was-validated');
+        } catch (error) {
+          console.error('Error during processing form', error);
+        }
+      }
 
       async function getAllHost() {
         try {
