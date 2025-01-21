@@ -321,10 +321,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         await getNetworkSettings();
         await getAuthentication();
 
-        const modal = new bootstrap.Modal(
-          document.getElementById('settings-modal')
-        );
-        modal.show();
+        $('#settings-modal').modal('show');
       }
 
       async function updateNetworkSettings() {
@@ -375,9 +372,9 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           $('#settings-modal').modal('hide');
 
           showNotification(data.message, data.success ? 'success' : 'danger');
-          if (data.success) {
+          setTimeout(() => {
             location.reload();
-          }
+          }, 1500);
         } catch {
           $('#settings-modal').modal('hide');
 
@@ -484,6 +481,40 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       }
     </script>
     <style>
+      .layout {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+
+      main {
+        flex-grow: 1;
+      }
+
+      footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+        height: 40px;
+        border-radius: 9px;
+        padding: 10px;
+      }
+
+      footer span {
+        font-size: 15px;
+      }
+
+      #github {
+        text-decoration: none;
+        color: inherit;
+        margin-right: 10px;
+      }
+
+      #github i {
+        font-size: 22px;
+      }
+
       .status-circle {
         width: 15px;
         height: 15px;
@@ -519,33 +550,42 @@ const char htmlPage[] PROGMEM = R"rawliteral(
     </style>
   </head>
   <body class="bg-light text-dark">
-    <!-- Main -->
-    <div class="container mt-5">
-      <h1 class="text-center">Wake on LAN</h1>
-      <!-- Notification Area -->
-      <div id="notification-area"></div>
-      <!-- Control -->
-      <h2 class="mt-4 d-flex justify-content-between align-items-center">
-        <span>Hosts</span>
-        <div class="ml-auto">
-          <button
-            class="btn btn-success"
-            data-bs-toggle="modal"
-            data-bs-target="#add-host-modal"
-          >
-            <i class="fas fa-plus"></i>
-          </button>
-          <button
-            class="btn btn-secondary btn-md"
-            title="Settings"
-            onclick="getSettings()"
-          >
-            <i class="fas fa-cog"></i>
-          </button>
-        </div>
-      </h2>
-      <!-- HOST List -->
-      <ul id="host-list" class="list-group mt-3"></ul>
+    <div class="layout">
+      <!-- Main -->
+      <main class="container mt-5">
+        <h1 class="text-center">Wake on LAN</h1>
+        <!-- Notification Area -->
+        <div id="notification-area"></div>
+        <!-- Control -->
+        <h2 class="mt-4 d-flex justify-content-between align-items-center">
+          <span>Hosts</span>
+          <div class="ml-auto">
+            <button
+              class="btn btn-success"
+              data-bs-toggle="modal"
+              data-bs-target="#add-host-modal"
+            >
+              <i class="fas fa-plus"></i>
+            </button>
+            <button
+              class="btn btn-secondary btn-md"
+              title="Settings"
+              onclick="getSettings()"
+            >
+              <i class="fas fa-cog"></i>
+            </button>
+          </div>
+        </h2>
+        <!-- HOST List -->
+        <ul id="host-list" class="list-group mt-3"></ul>
+      </main>
+      <footer class="bg-body-secondary">
+        <span class="fw-medium font-monospace">EspWOL</span>
+        <span class="fw-medium">&copy; 2025 StafLoker</span>
+        <a href="https://github.com/StafLoker/EspWOL" id="github">
+          <i class="fab fa-github"></i>
+        </a>
+      </footer>
     </div>
 
     <!-- Add host modal -->
@@ -950,9 +990,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         </div>
       </div>
     </div>
-    <footer class="text-center mt-5">
-      <p>&copy; 2025 StafLoker</p>
-    </footer>
   </body>
 </html>
 )rawliteral";
