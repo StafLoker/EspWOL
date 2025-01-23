@@ -551,7 +551,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
   </head>
   <body class="bg-light text-dark">
     <div class="layout">
-      <!-- Main -->
       <main class="container mt-5">
         <h1 class="text-center">Wake on LAN</h1>
         <!-- Notification Area -->
