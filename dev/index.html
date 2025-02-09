@@ -25,13 +25,12 @@
       crossorigin="anonymous"
     ></script>
     <script>
+      const forms = document.querySelectorAll('.needs-validation');
+      forms.forEach((form) => {
+        form.addEventListener('submit', handleFormSubmit);
+      });
       document.addEventListener('DOMContentLoaded', async function () {
         await getAllHost();
-
-        const forms = document.querySelectorAll('.needs-validation');
-        forms.forEach((form) => {
-          form.addEventListener('submit', handleFormSubmit);
-        });
       });
 
       async function handleFormSubmit(event) {
@@ -123,12 +122,14 @@
             document.getElementById('host-name').value = '';
             document.getElementById('host-mac').value = '';
             document.getElementById('host-ip').value = '';
+            document.getElementById('add-select-periodic-ping').value =
+              data.periodicPing;
             $('#add-host-modal').modal('hide');
           }
           showNotification(data.message, data.success ? 'success' : 'danger');
         } catch (error) {
-          showNotification('Error adding HOST', 'danger');
-          console.error('Error adding HOST:', error);
+          showNotification('Error adding host', 'danger');
+          console.error('Error adding host:', error);
         }
       }
 
@@ -143,10 +144,12 @@
           document.getElementById('edit-host-name').value = data.name;
           document.getElementById('edit-host-mac').value = data.mac;
           document.getElementById('edit-host-ip').value = data.ip;
+          document.getElementById('edit-select-periodic-ping').value =
+            data.periodicPing;
           $('#edit-host-modal').modal('show');
         } catch (error) {
-          showNotification('Error edit HOST', 'danger');
-          console.error('Error edit HOST:', error);
+          showNotification('Error edit host', 'danger');
+          console.error('Error edit host:', error);
         }
       }
 
@@ -174,8 +177,8 @@
         } catch (error) {
           $('#edit-host-modal').modal('hide');
 
-          showNotification('Error edit HOST', 'danger');
-          console.error('Error edit HOST:', error);
+          showNotification('Error edit host', 'danger');
+          console.error('Error edit host:', error);
         }
       }
 
@@ -197,8 +200,8 @@
           showNotification(data.message, data.success ? 'success' : 'danger');
         } catch (error) {
           $('#edit-host-modal').modal('hide');
-          showNotification('Error delete HOST', 'danger');
-          console.error('Error delete HOST:', error);
+          showNotification('Error delete host', 'danger');
+          console.error('Error delete host:', error);
         }
       }
 
@@ -252,74 +255,71 @@
           showNotification(data.message, data.success ? 'info' : 'danger');
         } catch (error) {
           showNotification("WOL packet don't sent", 'danger');
-          console.error('Ping failed:', error);
+          console.error("WOL packet don't sent:", error);
         }
       }
 
       async function getAbout() {
-        try {
-          const response = await fetch('/about', { method: 'GET' });
-          const data = await response.json();
+        const response = await fetch('/about');
+        if (!response.ok) throw new Error('Failed to fetch About information');
 
-          document.getElementById('version').innerText = data.version;
-          document.getElementById('hostname').innerText = data.hostname;
-        } catch (error) {
-          showNotification('Error to get about information', 'danger');
-          console.error('Fetch error (About):', error);
-        }
+        const data = await response.json();
+        document.getElementById('version').innerText = data.version;
+        document
+          .getElementById('version')
+          .classList.add(
+            data.lastVersion ? 'bg-success' : 'bg-warning text-dark'
+          );
+        document.getElementById('hostname').innerText = data.hostname;
       }
 
       async function getNetworkSettings() {
-        try {
-          const response = await fetch('/networkSettings', { method: 'GET' });
-          const data = await response.json();
+        const response = await fetch('/networkSettings');
+        if (!response.ok) throw new Error('Failed to fetch Network Settings');
 
-          document.getElementById('inlineRadioStaticIP').checked = data.enable;
-          document.getElementById('inlineRadioDHCP').checked = !data.enable;
-          document.getElementById('fieldIP').value = data.ip;
-          document.getElementById('fieldNetworkMask').value = data.networkMask;
-          document.getElementById('fieldGateway').value = data.gateway;
+        const data = await response.json();
+        document.getElementById('inlineRadioStaticIP').checked = data.enable;
+        document.getElementById('inlineRadioDHCP').checked = !data.enable;
+        document.getElementById('fieldIP').value = data.ip;
+        document.getElementById('fieldNetworkMask').value = data.networkMask;
+        document.getElementById('fieldGateway').value = data.gateway;
 
-          toggleNetworkFields();
-        } catch (error) {
-          showNotification('Error to get network settings', 'danger');
-          console.error('Fetch error (Network Settings):', error);
-        }
+        toggleNetworkFields();
       }
 
       async function getAuthentication() {
-        try {
-          const response = await fetch('/authenticationSettings', {
-            method: 'GET'
-          });
-          const data = await response.json();
+        const response = await fetch('/authenticationSettings');
+        if (!response.ok)
+          throw new Error('Failed to fetch Authentication Settings');
 
-          document.getElementById('switchEnableAuthentication').checked =
-            data.enable;
-          document.getElementById('fieldUsername').value = data.username;
-          document.getElementById('fieldPassword').value = data.password;
+        const data = await response.json();
+        document.getElementById('switchEnableAuthentication').checked =
+          data.enable;
+        document.getElementById('fieldUsername').value = data.username;
+        document.getElementById('fieldPassword').value = data.password;
 
-          const form = document.getElementById(
-            'editAuthenticationSettingsForm'
-          );
-          if (data.enable) {
-            form.classList.add('needs-validation');
-            form.classList.add('novalidate');
-          }
-
-          toggleAuthenticationFields();
-        } catch (error) {
-          showNotification('Error to get authentication settings', 'danger');
-          console.error('Fetch error (Authentication):', error);
+        const form = document.getElementById('editAuthenticationSettingsForm');
+        if (data.enable) {
+          form.classList.add('needs-validation');
+          form.classList.add('novalidate');
         }
+
+        toggleAuthenticationFields();
       }
 
       async function getSettings() {
-        await getAbout();
-        await getNetworkSettings();
-        await getAuthentication();
+        try {
+          await Promise.all([
+            getAbout(),
+            getNetworkSettings(),
+            getAuthentication()
+          ]);
 
-        $('#settings-modal').modal('show');
+          $('#settings-modal').modal('show');
+        } catch (error) {
+          console.error('Error loading settings:', error);
+          showNotification('Failed to load settings', 'danger');
+        }
       }
 
       async function updateNetworkSettings() {
@@ -394,19 +394,52 @@
         }
       }
 
-      function showNotification(message, type) {
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type} alert-dismissible fade show`;
-        notification.role = 'alert';
-        notification.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+      async function getUpdateSettings() {
+        try {
+          const response = await fetch('/updateVersion');
+          const data = await response.json();
 
-        const notificationArea = document.getElementById('notification-area');
-        notificationArea.appendChild(notification);
+          const textBody = document.getElementById('update-version-text-body');
+          const updateButton = document.getElementById('button-update-version');
+
+          if (data.version === data.lastVersion) {
+            textBody.textContent = `You are up to date!`;
+            updateButton.style.display = 'none';
+          } else {
+            textBody.innerHTML = `New version available: <span class="badge rounded-pill bg-primary">${data.lastVersion}</span>. 
+                You are using version <span class="badge rounded-pill bg-secondary">${data.version}</span>.`;
+            updateButton.style.display = 'block';
+          }
+        } catch (error) {
+          console.error('Error fetching update version:', error);
+        }
+      }
+
+      function showNotification(message, type) {
+        const notificationList = document.getElementById('notification-list');
+
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-bg-${type} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+
+        toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                ${message}
+            </div>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
+
+        notificationList.appendChild(toast);
+
+        const toastInstance = new bootstrap.Toast(toast);
+        toastInstance.show();
 
         setTimeout(() => {
-          notification.remove();
+          toast.remove();
         }, 3000);
       }
 
@@ -551,8 +584,6 @@
     <div class="layout">
       <main class="container mt-5">
         <h1 class="text-center">Wake on LAN</h1>
-        <!-- Notification Area -->
-        <div id="notification-area"></div>
         <!-- Control -->
         <h2 class="mt-4 d-flex justify-content-between align-items-center">
           <span>Hosts</span>
@@ -574,7 +605,42 @@
           </div>
         </h2>
         <!-- HOST List -->
-        <ul id="host-list" class="list-group mt-3"></ul>
+        <ul id="host-list" class="list-group mt-3">
+          <li
+            class="list-group-item d-flex justify-content-between align-items-center"
+            id="host-item-1"
+          >
+            <div class="d-flex align-items-center">
+              <div class="status-circle" id="status-1"></div>
+              Test - 10.10.1.9
+            </div>
+            <div>
+              <button
+                id="ping-button-1"
+                class="btn btn-info btn-sm me-2"
+                onclick="pingHost(1)"
+              >
+                <i class="fas fa-table-tennis"></i>
+              </button>
+              <button
+                class="btn btn-warning btn-sm me-2"
+                onclick="editHost(1)"
+                data-index="1"
+              >
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn btn-primary btn-sm" onclick="wakeHost(1)">
+                <i class="fas fa-play"></i>
+              </button>
+            </div>
+          </li>
+        </ul>
+
+        <!-- Alert Zone (Toast Container) -->
+        <div
+          class="toast-container position-fixed top-0 end-0 p-3"
+          id="notification-list"
+        ></div>
       </main>
       <footer class="bg-body-secondary">
         <span class="fw-medium font-monospace">EspWOL</span>
@@ -638,6 +704,29 @@
                   required
                 />
                 <div class="invalid-feedback">Please enter IP address.</div>
+              </div>
+              <div class="mb-3">
+                <label for="add-select-periodic-ping" class="form-label"
+                  >Periodic ping</label
+                >
+                <select
+                  class="form-select"
+                  id="add-select-periodic-ping"
+                  aria-label="Periodic ping"
+                >
+                  <option value="0" selected>Disabled</option>
+                  <option value="1">1 min</option>
+                  <option value="5">5 min</option>
+                  <option value="10">10 min</option>
+                  <option value="15">15 min</option>
+                  <option value="30">30 min</option>
+                  <option value="45">45 min</option>
+                  <option value="60">1 hour</option>
+                  <option value="180">3 hours</option>
+                  <option value="360">6 hours</option>
+                  <option value="720">12 hours</option>
+                  <option value="1440">24 hours</option>
+                </select>
               </div>
             </form>
           </div>
@@ -711,8 +800,31 @@
                   placeholder="Enter IP address"
                   required
                 />
+                <div class="invalid-feedback">Please enter IP address.</div>
               </div>
-              <div class="invalid-feedback">Please enter IP address.</div>
+              <div class="mb-3">
+                <label for="edit-select-periodic-ping" class="form-label"
+                  >Periodic ping</label
+                >
+                <select
+                  class="form-select"
+                  id="edit-select-periodic-ping"
+                  aria-label="Periodic ping"
+                >
+                  <option value="0" selected>Disabled</option>
+                  <option value="1">1 min</option>
+                  <option value="5">5 min</option>
+                  <option value="10">10 min</option>
+                  <option value="15">15 min</option>
+                  <option value="30">30 min</option>
+                  <option value="45">45 min</option>
+                  <option value="60">1 hour</option>
+                  <option value="180">3 hours</option>
+                  <option value="360">6 hours</option>
+                  <option value="720">12 hours</option>
+                  <option value="1440">24 hours</option>
+                </select>
+              </div>
             </form>
           </div>
           <div class="modal-footer">
@@ -768,7 +880,10 @@
                   Version:
                   <span
                     id="version"
-                    class="badge rounded-pill text-bg-success"
+                    class="badge rounded-pill"
+                    data-bs-toggle="modal"
+                    data-bs-target="#update-version-modal"
+                    data-bs-dismiss="modal"
                   ></span>
                 </p>
                 <p class="card-text">
@@ -973,6 +1088,51 @@
               onclick="resetWiFiSettings()"
             >
               Reset
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+              data-bs-toggle="modal"
+              data-bs-target="#settings-modal"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Update version modal -->
+    <div
+      class="modal fade"
+      id="update-version-modal"
+      tabindex="-1"
+      aria-labelledby="updateVersionLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="updateVersionLabel">Update version</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p id="update-version-text-body"></p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              id="button-update-version"
+              class="btn btn-danger"
+              onclick="updateVersion()"
+            >
+              Update
             </button>
             <button
               type="button"
