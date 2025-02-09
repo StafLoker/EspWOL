@@ -1,18 +1,37 @@
+/* 
+  Project: EspWOL 
+  Author: StafLoker
+*/
+
+/* Network */
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
-#include <LittleFS.h>
 #include <WiFiUdp.h>
 #include <WakeOnLan.h>
-#include <ArduinoJson.h>
 #include <WiFiManager.h>
 #include <ESP8266Ping.h>
 
-#include <ArduinoOTA.h>
+/* Memory */
+#include <LittleFS.h>
+#include <ArduinoJson.h>
 
+/* OTA */
+#define ENABLE_STANDARD_OTA 1  // Values: 1 to enable, != 1 to disable
+
+#if ENABLE_STANDARD_OTA == 1
+#include <ArduinoOTA.h>
+#endif
+
+#include <AutoOTA.h>
+
+/* Project */
 #include "index.h"
 #include "memory.h"
+#include "api.h"
 
 #define VERSION "2.0.0"
+
+AutoOTA ota(VERSION, "StafLoker/EspWOL");
 
 ESP8266WebServer server(80);
 WiFiUDP UDP;
@@ -31,6 +50,7 @@ struct Host {
   String name;
   String mac;
   String ip;
+  unsigned long periodicPing = 0;
 };
 
 // Structure for Network settings
@@ -51,12 +71,14 @@ struct Authentication {
 // Vector for storing the list of PCs
 std::vector<Host> hosts;
 
+#if ENABLE_STANDARD_OTA == 1
 // Function to setup OTA
 void setupOTA() {
   ArduinoOTA.setHostname(hostname);
   ArduinoOTA.setPassword((const char*)"ber#912NerYi");
   ArduinoOTA.begin();
 }
+#endif
 
 // Function to update WiFi settings
 void updateIPWifiSettings() {
@@ -72,255 +94,13 @@ void resetWiFiSettings() {
   wifiManager.resetSettings();  // Reset WiFi settings
 }
 
-
-// API: '/'
-void handleRoot() {
-  if (authentication.enable && !server.authenticate(authentication.username.c_str(), authentication.password.c_str())) {
-    return server.requestAuthentication();
-  }
-  server.send_P(200, "text/html", htmlPage);
-}
-
-// API: GET '/hosts'
-void getHostList() {
-  String jsonResponse;
-  StaticJsonDocument<1024> doc;
-  JsonArray array = doc.to<JsonArray>();
-  for (const Host& host : hosts) {
-    JsonObject obj = array.createNestedObject();
-    obj["name"] = host.name;
-    obj["mac"] = host.mac;
-    obj["ip"] = host.ip;
-  }
-  serializeJson(doc, jsonResponse);
-  server.send(200, "application/json", jsonResponse);
-}
-
-// API: GET '/hosts?id={index}'
-void getHost(const String& id) {
-  int index = id.toInt();
-  if (index >= 0 && index < hosts.size()) {
-    Host& host = hosts[index];
-    String jsonResponse;
-    StaticJsonDocument<256> doc;
-    doc["name"] = host.name;
-    doc["mac"] = host.mac;
-    doc["ip"] = host.ip;
-    serializeJson(doc, jsonResponse);
-    server.send(200, "application/json", jsonResponse);
-  } else {
-    server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
-  }
-}
-
-// API: POST '/hosts'
-void addHost() {
-  String body = server.arg("plain");
-  DynamicJsonDocument doc(1024);
-  deserializeJson(doc, body);
-  Host host;
-  host.name = doc["name"].as<String>();
-  host.mac = doc["mac"].as<String>();
-  host.ip = doc["ip"].as<String>();
-  hosts.push_back(host);
-  saveHostsData();
-  server.send(200, "application/json", "{ \"success\": true, \"message\": \"Host added\" }");
-}
-
-// API: PUT '/hosts?id={index}'
-void editHost(const String& id) {
-  int index = id.toInt();
-  String body = server.arg("plain");
-  DynamicJsonDocument doc(1024);
-  deserializeJson(doc, body);
-  if (index >= 0 && index < hosts.size()) {
-    Host& host = hosts[index];
-    host.name = doc["name"].as<String>();
-    host.mac = doc["mac"].as<String>();
-    host.ip = doc["ip"].as<String>();
-    saveHostsData();
-    server.send(200, "application/json", "{ \"success\": true, \"message\": \"Host updated\" }");
-  } else {
-    server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
-  }
-}
-
-// API: DELETE '/hosts?id={index}'
-void deleteHost(const String& id) {
-  int index = id.toInt();
-  if (index >= 0 && index < hosts.size()) {
-    hosts.erase(hosts.begin() + index);
-    saveHostsData();
-    server.send(200, "application/json", "{ \"success\": true, \"message\": \"Host deleted\" }");
-  } else {
-    server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
-  }
-}
-
-void handleHosts() {
-  if (!server.hasArg("id")) {
-    if (server.method() == HTTP_GET) {
-      getHostList();
-    } else if (server.method() == HTTP_POST) {
-      addHost();
-    } else {
-      server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
-    }
-  } else {
-    if (server.method() == HTTP_GET) {
-      getHost(server.arg("id"));
-    } else if (server.method() == HTTP_PUT) {
-      editHost(server.arg("id"));
-    } else if (server.method() == HTTP_DELETE) {
-      deleteHost(server.arg("id"));
-    } else {
-      server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
-    }
-  }
-}
-
-// API: POST '/ping?id={index}'
-void handleWakeHost() {
-  if (server.hasArg("id")) {
-    int index = server.arg("id").toInt();
-    if (index >= 0 && index < hosts.size()) {
-      Host& host = hosts[index];
-      if (WOL.sendMagicPacket(host.mac.c_str())) {
-        server.send(200, "application/json", "{ \"success\": true, \"message\": \"WOL packet sent\" }");
-      } else {
-        server.send(200, "application/json", "{ \"success\": true, \"message\": \"Failed to send WOL packet\" }");
-      }
-    } else {
-      server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
-    }
-  } else {
-    server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
-  }
-}
-
-// API: POST '/wake?id={index}'
-void handlePingHost() {
-  if (server.hasArg("id")) {
-    int index = server.arg("id").toInt();
-    if (index >= 0 && index < hosts.size()) {
-      Host& host = hosts[index];
-      IPAddress ip;
-      ip.fromString(host.ip);
-      if (Ping.ping(ip)) {
-        server.send(200, "application/json", "{ \"success\": true, \"message\": \"Pinging\" }");
-      } else {
-        server.send(200, "application/json", "{ \"success\": false, \"message\": \"Failed ping\" }");
-      }
-    } else {
-      server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
-    }
-  } else {
-    server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
-  }
-}
-
-// API: PUT '/networkSettings'
-void updateNetworkSettings() {
-  String body = server.arg("plain");
-  DynamicJsonDocument doc(1024);
-  deserializeJson(doc, body);
-  networkConfig.enable = doc["enable"];
-  if (networkConfig.enable) {
-    IPAddress ip;
-    IPAddress networkMask;
-    IPAddress gateway;
-    ip.fromString(doc["ip"].as<String>());
-    networkMask.fromString(doc["networkMask"].as<String>());
-    gateway.fromString(doc["gateway"].as<String>());
-    networkConfig.ip = ip;
-    networkConfig.networkMask = networkMask;
-    networkConfig.gateway = gateway;
-  }
-  saveNetworkConfig();
-  updateIPWifiSettings();
-  server.send(200, "application/json", "{ \"success\": true, \"message\": \"Network settings updated\" }");
-  delay(100);
-  ESP.restart();
-}
-
-// API: PUT '/authenticationSettings'
-void updateAuthenticationSettings() {
-  String body = server.arg("plain");
-  DynamicJsonDocument doc(1024);
-  deserializeJson(doc, body);
-  authentication.enable = doc["enable"];
-  if (authentication.enable) {
-    authentication.username = doc["username"].as<String>();
-    authentication.password = doc["password"].as<String>();
-  }
-  saveAuthentication();
-  server.send(200, "application/json", "{ \"success\": true, \"message\": \"Authentication updated\" }");
-}
-
-// API: GET '/networkSettings'
-void getNetworkSettings() {
-  String jsonResponse;
-  StaticJsonDocument<256> doc;
-  doc["enable"] = networkConfig.enable;
-  if (networkConfig.enable) {
-    doc["ip"] = networkConfig.ip.toString();
-    doc["networkMask"] = networkConfig.networkMask.toString();
-    doc["gateway"] = networkConfig.gateway.toString();
-  } else {
-    doc["ip"] = WiFi.localIP().toString();
-    doc["networkMask"] = WiFi.subnetMask().toString();
-    doc["gateway"] = WiFi.gatewayIP().toString();
-  }
-  serializeJson(doc, jsonResponse);
-  server.send(200, "application/json", jsonResponse);
-}
-
-// API: GET '/authenticationSettings'
-void getAuthenticationSettings() {
-  String jsonResponse;
-  StaticJsonDocument<256> doc;
-  doc["enable"] = authentication.enable;
-  doc["username"] = authentication.username;
-  doc["password"] = "************";
-  serializeJson(doc, jsonResponse);
-  server.send(200, "application/json", jsonResponse);
-}
-
-void handleNetworkSettings() {
-  if (server.method() == HTTP_GET) {
-    getNetworkSettings();
-  } else if (server.method() == HTTP_PUT) {
-    updateNetworkSettings();
-  } else {
-    server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
-  }
-}
-
-void handleAuthenticationSettings() {
-  if (server.method() == HTTP_GET) {
-    getAuthenticationSettings();
-  } else if (server.method() == HTTP_PUT) {
-    updateAuthenticationSettings();
-  } else {
-    server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
-  }
-}
-
-// API: GET '/about'
-void handleGetAbout() {
-  String jsonResponse;
-  StaticJsonDocument<256> doc;
-  doc["version"] = VERSION;
-  doc["hostname"] = wifiManager.getWiFiHostname();
-  serializeJson(doc, jsonResponse);
-  server.send(200, "application/json", jsonResponse);
-}
-
 // Server setup
 void setup() {
   WiFi.hostname(hostname);
 
+#if ENABLE_STANDARD_OTA == 1
   setupOTA();
+#endif
 
   // Load data at startup
   LittleFS.begin();
@@ -351,6 +131,8 @@ void setup() {
 
 void loop() {
   server.handleClient();
+#if ENABLE_STANDARD_OTA == 1
   ArduinoOTA.handle();
+#endif
   delay(1);  // Reduce power consumption by 60% with a delay https://hackaday.com/2022/10/28/esp8266-web-server-saves-60-power-with-a-1-ms-delay/
 }
