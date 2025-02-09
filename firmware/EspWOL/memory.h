@@ -1,3 +1,6 @@
+#ifndef MEMORY_H
+#define MEMORY_H
+
 // Function to load hosts data from a JSON file
 void loadHostsData();
 
@@ -15,3 +18,5 @@ void saveAuthentication();
 
 // Function to load authentication configuration from a JSON file
 void loadAuthentication();
+
+#endif

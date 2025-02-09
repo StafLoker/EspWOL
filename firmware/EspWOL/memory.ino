@@ -1,3 +1,5 @@
+#include "memory.h"
+
 // Function to load hosts data from a JSON file
 void loadHostsData() {
   if (LittleFS.begin()) {
