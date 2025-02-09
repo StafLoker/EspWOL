@@ -25,12 +25,13 @@
       crossorigin="anonymous"
     ></script>
     <script>
-      const forms = document.querySelectorAll('.needs-validation');
-      forms.forEach((form) => {
-        form.addEventListener('submit', handleFormSubmit);
-      });
       document.addEventListener('DOMContentLoaded', async function () {
         await getAllHost();
+
+        const forms = document.querySelectorAll('.needs-validation');
+        forms.forEach((form) => {
+          form.addEventListener('submit', handleFormSubmit);
+        });
       });
 
       async function handleFormSubmit(event) {
