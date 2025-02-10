@@ -19,11 +19,6 @@
       integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
       crossorigin="anonymous"
     ></script>
-    <script
-      src="https://code.jquery.com/jquery-3.7.1.js"
-      integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
-      crossorigin="anonymous"
-    ></script>
     <script>
       document.addEventListener('DOMContentLoaded', async function () {
         await getAllHost();
@@ -129,7 +124,7 @@
           }
           showNotification(data.message, data.success ? 'success' : 'danger');
         } catch (error) {
-          showNotification('Error adding host', 'danger');
+          showNotification('Error adding host', 'danger', 'Error');
           console.error('Error adding host:', error);
         }
       }
@@ -149,7 +144,7 @@
             data.periodicPing;
           $('#edit-host-modal').modal('show');
         } catch (error) {
-          showNotification('Error edit host', 'danger');
+          showNotification('Error edit host', 'danger', 'Error');
           console.error('Error edit host:', error);
         }
       }
@@ -174,11 +169,15 @@
 
           $('#edit-host-modal').modal('hide');
 
-          showNotification(data.message, data.success ? 'success' : 'danger');
+          showNotification(
+            data.message,
+            data.success ? 'success' : 'danger',
+            data.success ? 'Notification' : 'Error'
+          );
         } catch (error) {
           $('#edit-host-modal').modal('hide');
 
-          showNotification('Error edit host', 'danger');
+          showNotification('Error edit host', 'danger', 'Error');
           console.error('Error edit host:', error);
         }
       }
@@ -198,10 +197,14 @@
 
           $('#edit-host-modal').modal('hide');
 
-          showNotification(data.message, data.success ? 'success' : 'danger');
+          showNotification(
+            data.message,
+            data.success ? 'success' : 'danger',
+            data.success ? 'Notification' : 'Error'
+          );
         } catch (error) {
           $('#edit-host-modal').modal('hide');
-          showNotification('Error delete host', 'danger');
+          showNotification('Error delete host', 'danger', 'Error');
           console.error('Error delete host:', error);
         }
       }
@@ -235,14 +238,16 @@
           } else {
             statusCircle.classList.remove('green', 'blinking');
             statusCircle.classList.add('red');
-            showNotification(data.message, 'danger');
+            showNotification(data.message, 'danger', 'Error');
 
             setTimeout(() => {
               statusCircle.classList.remove('red');
             }, 10000);
           }
         } catch (error) {
-          showNotification('Ping failed', 'danger');
+          showNotification('Ping failed', 'danger', 'Error');
+          button.innerHTML = '<i class="fas fa-table-tennis"></i>';
+          button.removeAttribute('disabled');
           console.error('Ping failed:', error);
         }
       }
@@ -253,7 +258,11 @@
             method: 'POST'
           });
           const data = await response.json();
-          showNotification(data.message, data.success ? 'info' : 'danger');
+          showNotification(
+            data.message,
+            data.success ? 'info' : 'danger',
+            data.success ? 'Notification' : 'Error'
+          );
         } catch (error) {
           showNotification("WOL packet don't sent", 'danger');
           console.error("WOL packet don't sent:", error);
@@ -319,7 +328,7 @@
           $('#settings-modal').modal('show');
         } catch (error) {
           console.error('Error loading settings:', error);
-          showNotification('Failed to load settings', 'danger');
+          showNotification('Failed to load settings', 'danger', 'Error');
         }
       }
 
@@ -339,7 +348,11 @@
 
           $('#settings-modal').modal('hide');
 
-          showNotification(data.message, data.success ? 'success' : 'danger');
+          showNotification(
+            data.message,
+            data.success ? 'success' : 'danger',
+            data.success ? 'Notification' : 'Error'
+          );
           if (data.success) {
             setTimeout(() => {
               window.location.href = `http://${ip}`;
@@ -348,7 +361,11 @@
         } catch {
           $('#settings-modal').modal('hide');
 
-          showNotification('Error to update network settings', 'danger');
+          showNotification(
+            'Error to update network settings',
+            'danger',
+            'Error'
+          );
           console.error('Fetch error:', error);
         }
       }
@@ -370,14 +387,22 @@
 
           $('#settings-modal').modal('hide');
 
-          showNotification(data.message, data.success ? 'success' : 'danger');
+          showNotification(
+            data.message,
+            data.success ? 'success' : 'danger',
+            data.success ? 'Notification' : 'Error'
+          );
           setTimeout(() => {
             location.reload();
           }, 1500);
         } catch {
           $('#settings-modal').modal('hide');
 
-          showNotification('Error to update authentication settings', 'danger');
+          showNotification(
+            'Error to update authentication settings',
+            'danger',
+            'Error'
+          );
           console.error('Fetch error:', error);
         }
       }
@@ -386,7 +411,11 @@
         try {
           const response = await fetch('/resetWifi', { method: 'POST' });
           const data = await response.json();
-          showNotification(data.message, data.success ? 'success' : 'danger');
+          showNotification(
+            data.message,
+            data.success ? 'success' : 'danger',
+            data.success ? 'Notification' : 'Error'
+          );
           if (data.success) {
             location.reload();
           }
@@ -416,32 +445,51 @@
         }
       }
 
-      function showNotification(message, type) {
+      function showNotification(message, type, title = 'Notification') {
         const notificationList = document.getElementById('notification-list');
 
+        if (notificationList.children.length >= 3) {
+          notificationList.firstElementChild.remove();
+        }
+
         const toast = document.createElement('div');
-        toast.className = `toast align-items-center text-bg-${type} border-0`;
+        toast.className = `toast align-items-center border-0 rounded-3`;
         toast.setAttribute('role', 'alert');
         toast.setAttribute('aria-live', 'assertive');
         toast.setAttribute('aria-atomic', 'true');
+        toast.setAttribute('data-bs-autohide', 'true');
+        toast.setAttribute('data-bs-delay', '3000');
 
         toast.innerHTML = `
-        <div class="d-flex">
-            <div class="toast-body">
-                ${message}
-            </div>
-            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-    `;
+          <div class="toast-header">
+              <div class="me-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="var(--bs-${type})" class="bi bi-square-fill" viewBox="0 0 16 16">
+                    <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2z"/>
+                  </svg>
+              </div>
+              <strong class="me-auto">${title}</strong>
+              <small class="text-muted ms-auto">Just now</small>
+              <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+          <div class="toast-body">
+              ${message}
+          </div>`;
 
         notificationList.appendChild(toast);
 
         const toastInstance = new bootstrap.Toast(toast);
         toastInstance.show();
 
-        setTimeout(() => {
-          toast.remove();
-        }, 3000);
+        const timeElapsed = toast.querySelector('.toast-header small');
+        let secondsElapsed = 0;
+        const interval = setInterval(() => {
+          secondsElapsed++;
+          timeElapsed.innerText = `${secondsElapsed} seg ago`;
+
+          if (!document.body.contains(toast)) {
+            clearInterval(interval);
+          }
+        }, 1000);
       }
 
       function toggleNetworkFields() {
@@ -636,13 +684,15 @@
             </div>
           </li>
         </ul>
-
-        <!-- Alert Zone (Toast Container) -->
+      </main>
+      <!-- Alert Zone (Toast Container) -->
+      <div aria-live="polite" aria-atomic="true" class="position-relative">
         <div
-          class="toast-container position-fixed top-0 end-0 p-3"
+          class="toast-container bottom-0 end-0 p-3"
           id="notification-list"
         ></div>
-      </main>
+      </div>
+
       <footer class="bg-body-secondary">
         <span class="fw-medium font-monospace">EspWOL</span>
         <span class="fw-medium">&copy; 2025 StafLoker</span>
