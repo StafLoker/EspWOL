@@ -120,7 +120,7 @@
             document.getElementById('host-ip').value = '';
             document.getElementById('add-select-periodic-ping').value =
               data.periodicPing;
-            $('#add-host-modal').modal('hide');
+            const modal = new $('#add-host-modal').modal('hide');
           }
           showNotification(data.message, data.success ? 'success' : 'danger');
         } catch (error) {
@@ -447,8 +447,9 @@
 
       function showNotification(message, type, title = 'Notification') {
         const notificationList = document.getElementById('notification-list');
+        const notificationCount = notificationList.children.length;
 
-        if (notificationList.children.length >= 3) {
+        if (notificationCount >= 3) {
           notificationList.firstElementChild.remove();
         }
 
@@ -459,6 +460,7 @@
         toast.setAttribute('aria-atomic', 'true');
         toast.setAttribute('data-bs-autohide', 'true');
         toast.setAttribute('data-bs-delay', '3000');
+        toast.style.opacity = 1;
 
         toast.innerHTML = `
           <div class="toast-header">
@@ -479,6 +481,12 @@
 
         const toastInstance = new bootstrap.Toast(toast);
         toastInstance.show();
+
+        const notifications = notificationList.children;
+        let opacity = 1;
+        for (let i = notifications.length - 1; i >= 0; i--, opacity -= 0.25) {
+          notifications[i].style.opacity = opacity;
+        }
 
         const timeElapsed = toast.querySelector('.toast-header small');
         let secondsElapsed = 0;
