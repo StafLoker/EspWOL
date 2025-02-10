@@ -14,6 +14,7 @@
 /* Memory */
 #include <LittleFS.h>
 #include <ArduinoJson.h>
+#include <map>
 
 /* OTA */
 #define ENABLE_STANDARD_OTA 1  // Values: 1 to enable, != 1 to disable
@@ -23,6 +24,9 @@
 #endif
 
 #include <AutoOTA.h>
+
+/* Time */
+#include <GTimer.h>
 
 /* Project */
 #include "index.h"
@@ -68,8 +72,12 @@ struct Authentication {
   String password;
 } authentication;
 
-// Vector for storing the list of PCs
-std::vector<Host> hosts;
+// Map for storing hosts
+std::map<int, Host> hosts;
+// Map for storing lastPings
+std::map<int, unsigned long> lastPings;
+// Map for storing Timers
+std::map<int, GTimer<millis>> timers;
 
 #if ENABLE_STANDARD_OTA == 1
 // Function to setup OTA
@@ -92,6 +100,32 @@ void updateIPWifiSettings() {
 // Function to reset WiFi settings
 void resetWiFiSettings() {
   wifiManager.resetSettings();  // Reset WiFi settings
+}
+
+void setupPeriodicPingToHosts() {
+  for (const auto& pair : hosts) {
+    int id = pair.first;
+    const Host& host = pair.second;
+    if (host.periodicPing) {
+      timers[id] = GTimer<millis>(host.periodicPing, true);
+    }
+  }
+}
+
+void checkTimers() {
+  for (auto& pair : timers) {
+    int id = pair.first;
+    GTimer<millis>& timer = pair.second;
+    if (timer.tick()) {
+      Host& host = hosts[id];
+      IPAddress ip;
+      ip.fromString(host.ip);
+      lastPings[id] = millis();
+      if (!Ping.ping(ip)) {
+        WOL.sendMagicPacket(host.mac.c_str());
+      }
+    }
+  }
 }
 
 // Server setup
@@ -123,10 +157,13 @@ void setup() {
     resetWiFiSettings();
     server.send(200, "application/json", "{ \"success\": true, \"message\": \"WiFi settings reset\" }");
   });
+  server.on("/updateVersion", HTTP_ANY, handleUpdateVersion);
   server.onNotFound([]() {
     server.send(404, "text/plain", "404: Not found");
   });
   server.begin();
+
+  setupPeriodicPingToHosts();
 }
 
 void loop() {
@@ -134,5 +171,6 @@ void loop() {
 #if ENABLE_STANDARD_OTA == 1
   ArduinoOTA.handle();
 #endif
+  checkTimers();
   delay(1);  // Reduce power consumption by 60% with a delay https://hackaday.com/2022/10/28/esp8266-web-server-saves-60-power-with-a-1-ms-delay/
 }

@@ -20,7 +20,8 @@ static void getHostList() {
   String jsonResponse;
   StaticJsonDocument<1024> doc;
   JsonArray array = doc.to<JsonArray>();
-  for (const Host &host : hosts) {
+  for (const auto &pair : hosts) {
+    const Host &host = pair.second;
     JsonObject obj = array.createNestedObject();
     obj["name"] = host.name;
     obj["ip"] = host.ip;
@@ -59,6 +60,7 @@ static void addHost() {
   host.ip = doc["ip"].as<String>();
   host.periodicPing = doc["periodicPing"].as<long>() * 1000;
   hosts[hosts.size()] = host;
+  timers[hosts.size()] = GTimer<millis>(host.periodicPing, true);
   saveHostsData();
   server.send(200, "application/json", "{ \"success\": true, \"message\": \"Host added\" }");
 }
@@ -75,6 +77,13 @@ static void editHost(const String &id) {
     host.mac = doc["mac"].as<String>();
     host.ip = doc["ip"].as<String>();
     host.periodicPing = doc["periodicPing"].as<long>() * 1000;
+    if (host.periodicPing) {
+      GTimer<millis> &timer = timers[index];
+      timer.setTime(host.periodicPing);
+      timer.start();
+    } else {
+      timers.erase(index);
+    }
     saveHostsData();
     server.send(200, "application/json", "{ \"success\": true, \"message\": \"Host updated\" }");
   } else {
@@ -87,6 +96,8 @@ static void deleteHost(const String &id) {
   int index = id.toInt();
   if (index >= 0 && index < hosts.size()) {
     hosts.erase(index);
+    timers.erase(index);
+    lastPings.erase(index);
     saveHostsData();
     server.send(200, "application/json", "{ \"success\": true, \"message\": \"Host deleted\" }");
   } else {
@@ -285,7 +296,7 @@ static void getInformationToUpdate() {
 static void updateToLastVersion() {
   if (ota.hasUpdate()) {
     server.send(200, "application/json", "{ \"success\": true, \"message\": \"Update process will start in 1 second. Please wait for the update to complete.\" }");
-    dalay(1000);
+    delay(1000);
     ota.updateNow();
   }
 }

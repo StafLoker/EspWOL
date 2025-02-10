@@ -31,7 +31,8 @@ void saveHostsData() {
     if (file) {
       StaticJsonDocument<1024> doc;
       JsonArray array = doc.to<JsonArray>();
-      for (const Host& host : hosts) {
+      for (const auto& pair : hosts) {
+        const Host& host = pair.second;
         JsonObject obj = array.createNestedObject();
         obj["name"] = host.name;
         obj["mac"] = host.mac;
