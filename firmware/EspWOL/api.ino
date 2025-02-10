@@ -1,22 +1,28 @@
 #include "api.h"
 
+static bool isAuthenticated() {
+  if (authentication.enable && !server.authenticate(authentication.username.c_str(), authentication.password.c_str())) {
+    server.requestAuthentication();
+    return false;
+  }
+  return true;
+}
+
 // API: '/'
 void handleRoot() {
-  if (authentication.enable && !server.authenticate(authentication.username.c_str(), authentication.password.c_str())) {
-    return server.requestAuthentication();
+  if (isAuthenticated()) {
+    server.send_P(200, "text/html", htmlPage);
   }
-  server.send_P(200, "text/html", htmlPage);
 }
 
 // API: GET '/hosts'
-void getHostList() {
+static void getHostList() {
   String jsonResponse;
   StaticJsonDocument<1024> doc;
   JsonArray array = doc.to<JsonArray>();
-  for (const Host& host : hosts) {
+  for (const Host &host : hosts) {
     JsonObject obj = array.createNestedObject();
     obj["name"] = host.name;
-    obj["mac"] = host.mac;
     obj["ip"] = host.ip;
   }
   serializeJson(doc, jsonResponse);
@@ -24,15 +30,17 @@ void getHostList() {
 }
 
 // API: GET '/hosts?id={index}'
-void getHost(const String& id) {
+static void getHost(const String &id) {
   int index = id.toInt();
   if (index >= 0 && index < hosts.size()) {
-    Host& host = hosts[index];
+    Host &host = hosts[index];
     String jsonResponse;
     StaticJsonDocument<256> doc;
     doc["name"] = host.name;
     doc["mac"] = host.mac;
     doc["ip"] = host.ip;
+    doc["periodicPing"] = host.periodicPing / 1000;
+    doc["lastPing"] = (millis() - lastPings[index]) / 1000;
     serializeJson(doc, jsonResponse);
     server.send(200, "application/json", jsonResponse);
   } else {
@@ -41,7 +49,7 @@ void getHost(const String& id) {
 }
 
 // API: POST '/hosts'
-void addHost() {
+static void addHost() {
   String body = server.arg("plain");
   DynamicJsonDocument doc(1024);
   deserializeJson(doc, body);
@@ -49,22 +57,24 @@ void addHost() {
   host.name = doc["name"].as<String>();
   host.mac = doc["mac"].as<String>();
   host.ip = doc["ip"].as<String>();
-  hosts.push_back(host);
+  host.periodicPing = doc["periodicPing"].as<long>() * 1000;
+  hosts[hosts.size()] = host;
   saveHostsData();
   server.send(200, "application/json", "{ \"success\": true, \"message\": \"Host added\" }");
 }
 
 // API: PUT '/hosts?id={index}'
-void editHost(const String& id) {
+static void editHost(const String &id) {
   int index = id.toInt();
   String body = server.arg("plain");
   DynamicJsonDocument doc(1024);
   deserializeJson(doc, body);
   if (index >= 0 && index < hosts.size()) {
-    Host& host = hosts[index];
+    Host &host = hosts[index];
     host.name = doc["name"].as<String>();
     host.mac = doc["mac"].as<String>();
     host.ip = doc["ip"].as<String>();
+    host.periodicPing = doc["periodicPing"].as<long>() * 1000;
     saveHostsData();
     server.send(200, "application/json", "{ \"success\": true, \"message\": \"Host updated\" }");
   } else {
@@ -73,10 +83,10 @@ void editHost(const String& id) {
 }
 
 // API: DELETE '/hosts?id={index}'
-void deleteHost(const String& id) {
+static void deleteHost(const String &id) {
   int index = id.toInt();
   if (index >= 0 && index < hosts.size()) {
-    hosts.erase(hosts.begin() + index);
+    hosts.erase(index);
     saveHostsData();
     server.send(200, "application/json", "{ \"success\": true, \"message\": \"Host deleted\" }");
   } else {
@@ -85,69 +95,76 @@ void deleteHost(const String& id) {
 }
 
 void handleHosts() {
-  if (!server.hasArg("id")) {
-    if (server.method() == HTTP_GET) {
-      getHostList();
-    } else if (server.method() == HTTP_POST) {
-      addHost();
-    } else {
-      server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
-    }
-  } else {
-    if (server.method() == HTTP_GET) {
-      getHost(server.arg("id"));
-    } else if (server.method() == HTTP_PUT) {
-      editHost(server.arg("id"));
-    } else if (server.method() == HTTP_DELETE) {
-      deleteHost(server.arg("id"));
-    } else {
-      server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
-    }
-  }
-}
-
-// API: POST '/ping?id={index}'
-void handleWakeHost() {
-  if (server.hasArg("id")) {
-    int index = server.arg("id").toInt();
-    if (index >= 0 && index < hosts.size()) {
-      Host& host = hosts[index];
-      if (WOL.sendMagicPacket(host.mac.c_str())) {
-        server.send(200, "application/json", "{ \"success\": true, \"message\": \"WOL packet sent\" }");
+  if (isAuthenticated()) {
+    if (!server.hasArg("id")) {
+      if (server.method() == HTTP_GET) {
+        getHostList();
+      } else if (server.method() == HTTP_POST) {
+        addHost();
       } else {
-        server.send(200, "application/json", "{ \"success\": true, \"message\": \"Failed to send WOL packet\" }");
+        server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
       }
     } else {
-      server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
+      if (server.method() == HTTP_GET) {
+        getHost(server.arg("id"));
+      } else if (server.method() == HTTP_PUT) {
+        editHost(server.arg("id"));
+      } else if (server.method() == HTTP_DELETE) {
+        deleteHost(server.arg("id"));
+      } else {
+        server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
+      }
     }
-  } else {
-    server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
   }
 }
 
 // API: POST '/wake?id={index}'
-void handlePingHost() {
-  if (server.hasArg("id")) {
-    int index = server.arg("id").toInt();
-    if (index >= 0 && index < hosts.size()) {
-      Host& host = hosts[index];
-      IPAddress ip;
-      ip.fromString(host.ip);
-      if (Ping.ping(ip)) {
-        server.send(200, "application/json", "{ \"success\": true, \"message\": \"Pinging\" }");
+void handleWakeHost() {
+  if (isAuthenticated()) {
+    if (server.hasArg("id")) {
+      int index = server.arg("id").toInt();
+      if (index >= 0 && index < hosts.size()) {
+        Host &host = hosts[index];
+        if (WOL.sendMagicPacket(host.mac.c_str())) {
+          server.send(200, "application/json", "{ \"success\": true, \"message\": \"WOL packet sent\" }");
+        } else {
+          server.send(200, "application/json", "{ \"success\": true, \"message\": \"Failed to send WOL packet\" }");
+        }
       } else {
-        server.send(200, "application/json", "{ \"success\": false, \"message\": \"Failed ping\" }");
+        server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
       }
     } else {
-      server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
+      server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
     }
-  } else {
-    server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
+  }
+}
+
+
+// API: POST '/ping?id={index}'
+void handlePingHost() {
+  if (isAuthenticated()) {
+    if (server.hasArg("id")) {
+      int index = server.arg("id").toInt();
+      if (index >= 0 && index < hosts.size()) {
+        Host &host = hosts[index];
+        IPAddress ip;
+        ip.fromString(host.ip);
+        if (Ping.ping(ip)) {
+          server.send(200, "application/json", "{ \"success\": true, \"message\": \"Pinging\" }");
+        } else {
+          server.send(200, "application/json", "{ \"success\": false, \"message\": \"Failed ping\" }");
+        }
+      } else {
+        server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
+      }
+    } else {
+      server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
+    }
   }
 }
 
 // API: PUT '/networkSettings'
-void updateNetworkSettings() {
+static void updateNetworkSettings() {
   String body = server.arg("plain");
   DynamicJsonDocument doc(1024);
   deserializeJson(doc, body);
@@ -171,7 +188,7 @@ void updateNetworkSettings() {
 }
 
 // API: PUT '/authenticationSettings'
-void updateAuthenticationSettings() {
+static void updateAuthenticationSettings() {
   String body = server.arg("plain");
   DynamicJsonDocument doc(1024);
   deserializeJson(doc, body);
@@ -185,7 +202,7 @@ void updateAuthenticationSettings() {
 }
 
 // API: GET '/networkSettings'
-void getNetworkSettings() {
+static void getNetworkSettings() {
   String jsonResponse;
   StaticJsonDocument<256> doc;
   doc["enable"] = networkConfig.enable;
@@ -203,7 +220,7 @@ void getNetworkSettings() {
 }
 
 // API: GET '/authenticationSettings'
-void getAuthenticationSettings() {
+static void getAuthenticationSettings() {
   String jsonResponse;
   StaticJsonDocument<256> doc;
   doc["enable"] = authentication.enable;
@@ -214,43 +231,73 @@ void getAuthenticationSettings() {
 }
 
 void handleNetworkSettings() {
-  if (server.method() == HTTP_GET) {
-    getNetworkSettings();
-  } else if (server.method() == HTTP_PUT) {
-    updateNetworkSettings();
-  } else {
-    server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
+  if (isAuthenticated()) {
+    if (server.method() == HTTP_GET) {
+      getNetworkSettings();
+    } else if (server.method() == HTTP_PUT) {
+      updateNetworkSettings();
+    } else {
+      server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
+    }
   }
 }
 
 void handleAuthenticationSettings() {
-  if (server.method() == HTTP_GET) {
-    getAuthenticationSettings();
-  } else if (server.method() == HTTP_PUT) {
-    updateAuthenticationSettings();
-  } else {
-    server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
+  if (isAuthenticated()) {
+    if (server.method() == HTTP_GET) {
+      getAuthenticationSettings();
+    } else if (server.method() == HTTP_PUT) {
+      updateAuthenticationSettings();
+    } else {
+      server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
+    }
   }
 }
 
 // API: GET '/about'
 void handleGetAbout() {
+  if (isAuthenticated()) {
+    String jsonResponse;
+    StaticJsonDocument<256> doc;
+    doc["version"] = ota.version();
+    doc["lastVersion"] = ota.hasUpdate();
+    doc["hostname"] = wifiManager.getWiFiHostname();
+    serializeJson(doc, jsonResponse);
+    server.send(200, "application/json", jsonResponse);
+  }
+}
+
+// API: GET '/updateVersion'
+static void getInformationToUpdate() {
+  String lastVersion;
   String jsonResponse;
   StaticJsonDocument<256> doc;
-  doc["version"] = VERSION;
-  doc["hostname"] = wifiManager.getWiFiHostname();
+
+  ota.checkUpdate(&lastVersion);
+
+  doc["version"] = ota.version();
+  doc["lastVersion"] = lastVersion;
   serializeJson(doc, jsonResponse);
   server.send(200, "application/json", jsonResponse);
 }
 
-void handleSetPeriodicPing() {
-  int index = server.arg("id").toInt();
-  unsigned long newPingInterval = server.arg("interval").toInt();
+// API: POST '/updateVersion'
+static void updateToLastVersion() {
+  if (ota.hasUpdate()) {
+    server.send(200, "application/json", "{ \"success\": true, \"message\": \"Update process will start in 1 second. Please wait for the update to complete.\" }");
+    dalay(1000);
+    ota.updateNow();
+  }
+}
 
-  if (index >= 0 && index < hosts.size()) {
-    hosts[index].periodicPing = newPingInterval;
-    server.send(200, "application/json", "{ \"success\": true, \"message\": \"Periodic ping updated\" }");
-  } else {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid host ID\" }");
+void handleUpdateVersion() {
+  if (isAuthenticated()) {
+    if (server.method() == HTTP_GET) {
+      getInformationToUpdate();
+    } else if (server.method() == HTTP_POST) {
+      updateToLastVersion();
+    } else {
+      server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
+    }
   }
 }
