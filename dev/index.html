@@ -490,11 +490,13 @@
             location.reload();
           }
         } catch (error) {
+          showNotification('Error to reset WIFI settings', 'danger', 'Error');
           console.error('Fetch reset WIFI settings error:', error);
         }
       }
 
       async function getUpdateVersion() {
+        const modal = new bootstrap.Modal('#update-version-modal');
         try {
           const response = await fetch('/updateVersion');
           const data = await response.json();
@@ -510,19 +512,36 @@
                 You are using version <span class="badge rounded-pill bg-secondary">${data.version}</span>.`;
             updateButton.style.display = 'block';
           }
+          modal.show();
         } catch (error) {
+          showNotification(
+            'Error to get information about updating',
+            'danger',
+            'Error'
+          );
           console.error('Error fetching update version:', error);
         }
       }
 
       async function updateToLastVersion() {
-        const response = await fetch('/updateVersion', { method: 'POST' });
-        const data = await response.json();
-        showNotification(
-          data.message,
-          data.success ? 'success' : 'danger',
-          data.success ? 'Update' : 'Error'
-        );
+        const modal = new bootstrap.Modal('#update-version-modal');
+        try {
+          const response = await fetch('/updateVersion', { method: 'POST' });
+          const data = await response.json();
+          showNotification(
+            data.message,
+            data.success ? 'success' : 'danger',
+            data.success ? 'Update' : 'Error'
+          );
+          modal.hide();
+        } catch (error) {
+          showNotification(
+            'Error to updating to last version',
+            'danger',
+            'Updating error'
+          );
+          console.error('Error fetching update version:', error);
+        }
       }
 
       function showNotification(message, type, title = 'Notification') {
@@ -736,7 +755,13 @@
   </head>
   <body>
     <div class="layout">
-      <l-bouncy id="loader" size="54" speed="1.9" color="white" style="display: none;"></l-bouncy>
+      <l-bouncy
+        id="loader"
+        size="54"
+        speed="1.9"
+        color="white"
+        style="display: none"
+      ></l-bouncy>
       <header class="d-flex justify-content-end p-3">
         <button
           id="darkModeToggle"
@@ -770,38 +795,7 @@
           </div>
         </h2>
         <!-- HOST List -->
-        <ul id="host-list" class="list-group mt-3">
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center"
-            id="host-item-1"
-          >
-            <div class="d-flex align-items-center">
-              <div class="status-circle" id="status-1"></div>
-              Test - 10.10.1.9
-            </div>
-            <div>
-              <button
-                id="ping-button-1"
-                class="btn btn-info btn-sm me-2"
-                onclick="pingHost(1)"
-              >
-                <i class="fas fa-table-tennis"></i>
-              </button>
-              <button
-                class="btn btn-warning btn-sm me-2"
-                onclick="editHost(1)"
-                data-index="1"
-                data-bs-toggle="modal"
-                data-bs-target="#edit-host-modal"
-              >
-                <i class="fas fa-edit"></i>
-              </button>
-              <button class="btn btn-primary btn-sm" onclick="wakeHost(1)">
-                <i class="fas fa-play"></i>
-              </button>
-            </div>
-          </li>
-        </ul>
+        <ul id="host-list" class="list-group mt-3"></ul>
       </main>
       <!-- Alert Zone (Toast Container) -->
       <div aria-live="polite" aria-atomic="true" class="position-relative">
@@ -1056,9 +1050,8 @@
                   <span
                     id="version"
                     class="badge rounded-pill"
-                    data-bs-toggle="modal"
-                    data-bs-target="#update-version-modal"
                     data-bs-dismiss="modal"
+                    onclick="getUpdateVersion()"
                   ></span>
                 </p>
                 <p class="card-text">
@@ -1304,8 +1297,8 @@
             <button
               type="button"
               id="button-update-version"
-              class="btn btn-danger"
-              onclick="updateVersion()"
+              class="btn btn-success"
+              onclick="updateToLastVersion()"
             >
               Update
             </button>
