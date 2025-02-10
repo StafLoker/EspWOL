@@ -14,7 +14,8 @@ void loadHostsData() {
           host.name = v["name"].as<String>();
           host.mac = v["mac"].as<String>();
           host.ip = v["ip"].as<String>();
-          hosts.push_back(host);
+          host.periodicPing = v["periodicPing"].as<long>();
+          hosts[hosts.size()] = host;
         }
       }
       file.close();
@@ -35,6 +36,7 @@ void saveHostsData() {
         obj["name"] = host.name;
         obj["mac"] = host.mac;
         obj["ip"] = host.ip;
+        obj["periodicPing"] = host.periodicPing;
       }
       serializeJson(doc, file);
       file.close();
