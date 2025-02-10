@@ -23,8 +23,10 @@
       document.addEventListener('DOMContentLoaded', async function () {
         await getAllHost();
 
+        // Light-Dark mode toggle
         const htmlElement = document.documentElement;
-        const switchElement = document.getElementById('darkModeSwitch');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const darkModeIcon = document.getElementById('darkModeIcon');
         const prefersDarkScheme = window.matchMedia(
           '(prefers-color-scheme: dark)'
         ).matches;
@@ -32,23 +34,25 @@
           localStorage.getItem('bsTheme') ||
           (prefersDarkScheme ? 'dark' : 'light');
 
-        htmlElement.setAttribute('data-bs-theme', currentTheme);
-        switchElement.checked = currentTheme === 'dark';
+        function updateThemeIcon(theme) {
+          darkModeIcon.className =
+            theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+        }
 
-        switchElement.addEventListener('change', function () {
-          const newTheme = this.checked ? 'dark' : 'light';
+        htmlElement.setAttribute('data-bs-theme', currentTheme);
+        updateThemeIcon(currentTheme);
+
+        darkModeToggle.addEventListener('click', function () {
+          const newTheme =
+            htmlElement.getAttribute('data-bs-theme') === 'dark'
+              ? 'light'
+              : 'dark';
           htmlElement.setAttribute('data-bs-theme', newTheme);
           localStorage.setItem('bsTheme', newTheme);
+          updateThemeIcon(newTheme);
         });
 
-        // Tooltip aktivieren
-        var tooltipTriggerList = [].slice.call(
-          document.querySelectorAll('[data-bs-toggle="tooltip"]')
-        );
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-          return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-
+        // Forms 
         const forms = document.querySelectorAll('.needs-validation');
         forms.forEach((form) => {
           form.addEventListener('submit', handleFormSubmit);
@@ -682,21 +686,18 @@
   </head>
   <body>
     <div class="layout">
+      <header class="d-flex justify-content-end p-3">
+        <button
+          id="darkModeToggle"
+          class="btn btn-outline-secondary"
+          data-bs-toggle="tooltip"
+        >
+          <i id="darkModeIcon" class="fas"></i>
+        </button>
+      </header>
       <main class="container mt-5">
         <h1 class="text-center">Wake on LAN</h1>
-        <div class="form-check form-switch">
-          <input
-            class="form-check-input"
-            type="checkbox"
-            id="darkModeSwitch"
-            checked
-            aria-label="Switch between light and dark mode"
-            data-bs-toggle="tooltip"
-            data-bs-placement="top"
-            title="Switch between light and dark mode"
-          />
-          <label class="form-check-label" for="darkModeSwitch">Dark Mode</label>
-        </div>
+
         <!-- Control -->
         <h2 class="mt-4 d-flex justify-content-between align-items-center">
           <span>Hosts</span>
