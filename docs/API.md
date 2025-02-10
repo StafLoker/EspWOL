@@ -218,3 +218,16 @@
     ```  
     **Description:**  
     Get information about last version.
+
+15. **`POST /updateVersion`**  
+    **Request:**  
+    - No request body or headers needed.  
+    **Response:**  
+    ```json
+    {
+      "success": boolean,
+      "message": "string"
+    }
+    ```  
+    **Description:**  
+    Update to last version.
