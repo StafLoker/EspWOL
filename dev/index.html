@@ -19,10 +19,12 @@
       integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
       crossorigin="anonymous"
     ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/ldrs/dist/auto/bouncy.js"
+    ></script>
     <script>
       document.addEventListener('DOMContentLoaded', async function () {
-        await getAllHost();
-
         // Light-Dark mode toggle
         const htmlElement = document.documentElement;
         const darkModeToggle = document.getElementById('darkModeToggle');
@@ -37,6 +39,9 @@
         function updateThemeIcon(theme) {
           darkModeIcon.className =
             theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+          document
+            .querySelector('l-bouncy')
+            .setAttribute('color', theme === 'dark' ? 'white' : 'black');
         }
 
         htmlElement.setAttribute('data-bs-theme', currentTheme);
@@ -51,12 +56,22 @@
           localStorage.setItem('bsTheme', newTheme);
           updateThemeIcon(newTheme);
         });
-
-        // Forms 
+        // Forms
         const forms = document.querySelectorAll('.needs-validation');
         forms.forEach((form) => {
           form.addEventListener('submit', handleFormSubmit);
         });
+
+        const loader = document.getElementById('loader');
+
+        // Load all hosts
+        document.body.classList.add('blurred');
+        loader.style.display = 'block';
+
+        await getAllHost();
+
+        loader.style.display = 'none';
+        document.body.classList.remove('blurred');
       });
 
       async function handleFormSubmit(event) {
@@ -134,6 +149,9 @@
         const name = document.getElementById('host-name').value;
         const mac = document.getElementById('host-mac').value;
         const ip = document.getElementById('host-ip').value;
+        const periodicPing = document.getElementById(
+          'add-select-periodic-ping'
+        ).value;
 
         const modal = new bootstrap.Modal('#add-host-modal');
 
@@ -141,7 +159,7 @@
           const response = await fetch('/hosts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, mac, ip })
+            body: JSON.stringify({ name, mac, ip, periodicPing })
           });
 
           const data = await response.json();
@@ -150,13 +168,17 @@
             document.getElementById('host-name').value = '';
             document.getElementById('host-mac').value = '';
             document.getElementById('host-ip').value = '';
-            document.getElementById('add-select-periodic-ping').value =
-              data.periodicPing;
+            document.getElementById('add-select-periodic-ping').value = 0;
 
             modal.hide();
           }
-          showNotification(data.message, data.success ? 'success' : 'danger');
+          showNotification(
+            data.message,
+            data.success ? 'success' : 'danger',
+            data.success ? 'Notification' : 'Error'
+          );
         } catch (error) {
+          modal.hide();
           showNotification('Error adding host', 'danger', 'Error');
           console.error('Error adding host:', error);
         }
@@ -177,6 +199,8 @@
           document.getElementById('edit-host-ip').value = data.ip;
           document.getElementById('edit-select-periodic-ping').value =
             data.periodicPing;
+          document.getElementById('edit-last-ping').value =
+            'Last ping:' + data.lastPing / 60 + 'mins ago';
           modal.show();
         } catch (error) {
           showNotification('Error edit host', 'danger', 'Error');
@@ -190,6 +214,9 @@
         const name = document.getElementById('edit-host-name').value;
         const mac = document.getElementById('edit-host-mac').value;
         const ip = document.getElementById('edit-host-ip').value;
+        const periodicPing = document.getElementById(
+          'edit-select-periodic-ping'
+        ).value;
 
         const modal = new bootstrap.Modal('#edit-host-modal');
 
@@ -197,7 +224,7 @@
           const response = await fetch('/hosts?id=' + index, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, mac, ip })
+            body: JSON.stringify({ name, mac, ip, periodicPing })
           });
           const data = await response.json();
           if (data.success) {
@@ -467,7 +494,7 @@
         }
       }
 
-      async function getUpdateSettings() {
+      async function getUpdateVersion() {
         try {
           const response = await fetch('/updateVersion');
           const data = await response.json();
@@ -479,13 +506,23 @@
             textBody.textContent = `You are up to date!`;
             updateButton.style.display = 'none';
           } else {
-            textBody.innerHTML = `New version available: <span class="badge rounded-pill bg-primary">${data.lastVersion}</span>. 
+            textBody.innerHTML = `New version available: <span class="badge rounded-pill bg-primary">${data.lastVersion}</span>.
                 You are using version <span class="badge rounded-pill bg-secondary">${data.version}</span>.`;
             updateButton.style.display = 'block';
           }
         } catch (error) {
           console.error('Error fetching update version:', error);
         }
+      }
+
+      async function updateToLastVersion() {
+        const response = await fetch('/updateVersion', { method: 'POST' });
+        const data = await response.json();
+        showNotification(
+          data.message,
+          data.success ? 'success' : 'danger',
+          data.success ? 'Update' : 'Error'
+        );
       }
 
       function showNotification(message, type, title = 'Notification') {
@@ -620,6 +657,7 @@
         display: flex;
         flex-direction: column;
         height: 100vh;
+        position: relative;
       }
 
       main {
@@ -682,10 +720,23 @@
       .status-circle.red {
         background-color: red;
       }
+
+      l-bouncy {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 9999;
+      }
+
+      body.blurred main {
+        filter: blur(5px);
+      }
     </style>
   </head>
   <body>
     <div class="layout">
+      <l-bouncy id="loader" size="54" speed="1.9" color="white" style="display: none;"></l-bouncy>
       <header class="d-flex justify-content-end p-3">
         <button
           id="darkModeToggle"
@@ -740,6 +791,8 @@
                 class="btn btn-warning btn-sm me-2"
                 onclick="editHost(1)"
                 data-index="1"
+                data-bs-toggle="modal"
+                data-bs-target="#edit-host-modal"
               >
                 <i class="fas fa-edit"></i>
               </button>
@@ -831,17 +884,17 @@
                   aria-label="Periodic ping"
                 >
                   <option value="0" selected>Disabled</option>
-                  <option value="1">1 min</option>
-                  <option value="5">5 min</option>
-                  <option value="10">10 min</option>
-                  <option value="15">15 min</option>
-                  <option value="30">30 min</option>
-                  <option value="45">45 min</option>
-                  <option value="60">1 hour</option>
-                  <option value="180">3 hours</option>
-                  <option value="360">6 hours</option>
-                  <option value="720">12 hours</option>
-                  <option value="1440">24 hours</option>
+                  <option value="60">1 min</option>
+                  <option value="300">5 min</option>
+                  <option value="600">10 min</option>
+                  <option value="900">15 min</option>
+                  <option value="1800">30 min</option>
+                  <option value="2700">45 min</option>
+                  <option value="3600">1 hour</option>
+                  <option value="10800">3 hours</option>
+                  <option value="21600">6 hours</option>
+                  <option value="43200">12 hours</option>
+                  <option value="86400">24 hours</option>
                 </select>
               </div>
             </form>
@@ -928,18 +981,24 @@
                   aria-label="Periodic ping"
                 >
                   <option value="0" selected>Disabled</option>
-                  <option value="1">1 min</option>
-                  <option value="5">5 min</option>
-                  <option value="10">10 min</option>
-                  <option value="15">15 min</option>
-                  <option value="30">30 min</option>
-                  <option value="45">45 min</option>
-                  <option value="60">1 hour</option>
-                  <option value="180">3 hours</option>
-                  <option value="360">6 hours</option>
-                  <option value="720">12 hours</option>
-                  <option value="1440">24 hours</option>
+                  <option value="60">1 min</option>
+                  <option value="300">5 min</option>
+                  <option value="600">10 min</option>
+                  <option value="900">15 min</option>
+                  <option value="1800">30 min</option>
+                  <option value="2700">45 min</option>
+                  <option value="3600">1 hour</option>
+                  <option value="10800">3 hours</option>
+                  <option value="21600">6 hours</option>
+                  <option value="43200">12 hours</option>
+                  <option value="86400">24 hours</option>
                 </select>
+                <small
+                  class="text-muted d-flex justify-content-end"
+                  id="edit-last-ping"
+                >
+                  Last ping: _ min ago
+                </small>
               </div>
             </form>
           </div>
