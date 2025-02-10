@@ -22,18 +22,58 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       crossorigin="anonymous"
     ></script>
     <script
-      src="https://code.jquery.com/jquery-3.7.1.js"
-      integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
-      crossorigin="anonymous"
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/ldrs/dist/auto/bouncy.js"
     ></script>
     <script>
       document.addEventListener('DOMContentLoaded', async function () {
-        await getAllHost();
+        // Light-Dark mode toggle
+        const htmlElement = document.documentElement;
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const darkModeIcon = document.getElementById('darkModeIcon');
+        const prefersDarkScheme = window.matchMedia(
+          '(prefers-color-scheme: dark)'
+        ).matches;
+        const currentTheme =
+          localStorage.getItem('bsTheme') ||
+          (prefersDarkScheme ? 'dark' : 'light');
 
+        function updateThemeIcon(theme) {
+          darkModeIcon.className =
+            theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+          document
+            .querySelector('l-bouncy')
+            .setAttribute('color', theme === 'dark' ? 'white' : 'black');
+        }
+
+        htmlElement.setAttribute('data-bs-theme', currentTheme);
+        updateThemeIcon(currentTheme);
+
+        darkModeToggle.addEventListener('click', function () {
+          const newTheme =
+            htmlElement.getAttribute('data-bs-theme') === 'dark'
+              ? 'light'
+              : 'dark';
+          htmlElement.setAttribute('data-bs-theme', newTheme);
+          localStorage.setItem('bsTheme', newTheme);
+          updateThemeIcon(newTheme);
+        });
+        // Forms
         const forms = document.querySelectorAll('.needs-validation');
         forms.forEach((form) => {
           form.addEventListener('submit', handleFormSubmit);
         });
+
+        const loader = document.getElementById('loader');
+
+        // Load all hosts
+        document.body.classList.add('blurred');
+        loader.style.display = 'block';
+
+        await getAllHost();
+
+        loader.style.display = 'none';
+        document.body.classList.remove('blurred');
       });
 
       async function handleFormSubmit(event) {
@@ -111,12 +151,17 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const name = document.getElementById('host-name').value;
         const mac = document.getElementById('host-mac').value;
         const ip = document.getElementById('host-ip').value;
+        const periodicPing = document.getElementById(
+          'add-select-periodic-ping'
+        ).value;
+
+        const modal = new bootstrap.Modal('#add-host-modal');
 
         try {
           const response = await fetch('/hosts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, mac, ip })
+            body: JSON.stringify({ name, mac, ip, periodicPing })
           });
 
           const data = await response.json();
@@ -125,12 +170,19 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             document.getElementById('host-name').value = '';
             document.getElementById('host-mac').value = '';
             document.getElementById('host-ip').value = '';
-            $('#add-host-modal').modal('hide');
+            document.getElementById('add-select-periodic-ping').value = 0;
+
+            modal.hide();
           }
-          showNotification(data.message, data.success ? 'success' : 'danger');
+          showNotification(
+            data.message,
+            data.success ? 'success' : 'danger',
+            data.success ? 'Notification' : 'Error'
+          );
         } catch (error) {
-          showNotification('Error adding HOST', 'danger');
-          console.error('Error adding HOST:', error);
+          modal.hide();
+          showNotification('Error adding host', 'danger', 'Error');
+          console.error('Error adding host:', error);
         }
       }
 
@@ -139,16 +191,22 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         document
           .getElementById('edit-host-modal')
           .setAttribute('data-index', index);
+
+        const modal = new bootstrap.Modal('#edit-host-modal');
         try {
           const response = await fetch('/hosts?id=' + index, { method: 'GET' });
           const data = await response.json();
           document.getElementById('edit-host-name').value = data.name;
           document.getElementById('edit-host-mac').value = data.mac;
           document.getElementById('edit-host-ip').value = data.ip;
-          $('#edit-host-modal').modal('show');
+          document.getElementById('edit-select-periodic-ping').value =
+            data.periodicPing;
+          document.getElementById('edit-last-ping').value =
+            'Last ping:' + data.lastPing / 60 + 'mins ago';
+          modal.show();
         } catch (error) {
-          showNotification('Error edit HOST', 'danger');
-          console.error('Error edit HOST:', error);
+          showNotification('Error edit host', 'danger', 'Error');
+          console.error('Error edit host:', error);
         }
       }
 
@@ -158,32 +216,43 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const name = document.getElementById('edit-host-name').value;
         const mac = document.getElementById('edit-host-mac').value;
         const ip = document.getElementById('edit-host-ip').value;
+        const periodicPing = document.getElementById(
+          'edit-select-periodic-ping'
+        ).value;
+
+        const modal = new bootstrap.Modal('#edit-host-modal');
 
         try {
           const response = await fetch('/hosts?id=' + index, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, mac, ip })
+            body: JSON.stringify({ name, mac, ip, periodicPing })
           });
           const data = await response.json();
           if (data.success) {
             await getAllHost();
           }
 
-          $('#edit-host-modal').modal('hide');
+          modal.hide();
 
-          showNotification(data.message, data.success ? 'success' : 'danger');
+          showNotification(
+            data.message,
+            data.success ? 'success' : 'danger',
+            data.success ? 'Notification' : 'Error'
+          );
         } catch (error) {
-          $('#edit-host-modal').modal('hide');
+          modal.hide();
 
-          showNotification('Error edit HOST', 'danger');
-          console.error('Error edit HOST:', error);
+          showNotification('Error edit host', 'danger', 'Error');
+          console.error('Error edit host:', error);
         }
       }
 
       async function confirmDelete() {
         const modalElement = document.getElementById('edit-host-modal');
         const index = modalElement.getAttribute('data-index');
+
+        const modal = new bootstrap.Modal('#edit-host-modal');
 
         try {
           const response = await fetch('/hosts?id=' + index, {
@@ -194,13 +263,17 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             await getAllHost();
           }
 
-          $('#edit-host-modal').modal('hide');
+          modal.hide();
 
-          showNotification(data.message, data.success ? 'success' : 'danger');
+          showNotification(
+            data.message,
+            data.success ? 'success' : 'danger',
+            data.success ? 'Notification' : 'Error'
+          );
         } catch (error) {
-          $('#edit-host-modal').modal('hide');
-          showNotification('Error delete HOST', 'danger');
-          console.error('Error delete HOST:', error);
+          modal.hide();
+          showNotification('Error delete host', 'danger', 'Error');
+          console.error('Error delete host:', error);
         }
       }
 
@@ -233,14 +306,16 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           } else {
             statusCircle.classList.remove('green', 'blinking');
             statusCircle.classList.add('red');
-            showNotification(data.message, 'danger');
+            showNotification(data.message, 'danger', 'Error');
 
             setTimeout(() => {
               statusCircle.classList.remove('red');
             }, 10000);
           }
         } catch (error) {
-          showNotification('Ping failed', 'danger');
+          showNotification('Ping failed', 'danger', 'Error');
+          button.innerHTML = '<i class="fas fa-table-tennis"></i>';
+          button.removeAttribute('disabled');
           console.error('Ping failed:', error);
         }
       }
@@ -251,77 +326,78 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             method: 'POST'
           });
           const data = await response.json();
-          showNotification(data.message, data.success ? 'info' : 'danger');
+          showNotification(
+            data.message,
+            data.success ? 'info' : 'danger',
+            data.success ? 'Notification' : 'Error'
+          );
         } catch (error) {
           showNotification("WOL packet don't sent", 'danger');
-          console.error('Ping failed:', error);
+          console.error("WOL packet don't sent:", error);
         }
       }
 
       async function getAbout() {
-        try {
-          const response = await fetch('/about', { method: 'GET' });
-          const data = await response.json();
+        const response = await fetch('/about');
+        if (!response.ok) throw new Error('Failed to fetch About information');
 
-          document.getElementById('version').innerText = data.version;
-          document.getElementById('hostname').innerText = data.hostname;
-        } catch (error) {
-          showNotification('Error to get about information', 'danger');
-          console.error('Fetch error (About):', error);
-        }
+        const data = await response.json();
+        document.getElementById('version').innerText = data.version;
+        document
+          .getElementById('version')
+          .classList.add(
+            data.lastVersion ? 'bg-success' : 'bg-warning text-dark'
+          );
+        document.getElementById('hostname').innerText = data.hostname;
       }
 
       async function getNetworkSettings() {
-        try {
-          const response = await fetch('/networkSettings', { method: 'GET' });
-          const data = await response.json();
+        const response = await fetch('/networkSettings');
+        if (!response.ok) throw new Error('Failed to fetch Network Settings');
 
-          document.getElementById('inlineRadioStaticIP').checked = data.enable;
-          document.getElementById('inlineRadioDHCP').checked = !data.enable;
-          document.getElementById('fieldIP').value = data.ip;
-          document.getElementById('fieldNetworkMask').value = data.networkMask;
-          document.getElementById('fieldGateway').value = data.gateway;
+        const data = await response.json();
+        document.getElementById('inlineRadioStaticIP').checked = data.enable;
+        document.getElementById('inlineRadioDHCP').checked = !data.enable;
+        document.getElementById('fieldIP').value = data.ip;
+        document.getElementById('fieldNetworkMask').value = data.networkMask;
+        document.getElementById('fieldGateway').value = data.gateway;
 
-          toggleNetworkFields();
-        } catch (error) {
-          showNotification('Error to get network settings', 'danger');
-          console.error('Fetch error (Network Settings):', error);
-        }
+        toggleNetworkFields();
       }
 
       async function getAuthentication() {
-        try {
-          const response = await fetch('/authenticationSettings', {
-            method: 'GET'
-          });
-          const data = await response.json();
+        const response = await fetch('/authenticationSettings');
+        if (!response.ok)
+          throw new Error('Failed to fetch Authentication Settings');
 
-          document.getElementById('switchEnableAuthentication').checked =
-            data.enable;
-          document.getElementById('fieldUsername').value = data.username;
-          document.getElementById('fieldPassword').value = data.password;
+        const data = await response.json();
+        document.getElementById('switchEnableAuthentication').checked =
+          data.enable;
+        document.getElementById('fieldUsername').value = data.username;
+        document.getElementById('fieldPassword').value = data.password;
 
-          const form = document.getElementById(
-            'editAuthenticationSettingsForm'
-          );
-          if (data.enable) {
-            form.classList.add('needs-validation');
-            form.classList.add('novalidate');
-          }
-
-          toggleAuthenticationFields();
-        } catch (error) {
-          showNotification('Error to get authentication settings', 'danger');
-          console.error('Fetch error (Authentication):', error);
+        const form = document.getElementById('editAuthenticationSettingsForm');
+        if (data.enable) {
+          form.classList.add('needs-validation');
+          form.classList.add('novalidate');
         }
+
+        toggleAuthenticationFields();
       }
 
       async function getSettings() {
-        await getAbout();
-        await getNetworkSettings();
-        await getAuthentication();
-
-        $('#settings-modal').modal('show');
+        try {
+          await Promise.all([
+            getAbout(),
+            getNetworkSettings(),
+            getAuthentication()
+          ]);
+          const modal = new bootstrap.Modal('#settings-modal');
+          modal.show();
+        } catch (error) {
+          console.error('Error loading settings:', error);
+          showNotification('Failed to load settings', 'danger', 'Error');
+        }
       }
 
       async function updateNetworkSettings() {
@@ -329,6 +405,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const ip = document.getElementById('fieldIP').value;
         const networkMask = document.getElementById('fieldNetworkMask').value;
         const gateway = document.getElementById('fieldGateway').value;
+
+        const modal = new bootstrap.Modal('#settings-modal');
 
         try {
           const response = await fetch('/networkSettings', {
@@ -338,18 +416,26 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           });
           const data = await response.json();
 
-          $('#settings-modal').modal('hide');
+          modal.hide();
 
-          showNotification(data.message, data.success ? 'success' : 'danger');
+          showNotification(
+            data.message,
+            data.success ? 'success' : 'danger',
+            data.success ? 'Notification' : 'Error'
+          );
           if (data.success) {
             setTimeout(() => {
               window.location.href = `http://${ip}`;
             }, 1500);
           }
         } catch {
-          $('#settings-modal').modal('hide');
+          modal.hide();
 
-          showNotification('Error to update network settings', 'danger');
+          showNotification(
+            'Error to update network settings',
+            'danger',
+            'Error'
+          );
           console.error('Fetch error:', error);
         }
       }
@@ -361,6 +447,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const username = document.getElementById('fieldUsername').value;
         const password = document.getElementById('fieldPassword').value;
 
+        const modal = new bootstrap.Modal('#settings-modal');
+
         try {
           const response = await fetch('/authenticationSettings', {
             method: 'PUT',
@@ -369,16 +457,24 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           });
           const data = await response.json();
 
-          $('#settings-modal').modal('hide');
+          modal.hide();
 
-          showNotification(data.message, data.success ? 'success' : 'danger');
+          showNotification(
+            data.message,
+            data.success ? 'success' : 'danger',
+            data.success ? 'Notification' : 'Error'
+          );
           setTimeout(() => {
             location.reload();
           }, 1500);
         } catch {
-          $('#settings-modal').modal('hide');
+          modal.hide();
 
-          showNotification('Error to update authentication settings', 'danger');
+          showNotification(
+            'Error to update authentication settings',
+            'danger',
+            'Error'
+          );
           console.error('Fetch error:', error);
         }
       }
@@ -387,29 +483,122 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         try {
           const response = await fetch('/resetWifi', { method: 'POST' });
           const data = await response.json();
-          showNotification(data.message, data.success ? 'success' : 'danger');
+          showNotification(
+            data.message,
+            data.success ? 'success' : 'danger',
+            data.success ? 'Notification' : 'Error'
+          );
           if (data.success) {
             location.reload();
           }
         } catch (error) {
+          showNotification('Error to reset WIFI settings', 'danger', 'Error');
           console.error('Fetch reset WIFI settings error:', error);
         }
       }
 
-      function showNotification(message, type) {
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type} alert-dismissible fade show`;
-        notification.role = 'alert';
-        notification.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+      async function getUpdateVersion() {
+        const modal = new bootstrap.Modal('#update-version-modal');
+        try {
+          const response = await fetch('/updateVersion');
+          const data = await response.json();
 
-        const notificationArea = document.getElementById('notification-area');
-        notificationArea.appendChild(notification);
+          const textBody = document.getElementById('update-version-text-body');
+          const updateButton = document.getElementById('button-update-version');
 
-        setTimeout(() => {
-          notification.remove();
-        }, 3000);
+          if (data.version === data.lastVersion) {
+            textBody.textContent = `You are up to date!`;
+            updateButton.style.display = 'none';
+          } else {
+            textBody.innerHTML = `New version available: <span class="badge rounded-pill bg-primary">${data.lastVersion}</span>.
+                You are using version <span class="badge rounded-pill bg-secondary">${data.version}</span>.`;
+            updateButton.style.display = 'block';
+          }
+          modal.show();
+        } catch (error) {
+          showNotification(
+            'Error to get information about updating',
+            'danger',
+            'Error'
+          );
+          console.error('Error fetching update version:', error);
+        }
+      }
+
+      async function updateToLastVersion() {
+        const modal = new bootstrap.Modal('#update-version-modal');
+        try {
+          const response = await fetch('/updateVersion', { method: 'POST' });
+          const data = await response.json();
+          showNotification(
+            data.message,
+            data.success ? 'success' : 'danger',
+            data.success ? 'Update' : 'Error'
+          );
+          modal.hide();
+        } catch (error) {
+          showNotification(
+            'Error to updating to last version',
+            'danger',
+            'Updating error'
+          );
+          console.error('Error fetching update version:', error);
+        }
+      }
+
+      function showNotification(message, type, title = 'Notification') {
+        const notificationList = document.getElementById('notification-list');
+        const notificationCount = notificationList.children.length;
+
+        if (notificationCount >= 3) {
+          notificationList.firstElementChild.remove();
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center border-0 rounded-3`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+        toast.setAttribute('data-bs-autohide', 'true');
+        toast.setAttribute('data-bs-delay', '3000');
+        toast.style.opacity = 1;
+
+        toast.innerHTML = `
+          <div class="toast-header">
+              <div class="me-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="var(--bs-${type})" class="bi bi-square-fill" viewBox="0 0 16 16">
+                    <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2z"/>
+                  </svg>
+              </div>
+              <strong class="me-auto">${title}</strong>
+              <small class="text-muted ms-auto">Just now</small>
+              <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+          <div class="toast-body">
+              ${message}
+          </div>`;
+
+        notificationList.appendChild(toast);
+
+        const toastInstance = new bootstrap.Toast(toast);
+        toastInstance.show();
+
+        const notifications = notificationList.children;
+        let opacity = 1;
+        for (let i = notifications.length - 1; i >= 0; i--, opacity -= 0.25) {
+          notifications[i].style.opacity = opacity;
+        }
+
+        const timeElapsed = toast.querySelector('.toast-header small');
+        let secondsElapsed = 0;
+        const interval = setInterval(() => {
+          secondsElapsed++;
+          timeElapsed.innerText = `${secondsElapsed} seg ago`;
+
+          if (!document.body.contains(toast)) {
+            clearInterval(interval);
+          }
+        }, 1000);
       }
 
       function toggleNetworkFields() {
@@ -481,10 +670,15 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       }
     </script>
     <style>
+      html {
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+
       .layout {
         display: flex;
         flex-direction: column;
         height: 100vh;
+        position: relative;
       }
 
       main {
@@ -547,14 +741,41 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       .status-circle.red {
         background-color: red;
       }
+
+      l-bouncy {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 9999;
+      }
+
+      body.blurred main {
+        filter: blur(5px);
+      }
     </style>
   </head>
-  <body class="bg-light text-dark">
+  <body>
     <div class="layout">
+      <l-bouncy
+        id="loader"
+        size="54"
+        speed="1.9"
+        color="white"
+        style="display: none"
+      ></l-bouncy>
+      <header class="d-flex justify-content-end p-3">
+        <button
+          id="darkModeToggle"
+          class="btn btn-outline-secondary"
+          data-bs-toggle="tooltip"
+        >
+          <i id="darkModeIcon" class="fas"></i>
+        </button>
+      </header>
       <main class="container mt-5">
         <h1 class="text-center">Wake on LAN</h1>
-        <!-- Notification Area -->
-        <div id="notification-area"></div>
+
         <!-- Control -->
         <h2 class="mt-4 d-flex justify-content-between align-items-center">
           <span>Hosts</span>
@@ -578,6 +799,14 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         <!-- HOST List -->
         <ul id="host-list" class="list-group mt-3"></ul>
       </main>
+      <!-- Alert Zone (Toast Container) -->
+      <div aria-live="polite" aria-atomic="true" class="position-relative">
+        <div
+          class="toast-container bottom-0 end-0 p-3"
+          id="notification-list"
+        ></div>
+      </div>
+
       <footer class="bg-body-secondary">
         <span class="fw-medium font-monospace">EspWOL</span>
         <span class="fw-medium">&copy; 2025 StafLoker</span>
@@ -640,6 +869,29 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                   required
                 />
                 <div class="invalid-feedback">Please enter IP address.</div>
+              </div>
+              <div class="mb-3">
+                <label for="add-select-periodic-ping" class="form-label"
+                  >Periodic ping</label
+                >
+                <select
+                  class="form-select"
+                  id="add-select-periodic-ping"
+                  aria-label="Periodic ping"
+                >
+                  <option value="0" selected>Disabled</option>
+                  <option value="60">1 min</option>
+                  <option value="300">5 min</option>
+                  <option value="600">10 min</option>
+                  <option value="900">15 min</option>
+                  <option value="1800">30 min</option>
+                  <option value="2700">45 min</option>
+                  <option value="3600">1 hour</option>
+                  <option value="10800">3 hours</option>
+                  <option value="21600">6 hours</option>
+                  <option value="43200">12 hours</option>
+                  <option value="86400">24 hours</option>
+                </select>
               </div>
             </form>
           </div>
@@ -713,8 +965,37 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                   placeholder="Enter IP address"
                   required
                 />
+                <div class="invalid-feedback">Please enter IP address.</div>
               </div>
-              <div class="invalid-feedback">Please enter IP address.</div>
+              <div class="mb-3">
+                <label for="edit-select-periodic-ping" class="form-label"
+                  >Periodic ping</label
+                >
+                <select
+                  class="form-select"
+                  id="edit-select-periodic-ping"
+                  aria-label="Periodic ping"
+                >
+                  <option value="0" selected>Disabled</option>
+                  <option value="60">1 min</option>
+                  <option value="300">5 min</option>
+                  <option value="600">10 min</option>
+                  <option value="900">15 min</option>
+                  <option value="1800">30 min</option>
+                  <option value="2700">45 min</option>
+                  <option value="3600">1 hour</option>
+                  <option value="10800">3 hours</option>
+                  <option value="21600">6 hours</option>
+                  <option value="43200">12 hours</option>
+                  <option value="86400">24 hours</option>
+                </select>
+                <small
+                  class="text-muted d-flex justify-content-end"
+                  id="edit-last-ping"
+                >
+                  Last ping: _ min ago
+                </small>
+              </div>
             </form>
           </div>
           <div class="modal-footer">
@@ -770,7 +1051,9 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                   Version:
                   <span
                     id="version"
-                    class="badge rounded-pill text-bg-success"
+                    class="badge rounded-pill"
+                    data-bs-dismiss="modal"
+                    onclick="getUpdateVersion()"
                   ></span>
                 </p>
                 <p class="card-text">
@@ -975,6 +1258,51 @@ const char htmlPage[] PROGMEM = R"rawliteral(
               onclick="resetWiFiSettings()"
             >
               Reset
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+              data-bs-toggle="modal"
+              data-bs-target="#settings-modal"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Update version modal -->
+    <div
+      class="modal fade"
+      id="update-version-modal"
+      tabindex="-1"
+      aria-labelledby="updateVersionLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="updateVersionLabel">Update version</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p id="update-version-text-body"></p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              id="button-update-version"
+              class="btn btn-success"
+              onclick="updateToLastVersion()"
+            >
+              Update
             </button>
             <button
               type="button"
