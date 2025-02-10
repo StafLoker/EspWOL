@@ -23,6 +23,32 @@
       document.addEventListener('DOMContentLoaded', async function () {
         await getAllHost();
 
+        const htmlElement = document.documentElement;
+        const switchElement = document.getElementById('darkModeSwitch');
+        const prefersDarkScheme = window.matchMedia(
+          '(prefers-color-scheme: dark)'
+        ).matches;
+        const currentTheme =
+          localStorage.getItem('bsTheme') ||
+          (prefersDarkScheme ? 'dark' : 'light');
+
+        htmlElement.setAttribute('data-bs-theme', currentTheme);
+        switchElement.checked = currentTheme === 'dark';
+
+        switchElement.addEventListener('change', function () {
+          const newTheme = this.checked ? 'dark' : 'light';
+          htmlElement.setAttribute('data-bs-theme', newTheme);
+          localStorage.setItem('bsTheme', newTheme);
+        });
+
+        // Tooltip aktivieren
+        var tooltipTriggerList = [].slice.call(
+          document.querySelectorAll('[data-bs-toggle="tooltip"]')
+        );
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
         const forms = document.querySelectorAll('.needs-validation');
         forms.forEach((form) => {
           form.addEventListener('submit', handleFormSubmit);
@@ -582,6 +608,10 @@
       }
     </script>
     <style>
+      html {
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+
       .layout {
         display: flex;
         flex-direction: column;
@@ -650,10 +680,23 @@
       }
     </style>
   </head>
-  <body class="bg-light text-dark">
+  <body>
     <div class="layout">
       <main class="container mt-5">
         <h1 class="text-center">Wake on LAN</h1>
+        <div class="form-check form-switch">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="darkModeSwitch"
+            checked
+            aria-label="Switch between light and dark mode"
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"
+            title="Switch between light and dark mode"
+          />
+          <label class="form-check-label" for="darkModeSwitch">Dark Mode</label>
+        </div>
         <!-- Control -->
         <h2 class="mt-4 d-flex justify-content-between align-items-center">
           <span>Hosts</span>
