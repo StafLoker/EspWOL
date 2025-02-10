@@ -105,6 +105,8 @@
         const mac = document.getElementById('host-mac').value;
         const ip = document.getElementById('host-ip').value;
 
+        const modal = new bootstrap.Modal('#add-host-modal');
+
         try {
           const response = await fetch('/hosts', {
             method: 'POST',
@@ -120,7 +122,8 @@
             document.getElementById('host-ip').value = '';
             document.getElementById('add-select-periodic-ping').value =
               data.periodicPing;
-            const modal = new $('#add-host-modal').modal('hide');
+
+            modal.hide();
           }
           showNotification(data.message, data.success ? 'success' : 'danger');
         } catch (error) {
@@ -134,6 +137,8 @@
         document
           .getElementById('edit-host-modal')
           .setAttribute('data-index', index);
+
+        const modal = new bootstrap.Modal('#edit-host-modal');
         try {
           const response = await fetch('/hosts?id=' + index, { method: 'GET' });
           const data = await response.json();
@@ -142,7 +147,7 @@
           document.getElementById('edit-host-ip').value = data.ip;
           document.getElementById('edit-select-periodic-ping').value =
             data.periodicPing;
-          $('#edit-host-modal').modal('show');
+          modal.show();
         } catch (error) {
           showNotification('Error edit host', 'danger', 'Error');
           console.error('Error edit host:', error);
@@ -156,6 +161,8 @@
         const mac = document.getElementById('edit-host-mac').value;
         const ip = document.getElementById('edit-host-ip').value;
 
+        const modal = new bootstrap.Modal('#edit-host-modal');
+
         try {
           const response = await fetch('/hosts?id=' + index, {
             method: 'PUT',
@@ -167,7 +174,7 @@
             await getAllHost();
           }
 
-          $('#edit-host-modal').modal('hide');
+          modal.hide();
 
           showNotification(
             data.message,
@@ -175,7 +182,7 @@
             data.success ? 'Notification' : 'Error'
           );
         } catch (error) {
-          $('#edit-host-modal').modal('hide');
+          modal.hide();
 
           showNotification('Error edit host', 'danger', 'Error');
           console.error('Error edit host:', error);
@@ -186,6 +193,8 @@
         const modalElement = document.getElementById('edit-host-modal');
         const index = modalElement.getAttribute('data-index');
 
+        const modal = new bootstrap.Modal('#edit-host-modal');
+
         try {
           const response = await fetch('/hosts?id=' + index, {
             method: 'DELETE'
@@ -195,7 +204,7 @@
             await getAllHost();
           }
 
-          $('#edit-host-modal').modal('hide');
+          modal.hide();
 
           showNotification(
             data.message,
@@ -203,7 +212,7 @@
             data.success ? 'Notification' : 'Error'
           );
         } catch (error) {
-          $('#edit-host-modal').modal('hide');
+          modal.hide();
           showNotification('Error delete host', 'danger', 'Error');
           console.error('Error delete host:', error);
         }
@@ -324,8 +333,8 @@
             getNetworkSettings(),
             getAuthentication()
           ]);
-
-          $('#settings-modal').modal('show');
+          const modal = new bootstrap.Modal('#settings-modal');
+          modal.show();
         } catch (error) {
           console.error('Error loading settings:', error);
           showNotification('Failed to load settings', 'danger', 'Error');
@@ -338,6 +347,8 @@
         const networkMask = document.getElementById('fieldNetworkMask').value;
         const gateway = document.getElementById('fieldGateway').value;
 
+        const modal = new bootstrap.Modal('#settings-modal');
+
         try {
           const response = await fetch('/networkSettings', {
             method: 'PUT',
@@ -346,7 +357,7 @@
           });
           const data = await response.json();
 
-          $('#settings-modal').modal('hide');
+          modal.hide();
 
           showNotification(
             data.message,
@@ -359,7 +370,7 @@
             }, 1500);
           }
         } catch {
-          $('#settings-modal').modal('hide');
+          modal.hide();
 
           showNotification(
             'Error to update network settings',
@@ -377,6 +388,8 @@
         const username = document.getElementById('fieldUsername').value;
         const password = document.getElementById('fieldPassword').value;
 
+        const modal = new bootstrap.Modal('#settings-modal');
+
         try {
           const response = await fetch('/authenticationSettings', {
             method: 'PUT',
@@ -385,7 +398,7 @@
           });
           const data = await response.json();
 
-          $('#settings-modal').modal('hide');
+          modal.hide();
 
           showNotification(
             data.message,
@@ -396,7 +409,7 @@
             location.reload();
           }, 1500);
         } catch {
-          $('#settings-modal').modal('hide');
+          modal.hide();
 
           showNotification(
             'Error to update authentication settings',
