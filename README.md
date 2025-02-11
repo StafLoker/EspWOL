@@ -1,5 +1,5 @@
 <div align="center">
-   <!-- <img width="225" height="225" src="logo.png" alt="Logo"> -->
+   <img width="150" height="150" src="logo.jpeg" alt="Logo">
    <h1><b>EspWOL</b></h1>
    <p><i>~ Wake & play! ~</i></p>
    <p align="center">
@@ -29,6 +29,8 @@
 - **Network Configuration**: Switch seamlessly between static IP and DHCP modes.
 - **Host Ping Utility**: Test connectivity by pinging a specified host.
 - **Over-The-Air (OTA)**: Password: `ber#912NerYi`
+- **Update to last version**: Update to last version without using IDE
+- **Dark mode**: Switch between light and dark mode
 
 ## Requirements
 
@@ -40,6 +42,8 @@
 - [ArduinoJson library](https://github.com/bblanchon/ArduinoJson)
 - [ESP8266Ping library](https://github.com/dancol90/ESP8266Ping)
 - [ArduinoOTA](https://github.com/JAndrassy/ArduinoOTA)
+- [GTimer](https://github.com/GyverLibs/GTimer)
+- [AutoOTA](https://github.com/GyverLibs/AutoOTA)
 
 ## Installation
 
