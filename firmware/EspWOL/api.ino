@@ -8,6 +8,14 @@ static bool isAuthenticated() {
   return true;
 }
 
+static bool isValidPeriodicPing(long value) {
+  const long validValues[] = { 0, 60, 300, 600, 900, 1800, 2700, 3600, 10800, 21600, 43200, 86400 };
+  for (long v : validValues) {
+    if (value == v) return true;
+  }
+  return false;
+}
+
 // API: '/'
 void handleRoot() {
   if (isAuthenticated()) {
@@ -51,14 +59,32 @@ static void getHost(const String &id) {
 
 // API: POST '/hosts'
 static void addHost() {
+  if (!server.hasArg("plain")) {
+    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing body\" }");
+    return;
+  }
   String body = server.arg("plain");
   DynamicJsonDocument doc(1024);
-  deserializeJson(doc, body);
+  if (deserializeJson(doc, body)) {
+    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid JSON\" }");
+    return;
+  }
+
+  if (!doc.containsKey("name") || !doc.containsKey("mac") || !doc.containsKey("ip") || !doc.containsKey("periodicPing")) {
+    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing required fields\" }");
+    return;
+  }
+
+  long periodicPing = doc["periodicPing"].as<long>();
+  if (!isValidPeriodicPing(periodicPing)) {
+    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid periodicPing value\" }");
+    return;
+  }
   Host host;
   host.name = doc["name"].as<String>();
   host.mac = doc["mac"].as<String>();
   host.ip = doc["ip"].as<String>();
-  host.periodicPing = doc["periodicPing"].as<long>() * 1000;
+  host.periodicPing = periodicPing * 1000;
   hosts[hosts.size()] = host;
   timers[hosts.size()] = GTimer<millis>(host.periodicPing, true);
   saveHostsData();
@@ -67,16 +93,34 @@ static void addHost() {
 
 // API: PUT '/hosts?id={index}'
 static void editHost(const String &id) {
+  if (!server.hasArg("plain")) {
+    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing body\" }");
+    return;
+  }
   int index = id.toInt();
   String body = server.arg("plain");
   DynamicJsonDocument doc(1024);
-  deserializeJson(doc, body);
+  if (deserializeJson(doc, body)) {
+    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid JSON\" }");
+    return;
+  }
+
+  if (!doc.containsKey("name") || !doc.containsKey("mac") || !doc.containsKey("ip") || !doc.containsKey("periodicPing")) {
+    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing required fields\" }");
+    return;
+  }
+
+  long periodicPing = doc["periodicPing"].as<long>();
+  if (!isValidPeriodicPing(periodicPing)) {
+    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid periodicPing value\" }");
+    return;
+  }
   if (index >= 0 && index < hosts.size()) {
     Host &host = hosts[index];
     host.name = doc["name"].as<String>();
     host.mac = doc["mac"].as<String>();
     host.ip = doc["ip"].as<String>();
-    host.periodicPing = doc["periodicPing"].as<long>() * 1000;
+    host.periodicPing = periodicPing * 1000;
     if (host.periodicPing) {
       GTimer<millis> &timer = timers[index];
       timer.setTime(host.periodicPing);
@@ -176,9 +220,20 @@ void handlePingHost() {
 
 // API: PUT '/networkSettings'
 static void updateNetworkSettings() {
+  if (!server.hasArg("plain")) {
+    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing body\" }");
+    return;
+  }
   String body = server.arg("plain");
   DynamicJsonDocument doc(1024);
-  deserializeJson(doc, body);
+  if (deserializeJson(doc, body)) {
+    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid JSON\" }");
+    return;
+  }
+  if (!doc.containsKey("enable") || !doc.containsKey("ip") || !doc.containsKey("networkMask") || !doc.containsKey("gateway")) {
+    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing required fields\" }");
+    return;
+  }
   networkConfig.enable = doc["enable"];
   if (networkConfig.enable) {
     IPAddress ip;
@@ -200,9 +255,20 @@ static void updateNetworkSettings() {
 
 // API: PUT '/authenticationSettings'
 static void updateAuthenticationSettings() {
+  if (!server.hasArg("plain")) {
+    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing body\" }");
+    return;
+  }
   String body = server.arg("plain");
   DynamicJsonDocument doc(1024);
-  deserializeJson(doc, body);
+  if (deserializeJson(doc, body)) {
+    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid JSON\" }");
+    return;
+  }
+  if (!doc.containsKey("enable") || !doc.containsKey("username") || !doc.containsKey("password")) {
+    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing required fields\" }");
+    return;
+  }
   authentication.enable = doc["enable"];
   if (authentication.enable) {
     authentication.username = doc["username"].as<String>();
