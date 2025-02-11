@@ -11,13 +11,6 @@
 static bool isAuthenticated();
 
 /**
- * @brief Checks if value of periodic ping is valid
- * 
- * @return true if valid, false otherwise.
- */
-static bool isValidPeriodicPing(long value);
-
-/**
  * @brief Handles the root API request ('/').
  * 
  * Sends an HTML page to the client if the user is authenticated.

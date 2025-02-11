@@ -1,4 +1,5 @@
 #include "api.h"
+#include "validation.h"
 
 static bool isAuthenticated() {
   if (authentication.enable && !server.authenticate(authentication.username.c_str(), authentication.password.c_str())) {
@@ -6,14 +7,6 @@ static bool isAuthenticated() {
     return false;
   }
   return true;
-}
-
-static bool isValidPeriodicPing(long value) {
-  const long validValues[] = { 0, 60, 300, 600, 900, 1800, 2700, 3600, 10800, 21600, 43200, 86400 };
-  for (long v : validValues) {
-    if (value == v) return true;
-  }
-  return false;
 }
 
 // API: '/'
@@ -32,6 +25,7 @@ static void getHostList() {
     const Host &host = pair.second;
     JsonObject obj = array.createNestedObject();
     obj["name"] = host.name;
+    obj["mac"] = host.mac;
     obj["ip"] = host.ip;
   }
   serializeJson(doc, jsonResponse);
@@ -74,16 +68,22 @@ static void addHost() {
     server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing required fields\" }");
     return;
   }
-
+  String name = doc["name"].as<String>();
+  String mac = doc["mac"].as<String>();
+  String ip = doc["ip"].as<String>();
+  if (name.length() < 1 && !isValidMACAddress(mac) && !isValidIPAddress(ip)) {
+    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid data format\" }");
+    return;
+  }
   long periodicPing = doc["periodicPing"].as<long>();
   if (!isValidPeriodicPing(periodicPing)) {
     server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid periodicPing value\" }");
     return;
   }
   Host host;
-  host.name = doc["name"].as<String>();
-  host.mac = doc["mac"].as<String>();
-  host.ip = doc["ip"].as<String>();
+  host.name = name;
+  host.mac = mac;
+  host.ip = ip;
   host.periodicPing = periodicPing * 1000;
   hosts[hosts.size()] = host;
   timers[hosts.size()] = GTimer<millis>(host.periodicPing, true);
@@ -110,16 +110,24 @@ static void editHost(const String &id) {
     return;
   }
 
+  String name = doc["name"].as<String>();
+  String mac = doc["mac"].as<String>();
+  String ip = doc["ip"].as<String>();
+  if (name.length() < 1 && !isValidMACAddress(mac) && !isValidIPAddress(ip)) {
+    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid data format\" }");
+    return;
+  }
   long periodicPing = doc["periodicPing"].as<long>();
   if (!isValidPeriodicPing(periodicPing)) {
     server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid periodicPing value\" }");
     return;
   }
+
   if (index >= 0 && index < hosts.size()) {
     Host &host = hosts[index];
-    host.name = doc["name"].as<String>();
-    host.mac = doc["mac"].as<String>();
-    host.ip = doc["ip"].as<String>();
+    host.name = name;
+    host.mac = mac;
+    host.ip = ip;
     host.periodicPing = periodicPing * 1000;
     if (host.periodicPing) {
       GTimer<millis> &timer = timers[index];
@@ -234,14 +242,21 @@ static void updateNetworkSettings() {
     server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing required fields\" }");
     return;
   }
+  String ip_str = doc["ip"].as<String>();
+  String networkMask_str = doc["networkMask"].as<String>();
+  String gateway_str = doc["gateway"].as<String>();
+  if (!isValidBooleanParameter(doc["enable"].as<String>()) && !isValidIPAddress(ip_str) && !isValidIPAddress(networkMask_str) && !isValidIPAddress(gateway_str)) {
+    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid data format\" }");
+    return;
+  }
   networkConfig.enable = doc["enable"];
   if (networkConfig.enable) {
     IPAddress ip;
     IPAddress networkMask;
     IPAddress gateway;
-    ip.fromString(doc["ip"].as<String>());
-    networkMask.fromString(doc["networkMask"].as<String>());
-    gateway.fromString(doc["gateway"].as<String>());
+    ip.fromString(ip_str);
+    networkMask.fromString(networkMask_str);
+    gateway.fromString(gateway_str);
     networkConfig.ip = ip;
     networkConfig.networkMask = networkMask;
     networkConfig.gateway = gateway;
@@ -269,10 +284,16 @@ static void updateAuthenticationSettings() {
     server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing required fields\" }");
     return;
   }
+  String username = doc["username"].as<String>();
+  String password = doc["password"].as<String>();
+  if (username.length() < 3 && !isValidPassword(password)) {
+    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid data format\" }");
+    return;
+  }
   authentication.enable = doc["enable"];
   if (authentication.enable) {
-    authentication.username = doc["username"].as<String>();
-    authentication.password = doc["password"].as<String>();
+    authentication.username = username;
+    authentication.password = password;
   }
   saveAuthentication();
   server.send(200, "application/json", "{ \"success\": true, \"message\": \"Authentication updated\" }");
