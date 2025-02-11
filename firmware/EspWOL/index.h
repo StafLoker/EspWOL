@@ -527,6 +527,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
       async function updateToLastVersion() {
         const modal = new bootstrap.Modal('#update-version-modal');
+        const updateContainer = document.getElementById('update-container');
+        const updatingBar = document.getElementById('updating-bar');
         try {
           const response = await fetch('/updateVersion', { method: 'POST' });
           const data = await response.json();
@@ -535,7 +537,30 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             data.success ? 'success' : 'danger',
             data.success ? 'Update' : 'Error'
           );
+
           modal.hide();
+          document.body.classList.add('blurred');
+          updateContainer.style.display = 'block';
+
+          let progress = 0;
+          const duration = 30000; // 30 seconds
+
+          // Function to increment the progress
+          function updateProgress() {
+            if (progress < 100) {
+              progress += 100 / (duration / 100); // Increase by 1% every 100ms
+              updatingBar.style.width = `${progress}%`;
+            } else {
+              clearInterval(progressInterval); // Stop the interval when it reaches 100%
+            }
+          }
+
+          // Start the interval to update the progress every 100ms
+          const progressInterval = setInterval(updateProgress, 100);
+
+          setTimeout(() => {
+            location.reload();
+          }, duration);
         } catch (error) {
           showNotification(
             'Error to updating to last version',
@@ -753,10 +778,40 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       body.blurred main {
         filter: blur(5px);
       }
+
+      body.blurred button {
+        pointer-events: none;
+        opacity: 0.5;
+      }
+
+      #update-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        width: 35%;
+        z-index: 9999; /* Ensure it's above other content */
+      }
+
+      #update-container h3 {
+        margin-bottom: 20px;
+        color: white; /* Optional: if you want the text to be white */
+      }
+
+      #update-container .progress {
+        width: 80%;
+        max-width: 400px;
+      }
     </style>
   </head>
   <body>
     <div class="layout">
+      <!-- Loading -->
       <l-bouncy
         id="loader"
         size="54"
@@ -764,6 +819,23 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         color="white"
         style="display: none"
       ></l-bouncy>
+
+      <!-- Update banner -->
+      <div id="update-container" style="display: none">
+        <h3>Updating</h3>
+        <div
+          class="progress bg-warning"
+          id="updating-bar"
+          role="progressbar"
+          aria-label="Updating bar"
+          aria-valuenow="0"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >
+          <div class="progress-bar" style="width: 0%"></div>
+        </div>
+      </div>
+
       <header class="d-flex justify-content-end p-3">
         <button
           id="darkModeToggle"
@@ -810,7 +882,11 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       <footer class="bg-body-secondary">
         <span class="fw-medium font-monospace">EspWOL</span>
         <span class="fw-medium">&copy; 2025 StafLoker</span>
-        <a href="https://github.com/StafLoker/EspWOL" id="github">
+        <a
+          href="https://github.com/StafLoker/EspWOL"
+          id="github"
+          target="_blank"
+        >
           <i class="fab fa-github"></i>
         </a>
       </footer>
