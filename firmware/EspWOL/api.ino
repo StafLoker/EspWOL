@@ -286,7 +286,7 @@ static void updateAuthenticationSettings() {
   }
   String username = doc["username"].as<String>();
   String password = doc["password"].as<String>();
-  if (username.length() < 3 && !isValidPassword(password)) {
+  if (!isValidBooleanParameter(doc["enable"].as<String>()) && username.length() < 3 && !isValidPassword(password)) {
     server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid data format\" }");
     return;
   }
