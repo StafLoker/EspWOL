@@ -29,8 +29,9 @@
 - **Network Configuration**: Switch seamlessly between static IP and DHCP modes.
 - **Host Ping Utility**: Test connectivity by pinging a specified host.
 - **Over-The-Air (OTA)**: Password: `ber#912NerYi`
-- **Update to last version**: Update to last version without using IDE
-- **Dark mode**: Switch between light and dark mode
+- **Update to last version**: Update to last version without using IDE.
+- **Dark mode**: Switch between light and dark mode.
+- **Periodic ping**: Set up periodic ping, if ping fails, program attempt to wake up a host.
 
 ## Requirements
 
