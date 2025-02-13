@@ -184,6 +184,30 @@
         }
       }
 
+      function validateMAC(mac) {
+        return /^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$/.test(mac);
+      }
+
+      function validateIP(ip) {
+        return /^(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])){3}$/.test(
+          ip
+        );
+      }
+
+      function validatePassword(password) {
+        return (
+          password.length >= 8 &&
+          /[A-Z]/.test(password) &&
+          /[a-z]/.test(password) &&
+          /\d/.test(password) &&
+          /[!@#$%^&*(),.?":{}|<>]/.test(password)
+        );
+      }
+
+      function validateUsername(username) {
+        return username.length >= 3;
+      }
+
       async function editHost(index) {
         const host = document.getElementById(`host-item-${index}`);
         document
