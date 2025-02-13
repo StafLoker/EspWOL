@@ -39,9 +39,10 @@
         function updateThemeIcon(theme) {
           darkModeIcon.className =
             theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
-          document
-            .querySelector('l-bouncy')
-            .setAttribute('color', theme === 'dark' ? 'white' : 'black');
+          const loader = document.querySelector('l-bouncy');
+          if (loader) {
+            loader.setAttribute('color', theme === 'dark' ? 'white' : 'black');
+          }
         }
 
         htmlElement.setAttribute('data-bs-theme', currentTheme);
@@ -266,8 +267,15 @@
           document.getElementById('edit-host-ip').value = data.ip;
           document.getElementById('edit-select-periodic-ping').value =
             data.periodicPing;
-          document.getElementById('edit-last-ping').value =
-            'Last ping:' + data.lastPing / 60 + 'mins ago';
+          if (typeof data.lastPing === 'number' && !isNaN(data.lastPing)) {
+            const lastPingMinutes = Math.floor(data.lastPing / 60);
+            document.getElementById(
+              'edit-last-ping'
+            ).innerText = `Last ping: ${lastPingMinutes} mins ago`;
+          } else {
+            document.getElementById('edit-last-ping').innerText =
+              'Last ping: N/A';
+          }
           modal.show();
         } catch (error) {
           showNotification('Error edit host', 'danger', 'Error');
@@ -285,7 +293,7 @@
           'edit-select-periodic-ping'
         ).value;
 
-        const modal = new bootstrap.Modal('#edit-host-modal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
 
         try {
           const response = await fetch('/hosts?id=' + index, {
@@ -317,7 +325,7 @@
         const modalElement = document.getElementById('edit-host-modal');
         const index = modalElement.getAttribute('data-index');
 
-        const modal = new bootstrap.Modal('#edit-host-modal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
 
         try {
           const response = await fetch('/hosts?id=' + index, {
@@ -408,11 +416,12 @@
 
         const data = await response.json();
         document.getElementById('version').innerText = data.version;
-        document
-          .getElementById('version')
-          .classList.add(
-            data.lastVersion ? 'bg-success' : 'bg-warning text-dark'
-          );
+        if (data.version === data.lastVersion) {
+          document.getElementById('version').classList.add('bg-success');
+        } else {
+          document.getElementById('version').classList.add('bg-warning');
+          document.getElementById('version').classList.add('text-dark');
+        }
         document.getElementById('hostname').innerText = data.hostname;
       }
 
@@ -471,7 +480,8 @@
         const networkMask = document.getElementById('fieldNetworkMask').value;
         const gateway = document.getElementById('fieldGateway').value;
 
-        const modal = new bootstrap.Modal('#settings-modal');
+        const modalElement = document.getElementById('settings-modal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
 
         try {
           const response = await fetch('/networkSettings', {
@@ -512,7 +522,8 @@
         const username = document.getElementById('fieldUsername').value;
         const password = document.getElementById('fieldPassword').value;
 
-        const modal = new bootstrap.Modal('#settings-modal');
+        const modalElement = document.getElementById('settings-modal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
 
         try {
           const response = await fetch('/authenticationSettings', {
@@ -609,8 +620,8 @@
   </div>
 `;
         const layoutDiv = document.querySelector('.layout');
-        const modal = new bootstrap.Modal('#update-version-modal');
-        const updatingBar = document.getElementById('updating-bar');
+        const modalElement = document.getElementById('update-version-modal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
         try {
           const response = await fetch('/updateVersion', { method: 'POST' });
           const data = await response.json();
@@ -623,6 +634,8 @@
           modal.hide();
           layoutDiv.insertAdjacentHTML('afterbegin', updateBannerHTML);
           const updateContainer = document.getElementById('update-container');
+          updateContainer.style.display = 'flex';
+          const updatingBar = document.getElementById('updating-bar');
           document.body.classList.add('blurred');
 
           let progress = 0;
