@@ -43,7 +43,11 @@ static void getHost(const String &id) {
     doc["mac"] = host.mac;
     doc["ip"] = host.ip;
     doc["periodicPing"] = host.periodicPing / 1000;
-    doc["lastPing"] = (millis() - lastPings[index]) / 1000;
+    if (lastPings.find(index) != lastPings.end()) {
+      doc["lastPing"] = (millis() - lastPings[index]) / 1000;
+    } else {
+      doc["lastPing"] = 0;
+    }
     serializeJson(doc, jsonResponse);
     server.send(200, "application/json", jsonResponse);
   } else {
