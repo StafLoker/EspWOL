@@ -358,30 +358,32 @@
           '<span class="spinner-border spinner-border-sm" role="status"></span>';
 
         try {
-          const success = Math.random() > 0.5;
-          const statusCircle = document.getElementById(`status-${index}`);
-          button.innerHTML = '<i class="fas fa-table-tennis"></i>';
-          button.removeAttribute('disabled');
+          setTimeout(() => {
+            const success = Math.random() > 0.5;
+            const statusCircle = document.getElementById(`status-${index}`);
+            button.innerHTML = '<i class="fas fa-table-tennis"></i>';
+            button.removeAttribute('disabled');
 
-          if (success) {
-            statusCircle.classList.remove('red');
-            statusCircle.classList.add('green');
-            statusCircle.classList.add('blinking');
-
-            showNotification('Ping successful', 'success');
-            setTimeout(() => {
-              statusCircle.classList.remove('blinking');
-              statusCircle.classList.remove('green');
-            }, 10000);
-          } else {
-            statusCircle.classList.remove('green', 'blinking');
-            statusCircle.classList.add('red');
-            showNotification('Ping failed', 'danger', 'Error');
-
-            setTimeout(() => {
+            if (success) {
               statusCircle.classList.remove('red');
-            }, 10000);
-          }
+              statusCircle.classList.add('green');
+              statusCircle.classList.add('blinking');
+
+              showNotification('Ping successful', 'success');
+              setTimeout(() => {
+                statusCircle.classList.remove('blinking');
+                statusCircle.classList.remove('green');
+              }, 10000);
+            } else {
+              statusCircle.classList.remove('green', 'blinking');
+              statusCircle.classList.add('red');
+              showNotification('Ping failed', 'danger', 'Error');
+
+              setTimeout(() => {
+                statusCircle.classList.remove('red');
+              }, 10000);
+            }
+          }, 2000);
         } catch (error) {
           showNotification('Ping failed', 'danger', 'Error');
           button.innerHTML = '<i class="fas fa-table-tennis"></i>';
