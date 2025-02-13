@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Wake on LAN</title>
+    <title>Wake on LAN - Demo</title>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
@@ -57,6 +57,10 @@
         function updateThemeIcon(theme) {
           darkModeIcon.className =
             theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+          updateLoaderColor(theme);
+        }
+        
+        function updateLoaderColor(theme) {
           const loader = document.querySelector('l-bouncy');
           if (loader) {
             loader.setAttribute('color', theme === 'dark' ? 'white' : 'black');
@@ -120,6 +124,7 @@
 `;
         const layoutDiv = document.querySelector('.layout');
         layoutDiv.insertAdjacentHTML('afterbegin', loaderHTML);
+        updateLoaderColor(currentTheme);
         const loader = document.getElementById('loader');
 
         document.body.classList.add('blurred');
