@@ -82,15 +82,25 @@
         });
 
         // Load all hosts
+        const loaderHTML = `
+  <!-- Loading -->
+  <l-bouncy
+    id="loader"
+    size="54"
+    speed="1.9"
+    color="white"
+  ></l-bouncy>
+`;
+        const layoutDiv = document.querySelector('.layout');
+        layoutDiv.insertAdjacentHTML('afterbegin', loaderHTML);
         const loader = document.getElementById('loader');
 
         document.body.classList.add('blurred');
-        loader.style.display = 'block';
 
         await getAllHost();
 
-        loader.style.display = 'none';
         document.body.classList.remove('blurred');
+        loader.remove();
       });
 
       async function handleFormSubmit(event) {
@@ -581,8 +591,25 @@
       }
 
       async function updateToLastVersion() {
+        const updateBannerHTML = `
+  <!-- Update banner -->
+  <div id="update-container" style="display: none">
+    <h3>Updating</h3>
+    <div
+      class="progress bg-warning"
+      id="updating-bar"
+      role="progressbar"
+      aria-label="Updating bar"
+      aria-valuenow="0"
+      aria-valuemin="0"
+      aria-valuemax="100"
+    >
+      <div class="progress-bar" style="width: 0%"></div>
+    </div>
+  </div>
+`;
+        const layoutDiv = document.querySelector('.layout');
         const modal = new bootstrap.Modal('#update-version-modal');
-        const updateContainer = document.getElementById('update-container');
         const updatingBar = document.getElementById('updating-bar');
         try {
           const response = await fetch('/updateVersion', { method: 'POST' });
@@ -594,8 +621,9 @@
           );
 
           modal.hide();
+          layoutDiv.insertAdjacentHTML('afterbegin', updateBannerHTML);
+          const updateContainer = document.getElementById('update-container');
           document.body.classList.add('blurred');
-          updateContainer.style.display = 'block';
 
           let progress = 0;
           const duration = 30000; // 30 seconds
@@ -866,31 +894,6 @@
   </head>
   <body>
     <div class="layout">
-      <!-- Loading -->
-      <l-bouncy
-        id="loader"
-        size="54"
-        speed="1.9"
-        color="white"
-        style="display: none"
-      ></l-bouncy>
-
-      <!-- Update banner -->
-      <div id="update-container" style="display: none">
-        <h3>Updating</h3>
-        <div
-          class="progress bg-warning"
-          id="updating-bar"
-          role="progressbar"
-          aria-label="Updating bar"
-          aria-valuenow="0"
-          aria-valuemin="0"
-          aria-valuemax="100"
-        >
-          <div class="progress-bar" style="width: 0%"></div>
-        </div>
-      </div>
-
       <header class="d-flex justify-content-end p-3">
         <button
           id="darkModeToggle"
