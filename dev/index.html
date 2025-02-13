@@ -234,7 +234,8 @@
           'add-select-periodic-ping'
         ).value;
 
-        const modal = new bootstrap.Modal('#add-host-modal');
+        const modalElement = document.getElementById('add-host-modal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
 
         try {
           const response = await fetch('/hosts', {

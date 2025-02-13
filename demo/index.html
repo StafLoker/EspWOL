@@ -59,7 +59,7 @@
             theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
           updateLoaderColor(theme);
         }
-        
+
         function updateLoaderColor(theme) {
           const loader = document.querySelector('l-bouncy');
           if (loader) {
@@ -248,7 +248,8 @@
           'add-select-periodic-ping'
         ).value;
 
-        const modal = new bootstrap.Modal('#add-host-modal');
+        const modalElement = document.getElementById('add-host-modal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
 
         try {
           hosts.push({ name, mac, ip, periodicPing, lastPing: 0 });
