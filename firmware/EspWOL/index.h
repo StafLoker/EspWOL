@@ -58,15 +58,34 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           localStorage.setItem('bsTheme', newTheme);
           updateThemeIcon(newTheme);
         });
-        // Forms
-        const forms = document.querySelectorAll('.needs-validation');
-        forms.forEach((form) => {
+
+        // Forms validation
+        document.querySelectorAll('.needs-validation').forEach((form) => {
           form.addEventListener('submit', handleFormSubmit);
         });
 
-        const loader = document.getElementById('loader');
+        document.querySelectorAll('input').forEach((input) => {
+          input.addEventListener('input', () => {
+            switch (input.name) {
+              case 'mac':
+                testInputAndSetClass(input, validateMAC);
+                break;
+              case 'ip':
+                testInputAndSetClass(input, validateIP);
+                break;
+              case 'password':
+                testInputAndSetClass(input, validatePassword);
+                break;
+              case 'username':
+                testInputAndSetClass(input, validateUsername);
+                break;
+            }
+          });
+        });
 
         // Load all hosts
+        const loader = document.getElementById('loader');
+
         document.body.classList.add('blurred');
         loader.style.display = 'block';
 
@@ -102,11 +121,49 @@ const char htmlPage[] PROGMEM = R"rawliteral(
               await updateAuthentication();
               break;
           }
-
-          form.classList.add('was-validated');
         } catch (error) {
           console.error('Error during processing form', error);
         }
+      }
+
+      function testInputAndSetClass(
+        input,
+        validationFn,
+        errorMessage = 'Invalid field.'
+      ) {
+        if (validationFn(input.value)) {
+          input.classList.remove('is-invalid');
+          input.classList.add('is-valid');
+          input.setCustomValidity('');
+        } else {
+          input.classList.remove('is-valid');
+          input.classList.add('is-invalid');
+          input.setCustomValidity(errorMessage);
+        }
+      }
+
+      function validateMAC(mac) {
+        return /^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$/.test(mac);
+      }
+
+      function validateIP(ip) {
+        return /^(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])){3}$/.test(
+          ip
+        );
+      }
+
+      function validatePassword(password) {
+        return (
+          password.length >= 8 &&
+          /[A-Z]/.test(password) &&
+          /[a-z]/.test(password) &&
+          /\d/.test(password) &&
+          /[!@#$%^&*(),.?":{}|<>]/.test(password)
+        );
+      }
+
+      function validateUsername(username) {
+        return username.length >= 3;
       }
 
       async function getAllHost() {
@@ -918,33 +975,33 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 <input
                   type="text"
                   class="form-control"
+                  name="hostname"
                   id="host-name"
                   placeholder="Enter hostname"
                   required
                 />
-                <div class="invalid-feedback">Please enter hostname.</div>
               </div>
               <div class="mb-3">
                 <label for="host-mac" class="form-label">MAC Address</label>
                 <input
                   type="text"
                   class="form-control"
+                  name="mac"
                   id="host-mac"
-                  placeholder="Enter MAC address"
+                  placeholder="AA:BB:CC:DD:EE:FF"
                   required
                 />
-                <div class="invalid-feedback">Please enter MAC address.</div>
               </div>
               <div class="mb-3">
                 <label for="host-ip" class="form-label">IP Address</label>
                 <input
                   type="text"
                   class="form-control"
+                  name="ip"
                   id="host-ip"
-                  placeholder="Enter IP address"
+                  placeholder="192.168.1.100"
                   required
                 />
-                <div class="invalid-feedback">Please enter IP address.</div>
               </div>
               <div class="mb-3">
                 <label for="add-select-periodic-ping" class="form-label"
@@ -1014,10 +1071,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                   type="text"
                   class="form-control"
                   id="edit-host-name"
+                  name="hostname"
                   placeholder="Enter hostname"
                   required
                 />
-                <div class="invalid-feedback">Please enter hostname.</div>
               </div>
               <div class="mb-3">
                 <label for="edit-host-mac" class="form-label"
@@ -1026,22 +1083,22 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 <input
                   type="text"
                   class="form-control"
+                  name="mac"
                   id="edit-host-mac"
-                  placeholder="Enter MAC address"
+                  placeholder="AA:BB:CC:DD:EE:FF"
                   required
                 />
-                <div class="invalid-feedback">Please enter MAC address.</div>
               </div>
               <div class="mb-3">
                 <label for="edit-host-ip" class="form-label">IP Address</label>
                 <input
                   type="text"
                   class="form-control"
+                  name="ip"
                   id="edit-host-ip"
-                  placeholder="Enter IP address"
+                  placeholder="192.168.1.100"
                   required
                 />
-                <div class="invalid-feedback">Please enter IP address.</div>
               </div>
               <div class="mb-3">
                 <label for="edit-select-periodic-ping" class="form-label"
@@ -1178,10 +1235,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                     <input
                       type="text"
                       class="form-control"
+                      name="ip"
                       id="fieldIP"
                       placeholder="192.168.2.9"
                     />
-                    <div class="invalid-feedback">Please enter static IP</div>
                   </div>
                   <div class="mb-3">
                     <label for="static-network-mask" class="form-label"
@@ -1190,12 +1247,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                     <input
                       type="text"
                       class="form-control"
+                      name="ip"
                       id="fieldNetworkMask"
                       placeholder="255.255.255.0"
                     />
-                    <div class="invalid-feedback">
-                      Please enter network mask
-                    </div>
                   </div>
                   <div class="mb-3">
                     <label for="static-gateway" class="form-label"
@@ -1204,10 +1259,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                     <input
                       type="text"
                       class="form-control"
+                      name="ip"
                       id="fieldGateway"
                       placeholder="192.168.2.1"
                     />
-                    <div class="invalid-feedback">Please enter gateway</div>
                   </div>
                 </form>
               </div>
@@ -1260,20 +1315,20 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                     <input
                       type="text"
                       class="form-control"
+                      name="username"
                       id="fieldUsername"
                       placeholder="Enter username"
                     />
-                    <div class="invalid-feedback">Please enter username</div>
                   </div>
                   <div class="mb-3">
                     <label for="password" class="form-label">Password:</label>
                     <input
                       type="password"
                       class="form-control"
+                      name="password"
                       id="fieldPassword"
                       placeholder="Enter password"
                     />
-                    <div class="invalid-feedback">Please enter password</div>
                   </div>
                 </form>
               </div>
