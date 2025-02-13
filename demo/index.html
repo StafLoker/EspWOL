@@ -91,10 +91,18 @@
                 testInputAndSetClass(input, validateIP);
                 break;
               case 'password':
-                testInputAndSetClass(input, validatePassword);
+                testInputAndSetClass(
+                  input,
+                  validatePassword,
+                  'Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.'
+                );
                 break;
               case 'username':
-                testInputAndSetClass(input, validateUsername);
+                testInputAndSetClass(
+                  input,
+                  validateUsername,
+                  'Username must be at least 3 characters long.'
+                );
                 break;
             }
           });
