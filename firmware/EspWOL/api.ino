@@ -46,7 +46,7 @@ static void getHost(const String &id) {
     if (lastPings.find(index) != lastPings.end()) {
       doc["lastPing"] = (millis() - lastPings[index]) / 1000;
     } else {
-      doc["lastPing"] = 0;
+      doc["lastPing"] = -1;
     }
     serializeJson(doc, jsonResponse);
     server.send(200, "application/json", jsonResponse);

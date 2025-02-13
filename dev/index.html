@@ -281,7 +281,11 @@
           document.getElementById('edit-host-ip').value = data.ip;
           document.getElementById('edit-select-periodic-ping').value =
             data.periodicPing;
-          if (typeof data.lastPing === 'number' && !isNaN(data.lastPing)) {
+          if (
+            typeof data.lastPing === 'number' &&
+            !isNaN(data.lastPing) &&
+            data.lastPing >= 0
+          ) {
             const lastPingMinutes = Math.floor(data.lastPing / 60);
             document.getElementById(
               'edit-last-ping'

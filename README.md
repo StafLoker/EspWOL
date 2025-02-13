@@ -21,42 +21,58 @@
 
 ## Features
 
-- **Add host**: Add new hosts to the list with their name, MAC address, and IP address.
-- **Edit host**: Edit the name, MAC address, or IP address of a host.
-- **Delete host**: Remove a host from the list (via modal window).
-- **Wake on LAN**: Send a WOL request to wake a host remotely.
-- **Basic HTTP Authentication**: Enable or disable authentication, and update the username or password as needed.
+- **CRUD Host Management**: CRUD functionality to manage host information.
+- **Wake on LAN (WoL)**: Send a WoL request to wake a host remotely.
+- **Basic HTTP Authentication**: Enable/disable authentication and update credentials (username/password) as needed.
 - **Network Configuration**: Switch seamlessly between static IP and DHCP modes.
 - **Host Ping Utility**: Test connectivity by pinging a specified host.
-- **Over-The-Air (OTA)**: Password: `ber#912NerYi`
-- **Update to last version**: Update to last version without using IDE.
-- **Dark mode**: Switch between light and dark mode.
-- **Periodic ping**: Set up periodic ping, if ping fails, program attempt to wake up a host.
+- **Over-The-Air (OTA) Updates**: Secure OTA updates with password: `ber#912NerYi`.
+- **Auto-Update**: Update to the latest version without using an IDE via internet.
+- **Dark Mode**: Toggle between light and dark themes.
+- **Periodic Ping**: Configure periodic pings; if a ping fails, the program attempts to wake the host.
 
 ## Requirements
 
-- ESP8266 board (e.g., NodeMCU, Wemos D1 Mini)
-- Arduino IDE
-- ESP8266 library
-- [WakeOnLan library](https://github.com/a7md0/WakeOnLan)
-- [WIFI Manager library](https://github.com/tzapu/WiFiManager)
-- [ArduinoJson library](https://github.com/bblanchon/ArduinoJson)
-- [ESP8266Ping library](https://github.com/dancol90/ESP8266Ping)
-- [ArduinoOTA](https://github.com/JAndrassy/ArduinoOTA)
-- [GTimer](https://github.com/GyverLibs/GTimer)
-- [AutoOTA](https://github.com/GyverLibs/AutoOTA)
+- **Hardware**: ESP8266 board (e.g., NodeMCU, Wemos D1 Mini).
+- **Software**:
+  - Arduino IDE
+  - ESP8266 Core for Arduino
+- **Libraries**:
+  - [WakeOnLan](https://github.com/a7md0/WakeOnLan)
+  - [WiFiManager](https://github.com/tzapu/WiFiManager)
+  - [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
+  - [ESP8266Ping](https://github.com/dancol90/ESP8266Ping)
+  - [ArduinoOTA](https://github.com/JAndrassy/ArduinoOTA)
+  - [GTimer](https://github.com/GyverLibs/GTimer)
+  - [AutoOTA](https://github.com/GyverLibs/AutoOTA)
 
 ## Installation
 
-1. Clone this repository:
-2. Open the project in the Arduino IDE.
-3. Install the required libraries from the Library Manager
-4. Upload the code to your ESP8266 board.
+1. **Clone the Repository**:  
+   `git clone [repository-url]`  
+2. **Open Project**: Open the cloned project in the Arduino IDE.  
+3. **Install Libraries**: Install all required libraries via the Arduino IDE’s **Library Manager**.  
+4. **Upload Code**: Connect your ESP8266 board and upload the code.  
 
 ## Usage
 
-1. Once the ESP8266 is powered and connected to Wi-Fi, navigate to the IP address displayed in the Serial Monitor using your web browser.
-2. Use the web interface to manage your registered hosts:
-   - Click the `+` button next to the **Registered hosts** title to add a new host.
-   - Click the **settings** button next to any host to edit its details.
-   - Use the **play** button to send a Wake-on-LAN request to a host.
+1. **Access Web Interface**:  
+   - Power the ESP8266 and connect it to Wi-Fi.  
+   - Open the IP address shown in the Serial Monitor using a web browser.  
+
+2. **Manage Hosts**:  
+   - **Add Host**: Click the `+` button under **Registered Hosts**.  
+   - **Wake Host**: Click the **play** button (▶️) next to a host to send a WoL request.  
+
+### Updating to the Latest Version
+
+1. **Open Settings**:  
+   - Click the **Settings** button.  
+     - **Green Badge**: Indicates the latest version is installed.  
+     - **Yellow Badge**: An update is available.  
+
+2. **Start Update**:  
+   - Click the yellow badge, then click **Update** in the next window.  
+
+3. **Wait for Completion**:  
+   - Do not disconnect power until the update finishes.  

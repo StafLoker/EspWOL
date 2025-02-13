@@ -27,18 +27,18 @@
       // Data simulation
       let hosts = [
         {
-          name: 'Host 1',
-          mac: 'AA:BB:CC:DD:EE:FF',
+          name: 'Server',
+          mac: '76:14:22:af:23:46',
           ip: '192.168.1.101',
           periodicPing: 0,
-          lastPing: 0
+          lastPing: -1
         },
         {
-          name: 'Host 2',
-          mac: '11:22:33:44:55:66',
+          name: 'PC',
+          mac: '76:14:22:af:23:46',
           ip: '192.168.1.102',
-          periodicPing: 60,
-          lastPing: 30
+          periodicPing: 3600,
+          lastPing: 1000
         }
       ];
 
@@ -285,7 +285,11 @@
           document.getElementById('edit-host-ip').value = host.ip;
           document.getElementById('edit-select-periodic-ping').value =
             host.periodicPing;
-          if (typeof host.lastPing === 'number' && !isNaN(host.lastPing)) {
+          if (
+            typeof host.lastPing === 'number' &&
+            !isNaN(host.lastPing) &&
+            host.lastPing >= 0
+          ) {
             const lastPingMinutes = Math.floor(host.lastPing / 60);
             document.getElementById(
               'edit-last-ping'
