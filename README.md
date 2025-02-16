@@ -30,6 +30,8 @@
 - **Auto-Update**: Update to the latest version without using an IDE via internet.
 - **Dark Mode**: Toggle between light and dark themes.
 - **Periodic Ping**: Configure periodic pings; if a ping fails, the program attempts to wake the host.
+- **Export database**: Export database to **CSV** file.  
+- **Import database**: Import database from **CSV** file.
 
 ## Requirements
 
@@ -75,4 +77,15 @@
    - Click the yellow badge, then click **Update** in the next window.  
 
 3. **Wait for Completion**:  
-   - Do not disconnect power until the update finishes.  
+   - Do not disconnect power until the update finishes.
+
+## Migration from v1.x.x to v2.x.x  
+
+1. Ensure your firmware version is **1.2.3**.  
+2. Click the **Export** button.  
+3. Export the database and download the export file.  
+4. Upload **version 2.x.x** to the device with the **"Erase all content"** option enabled.  
+5. Click the **Export** button again.  
+6. Upload the previously exported file.  
+7. Click **Import**.  
+8. Migration complete!
