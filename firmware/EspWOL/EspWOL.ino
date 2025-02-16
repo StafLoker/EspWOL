@@ -158,6 +158,7 @@ void setup() {
     server.send(200, "application/json", "{ \"success\": true, \"message\": \"WiFi settings reset\" }");
   });
   server.on("/updateVersion", HTTP_ANY, handleUpdateVersion);
+  server.on("/import", HTTP_POST, handleImportDatabase);
   server.onNotFound([]() {
     server.send(404, "text/plain", "404: Not found");
   });

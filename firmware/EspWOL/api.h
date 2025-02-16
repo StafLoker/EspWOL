@@ -200,4 +200,11 @@ static void updateToLastVersion();
  */
 void handleUpdateVersion();
 
+/**
+ * @brief Import host database.
+ * 
+ * API Endpoint: POST '/import'
+ */
+void handleImportDatabase();
+
 #endif

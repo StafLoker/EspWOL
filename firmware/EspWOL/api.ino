@@ -27,6 +27,7 @@ static void getHostList() {
     obj["name"] = host.name;
     obj["mac"] = host.mac;
     obj["ip"] = host.ip;
+    obj["periodicPing"] = host.periodicPing;
   }
   serializeJson(doc, jsonResponse);
   server.send(200, "application/json", jsonResponse);
@@ -401,5 +402,12 @@ void handleUpdateVersion() {
     } else {
       server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
     }
+  }
+}
+
+// API: POST '/import'
+void handleImportDatabase() {
+  if (isAuthenticated()) {
+
   }
 }
