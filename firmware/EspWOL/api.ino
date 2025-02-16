@@ -141,10 +141,6 @@ static void editHost(const String &id) {
     host.mac = mac;
     host.ip = ip;
     host.periodicPing = periodicPing * 1000;
-    if (isHostDuplicate(host)) {
-      server.send(400, "application/json", "{ \"success\": false, \"message\": \"Is duplicated host.\" }");
-      return;
-    }
     if (host.periodicPing) {
       GTimer<millis> &timer = timers[index];
       timer.setTime(host.periodicPing);
@@ -339,7 +335,6 @@ static void getAuthenticationSettings() {
   StaticJsonDocument<256> doc;
   doc["enable"] = authentication.enable;
   doc["username"] = authentication.username;
-  doc["password"] = "************";
   serializeJson(doc, jsonResponse);
   server.send(200, "application/json", jsonResponse);
 }
