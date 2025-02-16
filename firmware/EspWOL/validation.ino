@@ -59,6 +59,13 @@ bool isValidMACAddress(const String &mac) {
   return true;
 }
 
-bool isValidBooleanParameter(const String &value) {
-  return (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false"));
+bool isHostDuplicate(const Host &newHost) {
+  for (const auto &pair : hosts) {
+    const Host &existingHost = pair.second;
+
+    if (existingHost.mac == newHost.mac || existingHost.ip == newHost.ip) {
+      return true;
+    }
+  }
+  return false;
 }

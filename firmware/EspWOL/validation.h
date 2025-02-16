@@ -44,15 +44,11 @@ bool isValidPassword(const String &password);
 bool isValidMACAddress(const String &mac);
 
 /**
- * @brief Checks if a given string represents a valid boolean value.
- * 
- * A valid boolean value is:
- * - `"true"` (case insensitive)
- * - `"false"` (case insensitive)
+ * @brief Checks if a new host is not duplicated (unique mac & ip)
  * 
  * @param value The string to check.
  * @return true if the value is `"true"` or `"false"`, false otherwise.
  */
-bool isValidBooleanParameter(const String &value);
+bool isHostDuplicate(const Host &newHost);
 
 #endif  // VALIDATION_H
