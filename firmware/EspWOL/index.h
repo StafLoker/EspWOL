@@ -64,6 +64,13 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           updateThemeIcon(newTheme);
         });
 
+        const tooltipTriggerList = document.querySelectorAll(
+          '[data-bs-toggle="tooltip"]'
+        );
+        const tooltipList = [...tooltipTriggerList].map(
+          (tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl)
+        );
+
         // Forms validation
         document.querySelectorAll('.needs-validation').forEach((form) => {
           form.addEventListener('submit', handleFormSubmit);
@@ -576,7 +583,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
               window.location.href = `http://${ip}`;
             }, 1500);
           }
-        } catch {
+        } catch (error) {
           modal.hide();
           disabledLoaderButton(button, `Update`);
 
@@ -620,7 +627,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           setTimeout(() => {
             location.reload();
           }, 1500);
-        } catch {
+        } catch (error) {
           modal.hide();
           disabledLoaderButton(button, `Update`);
 
