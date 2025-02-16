@@ -408,6 +408,62 @@ void handleUpdateVersion() {
 // API: POST '/import'
 void handleImportDatabase() {
   if (isAuthenticated()) {
-
+    if (!server.hasArg("plain")) {
+      server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing body\" }");
+      return;
+    }
+    String body = server.arg("plain");
+    DynamicJsonDocument doc(1024);
+    if (deserializeJson(doc, body)) {
+      server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid JSON\" }");
+      return;
+    }
+    
+    if (!doc.is<JsonArray>()) {
+      server.send(400, "application/json", "{ \"success\": false, \"message\": \"Expected JSON array\" }");
+      return;
+    }
+    
+    JsonArray arr = doc.as<JsonArray>();
+    int importedCount = 0;
+    
+    for (JsonVariant v : arr) {
+      if (!v.containsKey("name") || !v.containsKey("mac") || !v.containsKey("ip")) {
+        continue;
+      }
+      
+      String name = v["name"].as<String>();
+      String mac = v["mac"].as<String>();
+      String ip = v["ip"].as<String>();
+      
+      if (name.length() < 1 || !isValidMACAddress(mac) || !isValidIPAddress(ip)) {
+        continue;
+      }
+      
+      long periodicPing = 0;
+      if (v.containsKey("periodicPing")) {
+        periodicPing = v["periodicPing"].as<long>();
+        if (!isValidPeriodicPing(periodicPing)) {
+          periodicPing = 0;
+        }
+      }
+      
+      Host host;
+      host.name = name;
+      host.mac = mac;
+      host.ip = ip;
+      host.periodicPing = periodicPing * 1000;
+      
+      hosts[hosts.size()] = host;
+      timers[hosts.size()] = GTimer<millis>(host.periodicPing, true);
+      
+      importedCount++;
+    }
+    
+    saveHostsData();
+    
+    char response[128];
+    snprintf(response, sizeof(response), "{ \"success\": true, \"message\": \"Imported %d hosts from %d\" }", importedCount, arr.size());
+    server.send(200, "application/json", response);
   }
 }
