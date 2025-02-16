@@ -26,8 +26,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       src="https://cdn.jsdelivr.net/npm/ldrs/dist/auto/bouncy.js"
     ></script>
     <script>
-      let selectedFile = null;
-
       document.addEventListener('DOMContentLoaded', async function () {
         // Light-Dark mode toggle
         const htmlElement = document.documentElement;
@@ -96,12 +94,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             }
           });
         });
-
-        document
-          .getElementById('importFormFile')
-          .addEventListener('change', function (event) {
-            selectedFile = event.target.files[0];
-          });
 
         // Load all hosts
         enableLoaderWithBlur();
@@ -689,6 +681,9 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const modalElement = document.getElementById('export-import-modal');
         const modal = bootstrap.Modal.getInstance(modalElement);
 
+        const fileInput = document.getElementById('importFormFile');
+        const selectedFile = fileInput.files[0];
+
         const reader = new FileReader();
         reader.onload = async function (e) {
           const csvData = e.target.result;
@@ -736,6 +731,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
               'danger',
               'Error'
             );
+          } finally {
+            fileInput.value = '';
           }
         };
 
