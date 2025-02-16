@@ -337,6 +337,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           })
           .catch((error) => console.error("Fetch error (About):", error));
       }
+
       function exportDB2csv() {
         fetch("/pc_list")
           .then((response) => {
@@ -354,7 +355,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
             csvContent += "Name, MAC Address, IP Address\n";
 
-            pcList.forEach((pc) => {
+            data.forEach((pc) => {
               let row = `${pc.name}, ${pc.mac}, ${pc.ip}`;
               csvContent += row + "\n";
             });
