@@ -641,10 +641,10 @@
               if (values[0]) host.name = values[0];
               if (values[1]) host.mac = values[1];
               if (values[2]) host.ip = values[2];
-              if (values[3]) host.periodicPing = values[3];
+              if (values[3]) host.periodicPing = parseInt(values[3], 10);
               return host;
             })
-            .filter((host) => Object.keys(host).length > 0);
+            .filter((host) => host);
 
           try {
             const response = await fetch('/import', {
