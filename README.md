@@ -19,6 +19,10 @@
 <img src="ui.png" width="824" alt="Screenshot">
 </div>
 
+## Alerts
+> [!IMPORTANT]
+> [Instruction](#migration-from-v1xx-to-v2xx) of migration to version `2.x.x`.
+
 ## Features
 
 - **CRUD Host Management**: CRUD functionality to manage host information.
@@ -84,7 +88,7 @@
 1. Ensure your firmware version is **1.2.3**.  
 2. Click the **Export** button.  
 3. Export the database and download the export file.  
-4. Upload **version 2.x.x** to the device with the **"Erase all content"** option enabled.  
+4. Upload **version 2.x.x** to the device with the **"All Flash Contents"** option enabled.  
 5. Click the **Export** button again.  
 6. Upload the previously exported file.  
 7. Click **Import**.  
