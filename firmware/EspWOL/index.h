@@ -624,9 +624,11 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             data.success ? 'success' : 'danger',
             data.success ? 'Notification' : 'Error'
           );
-          setTimeout(() => {
-            location.reload();
-          }, 1500);
+          if (data.success) {
+            setTimeout(() => {
+              location.reload();
+            }, 1500);
+          }
         } catch (error) {
           modal.hide();
           disabledLoaderButton(button, `Update`);
@@ -943,13 +945,11 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
         if (isStaticIP) {
           form.classList.add('needs-validation');
-          form.setAttribute('novalidate', '');
           updateButton.setAttribute('form', 'editNetworkSettingsForm');
           updateButton.setAttribute('type', 'submit');
           updateButton.removeAttribute('onclick');
         } else {
           form.classList.remove('needs-validation');
-          form.removeAttribute('novalidate');
           updateButton.removeAttribute('form');
           updateButton.setAttribute('type', 'button');
           updateButton.setAttribute('onclick', 'updateNetworkSettings()');
@@ -979,13 +979,11 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
         if (isEnabled) {
           form.classList.add('needs-validation');
-          form.setAttribute('novalidate', '');
           updateButton.setAttribute('form', 'editAuthenticationSettingsForm');
           updateButton.setAttribute('type', 'submit');
           updateButton.removeAttribute('onclick');
         } else {
           form.classList.remove('needs-validation');
-          form.removeAttribute('novalidate');
           updateButton.removeAttribute('form');
           updateButton.setAttribute('type', 'button');
           updateButton.setAttribute('onclick', 'updateAuthentication()');

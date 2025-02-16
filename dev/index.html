@@ -622,9 +622,11 @@
             data.success ? 'success' : 'danger',
             data.success ? 'Notification' : 'Error'
           );
-          setTimeout(() => {
-            location.reload();
-          }, 1500);
+          if (data.success) {
+            setTimeout(() => {
+              location.reload();
+            }, 1500);
+          }
         } catch (error) {
           modal.hide();
           disabledLoaderButton(button, `Update`);
@@ -941,13 +943,11 @@
 
         if (isStaticIP) {
           form.classList.add('needs-validation');
-          form.setAttribute('novalidate', '');
           updateButton.setAttribute('form', 'editNetworkSettingsForm');
           updateButton.setAttribute('type', 'submit');
           updateButton.removeAttribute('onclick');
         } else {
           form.classList.remove('needs-validation');
-          form.removeAttribute('novalidate');
           updateButton.removeAttribute('form');
           updateButton.setAttribute('type', 'button');
           updateButton.setAttribute('onclick', 'updateNetworkSettings()');
@@ -977,13 +977,11 @@
 
         if (isEnabled) {
           form.classList.add('needs-validation');
-          form.setAttribute('novalidate', '');
           updateButton.setAttribute('form', 'editAuthenticationSettingsForm');
           updateButton.setAttribute('type', 'submit');
           updateButton.removeAttribute('onclick');
         } else {
           form.classList.remove('needs-validation');
-          form.removeAttribute('novalidate');
           updateButton.removeAttribute('form');
           updateButton.setAttribute('type', 'button');
           updateButton.setAttribute('onclick', 'updateAuthentication()');
