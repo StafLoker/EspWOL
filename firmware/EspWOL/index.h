@@ -104,27 +104,38 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           });
 
         // Load all hosts
-        const loaderHTML = `
-  <!-- Loading -->
-  <l-bouncy
-    id="loader"
-    size="54"
-    speed="1.9"
-    color="white"
-  ></l-bouncy>
-`;
-        const layoutDiv = document.querySelector('.layout');
-        layoutDiv.insertAdjacentHTML('afterbegin', loaderHTML);
+        enableLoaderWithBlur();
         updateLoaderColor(currentTheme);
         const loader = document.getElementById('loader');
-
-        document.body.classList.add('blurred');
-
         await getAllHost();
+        disabledLoaderWithBlur(loader);
+      });
 
+      async function getAllHostWithLoader() {
+        enableLoaderWithBlur();
+        const loader = document.getElementById('loader');
+        await getAllHost();
+        disabledLoaderWithBlur(loader);
+      }
+
+      function enableLoaderWithBlur() {
+        const loaderHTML = `
+          <l-bouncy
+            id="loader"
+            size="54"
+            speed="1.9"
+            color="white"
+          ></l-bouncy>
+        `;
+        const layoutDiv = document.querySelector('.layout');
+        layoutDiv.insertAdjacentHTML('afterbegin', loaderHTML);
+        document.body.classList.add('blurred');
+      }
+
+      function disabledLoaderWithBlur(loader) {
         document.body.classList.remove('blurred');
         loader.remove();
-      });
+      }
 
       async function handleFormSubmit(event) {
         event.preventDefault();
@@ -223,10 +234,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                             <button id="ping-button-${index}" class="btn btn-info btn-sm me-2" onclick="pingHost(${index})">
                                 <i class="fas fa-table-tennis"></i>
                             </button>
-                            <button class="btn btn-warning btn-sm me-2" onclick="editHost(${index})" data-index="${index}">
+                            <button id="edit-button-${index}" class="btn btn-warning btn-sm me-2" onclick="editHost(${index})" data-index="${index}">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn btn-primary btn-sm" onclick="wakeHost(${index})">
+                            <button id="wake-button-${index}" class="btn btn-primary btn-sm" onclick="wakeHost(${index})">
                                 <i class="fas fa-play"></i>
                             </button>
                         </div>`;
@@ -237,7 +248,20 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         }
       }
 
+      function enableLoaderButton(button) {
+        button.setAttribute('disabled', '');
+        button.innerHTML =
+          '<span class="spinner-border spinner-border-sm" role="status"></span>';
+      }
+
+      function disabledLoaderButton(button, html) {
+        button.innerHTML = html;
+        button.removeAttribute('disabled');
+      }
+
       async function addHost() {
+        const button = document.getElementById(`add-button`);
+        enableLoaderButton(button);
         const name = document.getElementById('host-name').value;
         const mac = document.getElementById('host-mac').value;
         const ip = document.getElementById('host-ip').value;
@@ -254,16 +278,17 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, mac, ip, periodicPing })
           });
-
           const data = await response.json();
+
+          disabledLoaderButton(button, `Add`);
+
           if (data.success) {
-            await getAllHost();
+            modal.hide();
+            await getAllHostWithLoader();
             document.getElementById('host-name').value = '';
             document.getElementById('host-mac').value = '';
             document.getElementById('host-ip').value = '';
             document.getElementById('add-select-periodic-ping').value = 0;
-
-            modal.hide();
           }
           showNotification(
             data.message,
@@ -272,12 +297,16 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           );
         } catch (error) {
           modal.hide();
+          disabledLoaderButton(button, `Add`);
+
           showNotification('Error adding host', 'danger', 'Error');
           console.error('Error adding host:', error);
         }
       }
 
       async function editHost(index) {
+        const button = document.getElementById(`edit-button-${index}`);
+        enableLoaderButton(button);
         const host = document.getElementById(`host-item-${index}`);
         document
           .getElementById('edit-host-modal')
@@ -309,10 +338,14 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         } catch (error) {
           showNotification('Error edit host', 'danger', 'Error');
           console.error('Error edit host:', error);
+        } finally {
+          disabledLoaderButton(button, '<i class="fas fa-edit"></i>');
         }
       }
 
       async function saveEditHost() {
+        const button = document.getElementById(`save-button`);
+        enableLoaderButton(button);
         const modalElement = document.getElementById('edit-host-modal');
         const index = modalElement.getAttribute('data-index');
         const name = document.getElementById('edit-host-name').value;
@@ -332,10 +365,11 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           });
           const data = await response.json();
           if (data.success) {
-            await getAllHost();
+            await getAllHostWithLoader();
           }
 
           modal.hide();
+          disabledLoaderButton(button, `Save changes`);
 
           showNotification(
             data.message,
@@ -344,6 +378,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           );
         } catch (error) {
           modal.hide();
+          disabledLoaderButton(button, `Save changes`);
 
           showNotification('Error edit host', 'danger', 'Error');
           console.error('Error edit host:', error);
@@ -351,6 +386,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       }
 
       async function confirmDelete() {
+        const button = document.getElementById(`delete-button`);
+        enableLoaderButton(button);
         const modalElement = document.getElementById('edit-host-modal');
         const index = modalElement.getAttribute('data-index');
 
@@ -362,10 +399,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           });
           const data = await response.json();
           if (data.success) {
-            await getAllHost();
+            await getAllHostWithLoader();
           }
-
           modal.hide();
+          disabledLoaderButton(button, `Delete`);
 
           showNotification(
             data.message,
@@ -374,6 +411,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           );
         } catch (error) {
           modal.hide();
+          disabledLoaderButton(button, `Delete`);
           showNotification('Error delete host', 'danger', 'Error');
           console.error('Error delete host:', error);
         }
@@ -381,9 +419,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
       async function pingHost(index) {
         const button = document.getElementById(`ping-button-${index}`);
-        button.setAttribute('disabled', '');
-        button.innerHTML =
-          '<span class="spinner-border spinner-border-sm" role="status"></span>';
+        enableLoaderButton(button);
 
         try {
           const response = await fetch('/ping?id=' + index, {
@@ -392,8 +428,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
           const data = await response.json();
           const statusCircle = document.getElementById(`status-${index}`);
-          button.innerHTML = '<i class="fas fa-table-tennis"></i>';
-          button.removeAttribute('disabled');
+          disabledLoaderButton(button, '<i class="fas fa-table-tennis"></i>');
 
           if (data.success) {
             statusCircle.classList.remove('red');
@@ -416,13 +451,14 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           }
         } catch (error) {
           showNotification('Ping failed', 'danger', 'Error');
-          button.innerHTML = '<i class="fas fa-table-tennis"></i>';
-          button.removeAttribute('disabled');
+          disabledLoaderButton(button, '<i class="fas fa-table-tennis"></i>');
           console.error('Ping failed:', error);
         }
       }
 
       async function wakeHost(index) {
+        const button = document.getElementById(`wake-button-${index}`);
+        enableLoaderButton(button);
         try {
           const response = await fetch('/wake?id=' + index, {
             method: 'POST'
@@ -436,6 +472,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         } catch (error) {
           showNotification("WOL packet don't sent", 'danger');
           console.error("WOL packet don't sent:", error);
+        } finally {
+          disabledLoaderButton(button, '<i class="fas fa-play"></i>');
         }
       }
 
@@ -444,12 +482,26 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         if (!response.ok) throw new Error('Failed to fetch About information');
 
         const data = await response.json();
-        document.getElementById('version').innerText = data.version;
+        const versionElement = document.getElementById('version');
+        const versionContainer = document.getElementById('version-container');
+        versionElement.innerText = data.version;
         if (data.version === data.lastVersion) {
           document.getElementById('version').classList.add('bg-success');
+          const notificationCircle = versionContainer.querySelector(
+            '.notification-circle'
+          );
+          if (notificationCircle) {
+            notificationCircle.remove();
+          }
         } else {
           document.getElementById('version').classList.add('bg-warning');
           document.getElementById('version').classList.add('text-dark');
+          if (!versionContainer.querySelector('.notification-circle')) {
+            const notificationCircle = document.createElement('span');
+            notificationCircle.className =
+              'position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle notification-circle';
+            versionContainer.appendChild(notificationCircle);
+          }
         }
         document.getElementById('hostname').innerText = data.hostname;
       }
@@ -477,18 +529,13 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         document.getElementById('switchEnableAuthentication').checked =
           data.enable;
         document.getElementById('fieldUsername').value = data.username;
-        document.getElementById('fieldPassword').value = data.password;
-
-        const form = document.getElementById('editAuthenticationSettingsForm');
-        if (data.enable) {
-          form.classList.add('needs-validation');
-          form.classList.add('novalidate');
-        }
 
         toggleAuthenticationFields();
       }
 
       async function getSettings() {
+        const button = document.getElementById(`settings-button`);
+        enableLoaderButton(button);
         try {
           await Promise.all([
             getAbout(),
@@ -500,10 +547,14 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         } catch (error) {
           console.error('Error loading settings:', error);
           showNotification('Failed to load settings', 'danger', 'Error');
+        } finally {
+          disabledLoaderButton(button, '<i class="fas fa-cog"></i>');
         }
       }
 
       async function updateNetworkSettings() {
+        const button = document.getElementById(`updateNetworkSettingsButton`);
+        enableLoaderButton(button);
         const enable = document.getElementById('inlineRadioStaticIP').checked;
         const ip = document.getElementById('fieldIP').value;
         const networkMask = document.getElementById('fieldNetworkMask').value;
@@ -521,6 +572,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           const data = await response.json();
 
           modal.hide();
+          disabledLoaderButton(button, `Update`);
 
           showNotification(
             data.message,
@@ -534,6 +586,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           }
         } catch {
           modal.hide();
+          disabledLoaderButton(button, `Update`);
 
           showNotification(
             'Error to update network settings',
@@ -545,6 +598,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       }
 
       async function updateAuthentication() {
+        const button = document.getElementById(`updateAuthenticationButton`);
+        enableLoaderButton(button);
         const enable = document.getElementById(
           'switchEnableAuthentication'
         ).checked;
@@ -563,6 +618,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           const data = await response.json();
 
           modal.hide();
+          disabledLoaderButton(button, `Update`);
 
           showNotification(
             data.message,
@@ -574,6 +630,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           }, 1500);
         } catch {
           modal.hide();
+          disabledLoaderButton(button, `Update`);
 
           showNotification(
             'Error to update authentication settings',
@@ -585,6 +642,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       }
 
       async function exportDatabase2CSV() {
+        const button = document.getElementById(`exportButton`);
+        enableLoaderButton(button);
         const modalElement = document.getElementById('export-import-modal');
         const modal = bootstrap.Modal.getInstance(modalElement);
         const response = await fetch('/hosts', { method: 'GET' });
@@ -613,6 +672,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const filename = `export-db-hosts-espwol-${timestamp}.csv`;
 
         modal.hide();
+        disabledLoaderButton(button, `Export`);
 
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement('a');
@@ -624,9 +684,11 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       }
 
       async function importDatabaseFromCSV() {
+        const button = document.getElementById(`importButton`);
+        enableLoaderButton(button);
         const modalElement = document.getElementById('export-import-modal');
         const modal = bootstrap.Modal.getInstance(modalElement);
-        
+
         const reader = new FileReader();
         reader.onload = async function (e) {
           const csvData = e.target.result;
@@ -643,10 +705,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
               if (values[0]) host.name = values[0];
               if (values[1]) host.mac = values[1];
               if (values[2]) host.ip = values[2];
-              if (values[3]) host.periodicPing = values[3];
+              if (values[3]) host.periodicPing = parseInt(values[3], 10);
               return host;
             })
-            .filter((host) => Object.keys(host).length > 0);
+            .filter((host) => host);
 
           try {
             const response = await fetch('/import', {
@@ -661,9 +723,13 @@ const char htmlPage[] PROGMEM = R"rawliteral(
               data.success ? 'success' : 'danger',
               data.success ? 'Import' : 'Error'
             );
+
             modal.hide();
-            await getAllHost();
+            disabledLoaderButton(button, `Import`);
+
+            await getAllHostWithLoader();
           } catch (error) {
+            disabledLoaderButton(button, `Import`);
             console.error('Error importing CSV:', error);
             showNotification(
               'Error importing CSV. Please try again.',
@@ -677,6 +743,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       }
 
       async function resetWiFiSettings() {
+        const button = document.getElementById(`reset-wifi-button`);
+        enableLoaderButton(button);
         try {
           const response = await fetch('/resetWifi', { method: 'POST' });
           const data = await response.json();
@@ -685,10 +753,12 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             data.success ? 'success' : 'danger',
             data.success ? 'Notification' : 'Error'
           );
+          disabledLoaderButton(button, `Reset`);
           if (data.success) {
             location.reload();
           }
         } catch (error) {
+          disabledLoaderButton(button, `Reset`);
           showNotification('Error to reset WIFI settings', 'danger', 'Error');
           console.error('Fetch reset WIFI settings error:', error);
         }
@@ -723,8 +793,9 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       }
 
       async function updateToLastVersion() {
+        const button = document.getElementById(`button-update-version`);
+        enableLoaderButton(button);
         const updateBannerHTML = `
-  <!-- Update banner -->
   <div id="update-container" style="display: none">
     <h3>Updating</h3>
     <div
@@ -753,6 +824,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           );
 
           modal.hide();
+          disabledLoaderButton(button, `Update`);
+
           layoutDiv.insertAdjacentHTML('afterbegin', updateBannerHTML);
           const updateContainer = document.getElementById('update-container');
           updateContainer.style.display = 'flex';
@@ -866,11 +939,13 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
         if (isStaticIP) {
           form.classList.add('needs-validation');
+          form.setAttribute('novalidate', '');
           updateButton.setAttribute('form', 'editNetworkSettingsForm');
           updateButton.setAttribute('type', 'submit');
           updateButton.removeAttribute('onclick');
         } else {
           form.classList.remove('needs-validation');
+          form.removeAttribute('novalidate');
           updateButton.removeAttribute('form');
           updateButton.setAttribute('type', 'button');
           updateButton.setAttribute('onclick', 'updateNetworkSettings()');
@@ -900,11 +975,13 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
         if (isEnabled) {
           form.classList.add('needs-validation');
+          form.setAttribute('novalidate', '');
           updateButton.setAttribute('form', 'editAuthenticationSettingsForm');
           updateButton.setAttribute('type', 'submit');
           updateButton.removeAttribute('onclick');
         } else {
           form.classList.remove('needs-validation');
+          form.removeAttribute('novalidate');
           updateButton.removeAttribute('form');
           updateButton.setAttribute('type', 'button');
           updateButton.setAttribute('onclick', 'updateAuthentication()');
@@ -1053,6 +1130,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
               <i class="fas fa-plus"></i>
             </button>
             <button
+              id="settings-button"
               class="btn btn-secondary btn-md"
               title="Settings"
               onclick="getSettings()"
@@ -1069,6 +1147,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             </button>
           </div>
         </h2>
+        <hr />
         <!-- HOST List -->
         <ul id="host-list" class="list-group mt-3"></ul>
       </main>
@@ -1173,7 +1252,12 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             </form>
           </div>
           <div class="modal-footer">
-            <button type="submit" class="btn btn-primary" form="addHostForm">
+            <button
+              id="add-button"
+              type="submit"
+              class="btn btn-primary"
+              form="addHostForm"
+            >
               Add
             </button>
             <button
@@ -1276,10 +1360,16 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             </form>
           </div>
           <div class="modal-footer">
-            <button type="submit" class="btn btn-primary" form="editHostForm">
+            <button
+              id="save-button"
+              type="submit"
+              class="btn btn-primary"
+              form="editHostForm"
+            >
               Save changes
             </button>
             <button
+              id="delete-button"
               type="button"
               class="btn btn-danger"
               onclick="confirmDelete()"
@@ -1326,12 +1416,14 @@ const char htmlPage[] PROGMEM = R"rawliteral(
               <div class="card-body">
                 <p class="card-text">
                   Version:
-                  <span
-                    id="version"
-                    class="badge rounded-pill"
-                    data-bs-dismiss="modal"
-                    onclick="getUpdateVersion()"
-                  ></span>
+                  <span id="version-container" class="position-relative">
+                    <span
+                      id="version"
+                      class="badge rounded-pill"
+                      data-bs-dismiss="modal"
+                      onclick="getUpdateVersion()"
+                    ></span>
+                  </span>
                 </p>
                 <p class="card-text">
                   Hostname:
@@ -1471,7 +1563,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                       class="form-control"
                       name="password"
                       id="fieldPassword"
-                      placeholder="Enter password"
+                      placeholder="*********"
                     />
                   </div>
                 </form>
@@ -1613,6 +1705,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           </div>
           <div class="modal-footer">
             <button
+              id="reset-wifi-button"
               type="button"
               class="btn btn-danger"
               onclick="resetWiFiSettings()"
