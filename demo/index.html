@@ -1,409 +1,748 @@
 <!DOCTYPE html>
-<html lang='en'>
-<head>
-    <meta charset='UTF-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Wake on LAN</title>
-    <link rel='stylesheet' href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
-    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css'>
-    <script src='https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js'></script>
-    <script src='https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js'></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        $(document).ready(function() {
-            updatePCList();
+      $(document).ready(function () {
+        updatePCList();
+      });
+
+      let pcList = [
+        { name: "Server", mac: "00:14:fe:01:23:93", ip: "192.168.1.10" },
+        { name: "Pc", mac: "76:14:22:af:23:46", ip: "192.168.1.11" },
+      ];
+
+      function updatePCList() {
+        const pcListElement = document.getElementById("pc-list");
+        pcListElement.innerHTML = "";
+        pcList.forEach((pc, index) => {
+          pcListElement.innerHTML +=
+            '<li class="list-group-item d-flex justify-content-between align-items-center">' +
+            '<div class="status-circle" id="status-' +
+            index +
+            '"></div>' +
+            pc.name +
+            " - " +
+            pc.mac +
+            " - " +
+            pc.ip +
+            '<div class="ml-auto">' +
+            '<button id="ping-button-' +
+            index +
+            '" class="btn btn-info btn-md mr-2" onclick="pingPC(\'' +
+            pc.ip +
+            "', " +
+            index +
+            ')"><i class="fas fa-table-tennis"></i></button>' +
+            '<button class="btn btn-warning btn-md mr-2" onclick="editPC(' +
+            index +
+            ')"><i class="fas fa-edit"></i></button>' +
+            '<button class="btn btn-primary btn-md" onclick="wakePC(\'' +
+            pc.mac +
+            '\')"><i class="fas fa-play"></i></button>' +
+            "</div></li>";
+        });
+      }
+
+      function addPC() {
+        const name = document.getElementById("pc-name").value;
+        const mac = document.getElementById("pc-mac").value;
+        const ip = document.getElementById("pc-ip").value;
+
+        pcList.push({ name, mac, ip });
+        updatePCList();
+        $("#add-pc-modal").modal("hide");
+        document.getElementById("pc-name").value = "";
+        document.getElementById("pc-mac").value = "";
+        document.getElementById("pc-ip").value = "";
+        showNotification("PC added successfully!", "success");
+      }
+      function editPC(index) {
+        const pc = pcList[index];
+        document.getElementById("edit-pc-name").value = pc.name;
+        document.getElementById("edit-pc-mac").value = pc.mac;
+        document.getElementById("edit-pc-ip").value = pc.ip;
+        $("#edit-pc-modal").data("index", index).modal("show");
+      }
+
+      function saveEditPC() {
+        const index = $("#edit-pc-modal").data("index");
+        const name = document.getElementById("edit-pc-name").value;
+        const mac = document.getElementById("edit-pc-mac").value;
+        const ip = document.getElementById("edit-pc-ip").value;
+
+        pcList[index] = { name, mac, ip };
+        updatePCList();
+        $("#edit-pc-modal").modal("hide");
+        showNotification("PC updated successfully!", "success");
+      }
+
+      function confirmDelete() {
+        const index = $("#edit-pc-modal").data("index");
+        pcList.splice(index, 1);
+        updatePCList();
+        showNotification("PC deleted successfully!", "danger");
+        $("#edit-pc-modal").modal("hide");
+      }
+
+      function wakePC(mac) {
+        showNotification("WOL packet sent to " + mac, "info");
+      }
+
+      function pingPC(ip, index) {
+        const button = document.getElementById("ping-button-" + index);
+        button.innerHTML =
+          '<div class="spinner-border spinner-border-sm" role="status"><span class="sr-only">Loading...</span></div>';
+
+        setTimeout(() => {
+          const statusCircle = document.getElementById("status-" + index);
+          button.innerHTML = '<i class="fas fa-table-tennis"></i>';
+          if (Math.random() < 0.5) {
+            statusCircle.classList.remove("red");
+            statusCircle.classList.add("green");
+            statusCircle.classList.add("blinking");
+            showNotification("Pinging", "success");
+            setTimeout(() => {
+              statusCircle.classList.remove("blinking");
+              statusCircle.classList.remove("green");
+            }, 10000);
+          } else {
+            statusCircle.classList.remove("green", "blinking");
+            statusCircle.classList.add("red");
+            showNotification("Not pinging", "danger");
+            setTimeout(() => {
+              statusCircle.classList.remove("red");
+            }, 10000);
+          }
+        }, 3000);
+      }
+
+      function showNotification(message, type) {
+        const notification = $(
+          '<div class="alert alert-' +
+            type +
+            ' alert-dismissible fade show" role="alert">' +
+            message +
+            '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>'
+        );
+        $("#notification-area").append(notification);
+        setTimeout(() => {
+          notification.alert("close");
+        }, 3000);
+      }
+
+      function resetWiFiSettings() {
+        showNotification("WiFi settings reset successfully!", "success");
+        location.reload();
+      }
+
+      function updateNetworkSettings() {
+        const enable = document.getElementById("inlineRadioStaticIP").checked;
+        const ip = document.getElementById("fieldIP").value;
+        const networkMask = document.getElementById("fieldNetworkMask").value;
+        const gateway = document.getElementById("fieldGateway").value;
+
+        $("#settings-modal").modal("hide");
+        showNotification("Network settings updated successfully!", "success");
+      }
+
+      function updateAuthentication() {
+        const enable = document.getElementById(
+          "switchEnableAuthentication"
+        ).checked;
+        const username = document.getElementById("fieldUsername").value;
+        const password = document.getElementById("fieldPassword").value;
+
+        $("#settings-modal").modal("hide");
+        showNotification("Authentication updated successfully!", "success");
+      }
+
+      function getNetworkSettings() {
+        const isStatic = Math.random() < 0.5;
+        document.getElementById("inlineRadioStaticIP").checked = isStatic;
+        document.getElementById("inlineRadioDHCP").checked = !isStatic;
+        document.getElementById("fieldIP").value = isStatic
+          ? "192.168.1.8"
+          : "192.168.1.76";
+        document.getElementById("fieldNetworkMask").value = "255.255.255.0";
+        document.getElementById("fieldGateway").value = "191.168.1.1";
+        toggleNetworkFields();
+      }
+
+      function getAuthentication() {
+        const isAuth = Math.random() < 0.5;
+        document.getElementById("switchEnableAuthentication").checked = isAuth;
+        document.getElementById("fieldUsername").value = isAuth ? "kety" : "";
+        document.getElementById("fieldPassword").value = "*************";
+        toggleAuthenticationFields();
+      }
+
+      function toggleAuthenticationFields() {
+        const switchElement = document.getElementById(
+          "switchEnableAuthentication"
+        );
+        const usernameField = document.getElementById("fieldUsername");
+        const passwordField = document.getElementById("fieldPassword");
+
+        if (switchElement.checked) {
+          usernameField.removeAttribute("disabled");
+          passwordField.removeAttribute("disabled");
+        } else {
+          usernameField.setAttribute("disabled", "");
+          passwordField.setAttribute("disabled", "");
+        }
+      }
+
+      function toggleNetworkFields() {
+        const isStaticIP = document.getElementById(
+          "inlineRadioStaticIP"
+        ).checked;
+        const ipField = document.getElementById("fieldIP");
+        const networkMaskField = document.getElementById("fieldNetworkMask");
+        const gatewayField = document.getElementById("fieldGateway");
+
+        if (isStaticIP) {
+          ipField.removeAttribute("disabled");
+          networkMaskField.removeAttribute("disabled");
+          gatewayField.removeAttribute("disabled");
+        } else {
+          ipField.setAttribute("disabled", "");
+          networkMaskField.setAttribute("disabled", "");
+          gatewayField.setAttribute("disabled", "");
+        }
+      }
+
+      function getAbout() {}
+
+      function exportDB2csv() {
+        let csvContent = "data:text/csv;charset=utf-8,";
+
+        csvContent += "Name, MAC Address, IP Address\n";
+
+        pcList.forEach((pc) => {
+          let row = `${pc.name}, ${pc.mac}, ${pc.ip}`;
+          csvContent += row + "\n";
         });
 
-        let pcList = [
-            { name: 'Server', mac: '00:14:fe:01:23:93', ip: '192.168.1.10' },
-            { name: 'Pc', mac: '76:14:22:af:23:46', ip: '192.168.1.11' },
-        ];
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        const hours = String(now.getHours()).padStart(2, "0");
+        const minutes = String(now.getMinutes()).padStart(2, "0");
+        const seconds = String(now.getSeconds()).padStart(2, "0");
+        const timestamp = `${year}-${month}-${day}--${hours}-${minutes}-${seconds}`;
+        const filename = `export-db-hosts-espwol-${timestamp}.csv`;
 
-        function updatePCList() {
-            const pcListElement = document.getElementById('pc-list');
-            pcListElement.innerHTML = '';
-            pcList.forEach((pc, index) => {
-                pcListElement.innerHTML += '<li class="list-group-item d-flex justify-content-between align-items-center">' +
-                    '<div class="status-circle" id="status-' + index + '"></div>' +
-                    pc.name + ' - ' + pc.mac + ' - ' + pc.ip +
-                    '<div class="ml-auto">' +
-                    '<button id="ping-button-'+ index +'" class="btn btn-info btn-md mr-2" onclick="pingPC(\'' + pc.ip + '\', ' + index + ')"><i class="fas fa-table-tennis"></i></button>' +
-                    '<button class="btn btn-warning btn-md mr-2" onclick="editPC(' + index + ')"><i class="fas fa-edit"></i></button>' +
-                    '<button class="btn btn-primary btn-md" onclick="wakePC(\'' + pc.mac + '\')"><i class="fas fa-play"></i></button>' +
-                    '</div></li>';
-            });
-        }
+        $("#export-modal").modal("hide");
 
-        function addPC() {
-            const name = document.getElementById('pc-name').value;
-            const mac = document.getElementById('pc-mac').value;
-            const ip = document.getElementById('pc-ip').value;
-
-            pcList.push({ name, mac, ip });
-            updatePCList();
-            $('#add-pc-modal').modal('hide');
-            document.getElementById('pc-name').value = '';
-            document.getElementById('pc-mac').value = '';
-            document.getElementById('pc-ip').value = '';
-            showNotification('PC added successfully!', 'success');
-        }
-        function editPC(index) {
-            const pc = pcList[index];
-            document.getElementById('edit-pc-name').value = pc.name;
-            document.getElementById('edit-pc-mac').value = pc.mac;
-            document.getElementById('edit-pc-ip').value = pc.ip;
-            $('#edit-pc-modal').data('index', index).modal('show');
-        }
-
-        function saveEditPC() {
-            const index = $('#edit-pc-modal').data('index');
-            const name = document.getElementById('edit-pc-name').value;
-            const mac = document.getElementById('edit-pc-mac').value;
-            const ip = document.getElementById('edit-pc-ip').value;
-
-            pcList[index] = { name, mac, ip };
-            updatePCList();
-            $('#edit-pc-modal').modal('hide');
-            showNotification('PC updated successfully!', 'success');
-        }
-        
-        function confirmDelete() {
-            const index = $('#edit-pc-modal').data('index');
-            pcList.splice(index, 1);
-            updatePCList();
-            showNotification('PC deleted successfully!', 'danger');
-            $('#edit-pc-modal').modal('hide');
-        }
-
-        function wakePC(mac) {
-            showNotification('WOL packet sent to ' + mac, 'info');
-        }
-
-        function pingPC(ip, index) {
-            const button = document.getElementById('ping-button-' + index);
-            button.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"><span class="sr-only">Loading...</span></div>';
-        
-            setTimeout(() => {
-                const statusCircle = document.getElementById('status-' + index);
-                button.innerHTML = '<i class="fas fa-table-tennis"></i>';
-                if (Math.random() < 0.5) {
-                    statusCircle.classList.remove('red');
-                    statusCircle.classList.add('green');
-                    statusCircle.classList.add('blinking');
-                    showNotification('Pinging', 'success');
-                    setTimeout(() => {
-                        statusCircle.classList.remove('blinking');
-                        statusCircle.classList.remove('green');
-                    }, 10000);
-                } else {
-                    statusCircle.classList.remove('green', 'blinking');
-                    statusCircle.classList.add('red');
-                    showNotification('Not pinging', 'danger');
-                    setTimeout(() => {
-                        statusCircle.classList.remove('red');
-                    }, 10000);
-                }
-            }, 3000);
-        }
-
-        function showNotification(message, type) {
-            const notification = $('<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' + message + '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>');
-            $('#notification-area').append(notification);
-            setTimeout(() => {
-                notification.alert('close');
-            }, 3000);
-        }
-
-        function resetWiFiSettings() {
-            showNotification('WiFi settings reset successfully!', 'success');
-            location.reload();
-        }
-
-        function updateNetworkSettings() {
-            const enable = document.getElementById('inlineRadioStaticIP').checked;
-            const ip = document.getElementById('fieldIP').value;
-            const networkMask = document.getElementById('fieldNetworkMask').value;
-            const gateway = document.getElementById('fieldGateway').value;
-
-            $('#settings-modal').modal('hide');
-            showNotification('Network settings updated successfully!', 'success');
-        }
-
-        function updateAuthentication() {
-            const enable = document.getElementById('switchEnableAuthentication').checked;
-            const username = document.getElementById('fieldUsername').value;
-            const password = document.getElementById('fieldPassword').value;
-
-            $('#settings-modal').modal('hide');
-            showNotification('Authentication updated successfully!', 'success');
-        }
-        
-        function getNetworkSettings() {
-            const isStatic = Math.random() < 0.5;
-            document.getElementById('inlineRadioStaticIP').checked = isStatic;
-            document.getElementById('inlineRadioDHCP').checked = !isStatic;
-            document.getElementById('fieldIP').value = isStatic ? "192.168.1.8" : "192.168.1.76";
-            document.getElementById('fieldNetworkMask').value = "255.255.255.0";
-            document.getElementById('fieldGateway').value = "191.168.1.1";
-            toggleNetworkFields();
-        }
-
-        function getAuthentication() {
-            const isAuth = Math.random() < 0.5;
-            document.getElementById('switchEnableAuthentication').checked = isAuth;
-            document.getElementById('fieldUsername').value = isAuth ? "kety" : "";
-            document.getElementById('fieldPassword').value = "*************";
-            toggleAuthenticationFields();
-        }
-
-        function toggleAuthenticationFields() {
-            const switchElement = document.getElementById('switchEnableAuthentication');
-            const usernameField = document.getElementById('fieldUsername');
-            const passwordField = document.getElementById('fieldPassword');
-            
-            if (switchElement.checked) {
-                usernameField.removeAttribute('disabled');
-                passwordField.removeAttribute('disabled');
-            } else {
-                usernameField.setAttribute('disabled', '');
-                passwordField.setAttribute('disabled', '');
-            }
-        }
-
-        function toggleNetworkFields() {
-            const isStaticIP = document.getElementById('inlineRadioStaticIP').checked;
-            const ipField = document.getElementById('fieldIP');
-            const networkMaskField = document.getElementById('fieldNetworkMask');
-            const gatewayField = document.getElementById('fieldGateway');
-
-            if (isStaticIP) {
-                ipField.removeAttribute('disabled');
-                networkMaskField.removeAttribute('disabled');
-                gatewayField.removeAttribute('disabled');
-            } else {
-                ipField.setAttribute('disabled', '');
-                networkMaskField.setAttribute('disabled', '');
-                gatewayField.setAttribute('disabled', '');
-            }
-        }
-
-        function getAbout() {
-
-        }
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
     </script>
     <style>
-        .status-circle {
-            width: 15px;
-            height: 15px;
-            border-radius: 50%;
-            background-color: gray;
-            margin-right: 10px;
-            transition: background-color 0.3s ease;
-        }
+      .status-circle {
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background-color: gray;
+        margin-right: 10px;
+        transition: background-color 0.3s ease;
+      }
 
-        .blinking {
-            animation: blink-animation 1s infinite;
-        }
+      .blinking {
+        animation: blink-animation 1s infinite;
+      }
 
-        @keyframes blink-animation {
-            0% { opacity: 1; }
-            50% { opacity: 0; }
-            100% { opacity: 1; }
+      @keyframes blink-animation {
+        0% {
+          opacity: 1;
         }
+        50% {
+          opacity: 0;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
 
-        .status-circle.green {
-            background-color: green;
-        }
+      .status-circle.green {
+        background-color: green;
+      }
 
-        .status-circle.red {
-            background-color: red;
-        }
+      .status-circle.red {
+        background-color: red;
+      }
     </style>
-</head>
-<body class='bg-light text-dark'>
-    <div class='container mt-5'>
-        <h1 class='text-center'>Wake on LAN</h1>
-        <div id='notification-area'></div>
-        <h2 class='mt-4 d-flex justify-content-between align-items-center'>
-            <span>PC List</span>
-            <div class='ml-auto'>
-                <button class='btn btn-success' data-toggle='modal' data-target='#add-pc-modal'>
-                    <i class='fas fa-plus'></i>
+  </head>
+  <body class="bg-light text-dark">
+    <div class="container mt-5">
+      <h1 class="text-center">Wake on LAN</h1>
+      <div id="notification-area"></div>
+      <h2 class="mt-4 d-flex justify-content-between align-items-center">
+        <span>PC List</span>
+        <div class="ml-auto">
+          <button
+            class="btn btn-success"
+            data-toggle="modal"
+            data-target="#add-pc-modal"
+          >
+            <i class="fas fa-plus"></i>
+          </button>
+          <button
+            class="btn btn-secondary btn-md"
+            title="Settings"
+            data-toggle="modal"
+            data-target="#settings-modal"
+            onclick="getNetworkSettings(); getAuthentication(); getAbout();"
+          >
+            <i class="fas fa-cog"></i>
+          </button>
+          <button
+            class="btn btn-warning btn-md"
+            title="Export"
+            data-toggle="modal"
+            data-target="#export-modal"
+          >
+            <i class="fas fa-file-export"></i>
+          </button>
+        </div>
+      </h2>
+      <ul id="pc-list" class="list-group mt-3"></ul>
+    </div>
+    <div
+      class="modal fade"
+      id="add-pc-modal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="addPCLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addPCLabel">Add PC</h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="pc-name">Name</label>
+              <input
+                type="text"
+                class="form-control"
+                id="pc-name"
+                placeholder="Enter PC name"
+              />
+            </div>
+            <div class="form-group">
+              <label for="pc-mac">MAC Address</label>
+              <input
+                type="text"
+                class="form-control"
+                id="pc-mac"
+                placeholder="Enter MAC address"
+              />
+            </div>
+            <div class="form-group">
+              <label for="pc-ip">IP Address</label>
+              <input
+                type="text"
+                class="form-control"
+                id="pc-ip"
+                placeholder="Enter IP address"
+              />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="addPC()">
+              Add
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="modal fade"
+      id="edit-pc-modal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="editPCLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editPCLabel">Edit PC</h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="edit-pc-name">Name</label>
+              <input
+                type="text"
+                class="form-control"
+                id="edit-pc-name"
+                placeholder="Enter PC name"
+              />
+            </div>
+            <div class="form-group">
+              <label for="edit-pc-mac">MAC Address</label>
+              <input
+                type="text"
+                class="form-control"
+                id="edit-pc-mac"
+                placeholder="Enter MAC address"
+              />
+            </div>
+            <div class="form-group">
+              <label for="edit-pc-ip">IP Address</label>
+              <input
+                type="text"
+                class="form-control"
+                id="edit-pc-ip"
+                placeholder="Enter IP address"
+              />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="saveEditPC()"
+            >
+              Save changes
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              onclick="confirmDelete()"
+            >
+              Delete
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="modal fade"
+      id="settings-modal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="settingsLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="settingsLabel">Settings</h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="modal-title">About</h5>
+              </div>
+              <div class="card-body">
+                <p class="card-text">
+                  Version:
+                  <a
+                    id="version"
+                    href="https://github.com/StafLoker/EspWOL"
+                    class="badge badge-pill badge-success"
+                    >1.2.2</a
+                  >
+                </p>
+                <p class="card-text">
+                  Hostname:
+                  <span id="hostname" class="badge badge-info">wol</span>
+                </p>
+              </div>
+            </div>
+            <hr />
+            <div class="card">
+              <div class="card-header">
+                <h5 class="modal-title">Network</h5>
+              </div>
+              <div class="card-body">
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="inlineRadioOptions"
+                    id="inlineRadioStaticIP"
+                    value="staticIP"
+                    onchange="toggleNetworkFields()"
+                  />
+                  <label class="form-check-label" for="inlineRadio1"
+                    >Static IP</label
+                  >
+                </div>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="inlineRadioOptions"
+                    id="inlineRadioDHCP"
+                    value="dhcp"
+                    onchange="toggleNetworkFields()"
+                  />
+                  <label class="form-check-label" for="inlineRadio2"
+                    >DHCP</label
+                  >
+                </div>
+                <div class="form-group">
+                  <label for="ip">IP:</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="fieldIP"
+                    placeholder="192.168.2.9"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="static-network-mask">Network Mask:</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="fieldNetworkMask"
+                    placeholder="255.255.255.0"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="static-gateway">Gateway:</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="fieldGateway"
+                    placeholder="192.168.2.1"
+                  />
+                </div>
+              </div>
+              <div class="card-footer">
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  onclick="updateNetworkSettings()"
+                >
+                  Update
                 </button>
-                <button class='btn btn-secondary btn-md' title='Settings' data-toggle='modal' data-target='#settings-modal' onclick="getNetworkSettings(); getAuthentication(); getAbout();">
-                    <i class='fas fa-cog'></i>
+                <button
+                  type="button"
+                  class="btn btn-danger"
+                  title="Reset WiFi"
+                  data-toggle="modal"
+                  data-target="#reset-wifi-modal"
+                  onclick="$('#settings-modal').modal('hide');"
+                >
+                  Reset WiFi
                 </button>
+              </div>
             </div>
-        </h2>
-        <ul id='pc-list' class='list-group mt-3'></ul>
-    </div>
-    <div class='modal fade' id='add-pc-modal' tabindex='-1' role='dialog' aria-labelledby='addPCLabel' aria-hidden='true'>
-        <div class='modal-dialog' role='document'>
-            <div class='modal-content'>
-                <div class='modal-header'>
-                    <h5 class='modal-title' id='addPCLabel'>Add PC</h5>
-                    <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
-                        <span aria-hidden='true'>&times;</span>
-                    </button>
+            <hr />
+            <div class="card">
+              <div class="card-header">
+                <h5 class="modal-title">Authentication</h5>
+              </div>
+              <div class="card-body">
+                <div class="custom-control custom-switch">
+                  <input
+                    type="checkbox"
+                    class="custom-control-input"
+                    id="switchEnableAuthentication"
+                    onchange="toggleAuthenticationFields()"
+                  />
+                  <label
+                    class="custom-control-label"
+                    for="switchEnableAuthentication"
+                    >Enable</label
+                  >
                 </div>
-                <div class='modal-body'>
-                    <div class='form-group'>
-                        <label for='pc-name'>Name</label>
-                        <input type='text' class='form-control' id='pc-name' placeholder='Enter PC name'>
-                    </div>
-                    <div class='form-group'>
-                        <label for='pc-mac'>MAC Address</label>
-                        <input type='text' class='form-control' id='pc-mac' placeholder='Enter MAC address'>
-                    </div>
-                    <div class='form-group'>
-                        <label for='pc-ip'>IP Address</label>
-                        <input type='text' class='form-control' id='pc-ip' placeholder='Enter IP address'>
-                    </div>
+                <div class="form-group">
+                  <label for="username">Username:</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="fieldUsername"
+                    placeholder="Enter username"
+                  />
                 </div>
-                <div class='modal-footer'>
-                    <button type='button' class='btn btn-primary' onclick='addPC()'>Add</button>
-                    <button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>
+                <div class="form-group">
+                  <label for="password">Password:</label>
+                  <input
+                    type="password"
+                    class="form-control"
+                    id="fieldPassword"
+                    placeholder="Enter password"
+                  />
                 </div>
+              </div>
+              <div class="card-footer">
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  onclick="updateAuthentication()"
+                >
+                  Update
+                </button>
+              </div>
             </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+            >
+              Close
+            </button>
+          </div>
         </div>
+      </div>
     </div>
-    <div class='modal fade' id='edit-pc-modal' tabindex='-1' role='dialog' aria-labelledby='editPCLabel' aria-hidden='true'>
-        <div class='modal-dialog' role='document'>
-            <div class='modal-content'>
-                <div class='modal-header'>
-                    <h5 class='modal-title' id='editPCLabel'>Edit PC</h5>
-                    <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
-                        <span aria-hidden='true'>&times;</span>
-                    </button>
-                </div>
-                <div class='modal-body'>
-                    <div class='form-group'>
-                        <label for='edit-pc-name'>Name</label>
-                        <input type='text' class='form-control' id='edit-pc-name' placeholder='Enter PC name'>
-                    </div>
-                    <div class='form-group'>
-                        <label for='edit-pc-mac'>MAC Address</label>
-                        <input type='text' class='form-control' id='edit-pc-mac' placeholder='Enter MAC address'>
-                    </div>
-                    <div class='form-group'>
-                        <label for='edit-pc-ip'>IP Address</label>
-                        <input type='text' class='form-control' id='edit-pc-ip' placeholder='Enter IP address'>
-                    </div>
-                </div>
-                <div class='modal-footer'>
-                    <button type='button' class='btn btn-primary' onclick='saveEditPC()'>Save changes</button>
-                    <button type='button' class='btn btn-danger' onclick='confirmDelete()'>Delete</button>
-                    <button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>
-                </div>
-            </div>
+    <div
+      class="modal fade"
+      id="reset-wifi-modal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="resetWiFiLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="resetWiFiLabel">Reset WiFi Settings</h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>
+              Are you sure you want to reset WiFi settings? This will clear
+              saved credentials.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-danger"
+              onclick="resetWiFiSettings()"
+            >
+              Reset
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+              onclick="$('#settings-modal').modal('show');"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
+      </div>
     </div>
-    <div class='modal fade' id='settings-modal' tabindex='-1' role='dialog' aria-labelledby='settingsLabel' aria-hidden='true'>
-        <div class='modal-dialog' role='document'>
-            <div class='modal-content'>
-                <div class='modal-header'>
-                    <h5 class='modal-title' id='settingsLabel'>Settings</h5>
-                    <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
-                        <span aria-hidden='true'>&times;</span>
-                    </button>
-                </div>
-                <div class='modal-body'>
-
-                    <div class='card'>
-                        <div class='card-header'>
-                            <h5 class='modal-title'>About</h5>
-                        </div>
-                        <div class='card-body'>
-                            <p class="card-text"> Version: 
-                                <a id="version" href="https://github.com/StafLoker/EspWOL" class="badge badge-pill badge-success">1.2.2</a>
-                            </p>
-                            <p class="card-text"> Hostname: 
-                                <span id="hostname" class="badge badge-info">wol</span>
-                            </p>
-                        </div>
-                    </div>
-                    <hr/>
-                    <div class='card'>
-                        <div class='card-header'>
-                            <h5 class='modal-title'>Network</h5>
-                        </div>
-                        <div class='card-body'>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadioStaticIP" value="staticIP" onchange="toggleNetworkFields()"> 
-                                <label class="form-check-label" for="inlineRadio1">Static IP</label>
-                              </div>
-                              <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadioDHCP" value="dhcp" onchange="toggleNetworkFields()">
-                                <label class="form-check-label" for="inlineRadio2">DHCP</label>
-                            </div>
-                            <div class='form-group'>
-                                <label for='ip'>IP:</label>
-                                <input type='text' class='form-control' id='fieldIP' placeholder='192.168.2.9'>
-                            </div>
-                            <div class='form-group'>
-                                <label for='static-network-mask'>Network Mask:</label>
-                                <input type='text' class='form-control' id='fieldNetworkMask' placeholder='255.255.255.0'>
-                            </div>
-                            <div class='form-group'>
-                                <label for='static-gateway'>Gateway:</label>
-                                <input type='text' class='form-control' id='fieldGateway' placeholder='192.168.2.1'>
-                            </div>
-                        </div>
-                        <div class='card-footer'>
-                            <button type='button' class='btn btn-primary' onclick='updateNetworkSettings()'>Update</button>
-                            <button type='button' class='btn btn-danger' title='Reset WiFi' data-toggle='modal' data-target='#reset-wifi-modal'onclick="$('#settings-modal').modal('hide');">Reset WiFi</button>
-                        </div>
-                    </div>
-                    <hr/>
-                    <div class='card'>
-                        <div class='card-header'>
-                            <h5 class='modal-title'>Authentication</h5>
-                        </div>
-                        <div class='card-body'>
-                            <div class="custom-control custom-switch">
-                              <input type="checkbox" class="custom-control-input" id="switchEnableAuthentication" onchange="toggleAuthenticationFields()">
-                              <label class="custom-control-label" for="switchEnableAuthentication">Enable</label>
-                            </div>
-                            <div class='form-group'>
-                                <label for='username'>Username:</label>
-                                <input type='text' class='form-control' id='fieldUsername' placeholder='Enter username'>
-                            </div>
-                            <div class='form-group'>
-                                <label for='password'>Password:</label>
-                                <input type='password' class='form-control' id='fieldPassword' placeholder='Enter password'>
-                            </div>
-                        </div>
-                        <div class='card-footer'>
-                            <button type='button' class='btn btn-primary' onclick='updateAuthentication()'>Update</button>
-                        </div>
-                    </div>
-                </div>
-                <div class='modal-footer'>
-                    <button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>
-                </div>
-            </div>
+    <div
+      class="modal fade"
+      id="export-modal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="exportDBLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exportDBLabel">Export</h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>Export & download all host to CSV?</p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="exportDB2csv()"
+            >
+              Export
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
+      </div>
     </div>
-    <div class='modal fade' id='reset-wifi-modal' tabindex='-1' role='dialog' aria-labelledby='resetWiFiLabel' aria-hidden='true'>
-        <div class='modal-dialog' role='document'>
-            <div class='modal-content'>
-                <div class='modal-header'>
-                    <h5 class='modal-title' id='resetWiFiLabel'>Reset WiFi Settings</h5>
-                    <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
-                        <span aria-hidden='true'>&times;</span>
-                    </button>
-                </div>
-                <div class='modal-body'>
-                    <p>Are you sure you want to reset WiFi settings? This will clear saved credentials.</p>
-                </div>
-                <div class='modal-footer'>
-                    <button type='button' class='btn btn-danger' onclick='resetWiFiSettings()'>Reset</button>
-                    <button type='button' class='btn btn-secondary' data-dismiss='modal' onclick="$('#settings-modal').modal('show');">Cancel</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <footer class='text-center mt-5'>
-        <p>&copy; 2025 StafLoker</p>
+    <footer class="text-center mt-5">
+      <p>&copy; 2025 StafLoker</p>
     </footer>
-</body>
+  </body>
 </html>
