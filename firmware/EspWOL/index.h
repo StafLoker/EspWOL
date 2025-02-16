@@ -5,6 +5,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Wake on LAN</title>
     <link
       rel="stylesheet"
@@ -803,6 +807,9 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       .blinking {
         animation: blink-animation 1s infinite;
       }
+      .blinking {
+        animation: blink-animation 1s infinite;
+      }
 
       @keyframes blink-animation {
         0% {
@@ -815,7 +822,21 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           opacity: 1;
         }
       }
+      @keyframes blink-animation {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
 
+      .status-circle.green {
+        background-color: green;
+      }
       .status-circle.green {
         background-color: green;
       }
