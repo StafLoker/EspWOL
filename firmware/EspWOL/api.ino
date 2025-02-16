@@ -1,5 +1,6 @@
 #include "api.h"
 #include "validation.h"
+#include "memory.h"
 
 static bool isAuthenticated() {
   if (authentication.enable && !server.authenticate(authentication.username.c_str(), authentication.password.c_str())) {
@@ -19,10 +20,11 @@ void handleRoot() {
 // API: GET '/hosts'
 static void getHostList() {
   String jsonResponse;
-  StaticJsonDocument<1024> doc;
+  DynamicJsonDocument doc(1024);
   JsonArray array = doc.to<JsonArray>();
   for (const auto &pair : hosts) {
     const Host &host = pair.second;
+
     JsonObject obj = array.createNestedObject();
     obj["name"] = host.name;
     obj["mac"] = host.mac;
@@ -76,7 +78,7 @@ static void addHost() {
   String name = doc["name"].as<String>();
   String mac = doc["mac"].as<String>();
   String ip = doc["ip"].as<String>();
-  if (name.isEmpty() && !isValidMACAddress(mac) && !isValidIPAddress(ip)) {
+  if (name.isEmpty() || !isValidMACAddress(mac) || !isValidIPAddress(ip)) {
     server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid data format\" }");
     return;
   }
@@ -90,8 +92,13 @@ static void addHost() {
   host.mac = mac;
   host.ip = ip;
   host.periodicPing = periodicPing * 1000;
-  hosts[hosts.size()] = host;
-  timers[hosts.size()] = GTimer<millis>(host.periodicPing, true);
+  if (isHostDuplicate(host)) {
+    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Is duplicated host.\" }");
+    return;
+  }
+  int id = hosts.size();
+  hosts[id] = host;
+  timers[id] = GTimer<millis>(host.periodicPing, true);
   saveHostsData();
   server.send(200, "application/json", "{ \"success\": true, \"message\": \"Host added\" }");
 }
@@ -118,7 +125,7 @@ static void editHost(const String &id) {
   String name = doc["name"].as<String>();
   String mac = doc["mac"].as<String>();
   String ip = doc["ip"].as<String>();
-  if (name.isEmpty() && !isValidMACAddress(mac) && !isValidIPAddress(ip)) {
+  if (name.isEmpty() || !isValidMACAddress(mac) || !isValidIPAddress(ip)) {
     server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid data format\" }");
     return;
   }
@@ -134,6 +141,10 @@ static void editHost(const String &id) {
     host.mac = mac;
     host.ip = ip;
     host.periodicPing = periodicPing * 1000;
+    if (isHostDuplicate(host)) {
+      server.send(400, "application/json", "{ \"success\": false, \"message\": \"Is duplicated host.\" }");
+      return;
+    }
     if (host.periodicPing) {
       GTimer<millis> &timer = timers[index];
       timer.setTime(host.periodicPing);
@@ -196,7 +207,7 @@ void handleWakeHost() {
         if (WOL.sendMagicPacket(host.mac.c_str())) {
           server.send(200, "application/json", "{ \"success\": true, \"message\": \"WOL packet sent\" }");
         } else {
-          server.send(200, "application/json", "{ \"success\": true, \"message\": \"Failed to send WOL packet\" }");
+          server.send(200, "application/json", "{ \"success\": false, \"message\": \"Failed to send WOL packet\" }");
         }
       } else {
         server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
@@ -250,7 +261,7 @@ static void updateNetworkSettings() {
   String ip_str = doc["ip"].as<String>();
   String networkMask_str = doc["networkMask"].as<String>();
   String gateway_str = doc["gateway"].as<String>();
-  if (!isValidBooleanParameter(doc["enable"].as<String>()) && !isValidIPAddress(ip_str) && !isValidIPAddress(networkMask_str) && !isValidIPAddress(gateway_str)) {
+  if (!doc["enable"].is<bool>() || !isValidIPAddress(ip_str) || !isValidIPAddress(networkMask_str) || !isValidIPAddress(gateway_str)) {
     server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid data format\" }");
     return;
   }
@@ -291,7 +302,7 @@ static void updateAuthenticationSettings() {
   }
   String username = doc["username"].as<String>();
   String password = doc["password"].as<String>();
-  if (!isValidBooleanParameter(doc["enable"].as<String>()) && username.length() < 3 && !isValidPassword(password)) {
+  if (!doc["enable"].is<bool>() || username.length() < 3 || !isValidPassword(password)) {
     server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid data format\" }");
     return;
   }
@@ -429,6 +440,7 @@ void handleImportDatabase() {
     JsonArray arr = doc.as<JsonArray>();
     int importedCount = 0;
     int ignoredCount = 0;
+    int id;
 
     for (JsonVariant v : arr) {
       if (!v.containsKey("name") || !v.containsKey("mac") || !v.containsKey("ip")) {
@@ -459,8 +471,13 @@ void handleImportDatabase() {
       host.ip = ip;
       host.periodicPing = periodicPing * 1000;
 
-      hosts[hosts.size()] = host;
-      timers[hosts.size()] = GTimer<millis>(host.periodicPing, true);
+      if (isHostDuplicate(host)) {
+        ignoredCount++;
+        continue;
+      }
+      id = hosts.size();
+      hosts[id] = host;
+      timers[id] = GTimer<millis>(host.periodicPing, true);
 
       importedCount++;
     }
@@ -469,8 +486,8 @@ void handleImportDatabase() {
 
     char response[256];
     snprintf(response, sizeof(response),
-             "{ \"success\": true, \"message\": \"Imported %d hosts from %d. %d hosts ignored.\" }",
-             importedCount, arr.size(), ignoredCount);
+             "{ \"success\": true, \"message\": \"Imported %d hosts from %d. %d hosts ignored. Hosts in database after import: %d.\" }",
+             importedCount, arr.size(), ignoredCount, hosts.size());
     server.send(200, "application/json", response);
   }
 }
