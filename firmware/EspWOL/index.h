@@ -282,6 +282,50 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 })
                 .catch(error => console.error('Fetch error (About):', error));
         }
+        function exportDB2csv() {
+        fetch("/pc_list")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+            return response.json();
+          })
+          .then((data) => {
+            if (!Array.isArray(data)) {
+              console.error("Expected an array but got:", data);
+              return;
+            }
+            let csvContent = "data:text/csv;charset=utf-8,";
+
+            csvContent += "Name, MAC Address, IP Address\n";
+
+            pcList.forEach((pc) => {
+              let row = `${pc.name}, ${pc.mac}, ${pc.ip}`;
+              csvContent += row + "\n";
+            });
+
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, "0");
+            const day = String(now.getDate()).padStart(2, "0");
+            const hours = String(now.getHours()).padStart(2, "0");
+            const minutes = String(now.getMinutes()).padStart(2, "0");
+            const seconds = String(now.getSeconds()).padStart(2, "0");
+            const timestamp = `${year}-${month}-${day}--${hours}-${minutes}-${seconds}`;
+            const filename = `export-db-hosts-espwol-${timestamp}.csv`;
+
+            $("#export-modal").modal("hide");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          })
+          .catch((error) => console.error("Error fetching data:", error));
+      }
     </script>
     <style>
         .status-circle {
@@ -325,6 +369,14 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 <button class='btn btn-secondary btn-md' title='Settings' data-toggle='modal' data-target='#settings-modal' onclick="getNetworkSettings(); getAuthentication(); getAbout();">
                     <i class='fas fa-cog'></i>
                 </button>
+                <button
+            class="btn btn-warning btn-md"
+            title="Export"
+            data-toggle="modal"
+            data-target="#export-modal"
+          >
+            <i class="fas fa-file-export"></i>
+          </button>
             </div>
         </h2>
         <ul id='pc-list' class='list-group mt-3'></ul>
@@ -493,6 +545,49 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 </div>
             </div>
         </div>
+    </div>
+    <div
+      class="modal fade"
+      id="export-modal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="exportDBLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exportDBLabel">Export</h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>Export & download all host to CSV?</p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="exportDB2csv()"
+            >
+              Export
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
     <footer class='text-center mt-5'>
         <p>&copy; 2025 StafLoker</p>
