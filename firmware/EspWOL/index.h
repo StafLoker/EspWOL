@@ -5,10 +5,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Wake on LAN</title>
     <link
       rel="stylesheet"
@@ -45,9 +41,14 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         function updateThemeIcon(theme) {
           darkModeIcon.className =
             theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
-          document
-            .querySelector('l-bouncy')
-            .setAttribute('color', theme === 'dark' ? 'white' : 'black');
+          updateLoaderColor(theme);
+        }
+
+        function updateLoaderColor(theme) {
+          const loader = document.querySelector('l-bouncy');
+          if (loader) {
+            loader.setAttribute('color', theme === 'dark' ? 'white' : 'black');
+          }
         }
 
         htmlElement.setAttribute('data-bs-theme', currentTheme);
@@ -78,25 +79,44 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 testInputAndSetClass(input, validateIP);
                 break;
               case 'password':
-                testInputAndSetClass(input, validatePassword);
+                testInputAndSetClass(
+                  input,
+                  validatePassword,
+                  'Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.'
+                );
                 break;
               case 'username':
-                testInputAndSetClass(input, validateUsername);
+                testInputAndSetClass(
+                  input,
+                  validateUsername,
+                  'Username must be at least 3 characters long.'
+                );
                 break;
             }
           });
         });
 
         // Load all hosts
+        const loaderHTML = `
+  <!-- Loading -->
+  <l-bouncy
+    id="loader"
+    size="54"
+    speed="1.9"
+    color="white"
+  ></l-bouncy>
+`;
+        const layoutDiv = document.querySelector('.layout');
+        layoutDiv.insertAdjacentHTML('afterbegin', loaderHTML);
+        updateLoaderColor(currentTheme);
         const loader = document.getElementById('loader');
 
         document.body.classList.add('blurred');
-        loader.style.display = 'block';
 
         await getAllHost();
 
-        loader.style.display = 'none';
         document.body.classList.remove('blurred');
+        loader.remove();
       });
 
       async function handleFormSubmit(event) {
@@ -216,7 +236,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           'add-select-periodic-ping'
         ).value;
 
-        const modal = new bootstrap.Modal('#add-host-modal');
+        const modalElement = document.getElementById('add-host-modal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
 
         try {
           const response = await fetch('/hosts', {
@@ -262,8 +283,19 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           document.getElementById('edit-host-ip').value = data.ip;
           document.getElementById('edit-select-periodic-ping').value =
             data.periodicPing;
-          document.getElementById('edit-last-ping').value =
-            'Last ping:' + data.lastPing / 60 + 'mins ago';
+          if (
+            typeof data.lastPing === 'number' &&
+            !isNaN(data.lastPing) &&
+            data.lastPing >= 0
+          ) {
+            const lastPingMinutes = Math.floor(data.lastPing / 60);
+            document.getElementById(
+              'edit-last-ping'
+            ).innerText = `Last ping: ${lastPingMinutes} mins ago`;
+          } else {
+            document.getElementById('edit-last-ping').innerText =
+              'Last ping: N/A';
+          }
           modal.show();
         } catch (error) {
           showNotification('Error edit host', 'danger', 'Error');
@@ -281,7 +313,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           'edit-select-periodic-ping'
         ).value;
 
-        const modal = new bootstrap.Modal('#edit-host-modal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
 
         try {
           const response = await fetch('/hosts?id=' + index, {
@@ -313,7 +345,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const modalElement = document.getElementById('edit-host-modal');
         const index = modalElement.getAttribute('data-index');
 
-        const modal = new bootstrap.Modal('#edit-host-modal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
 
         try {
           const response = await fetch('/hosts?id=' + index, {
@@ -404,11 +436,12 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
         const data = await response.json();
         document.getElementById('version').innerText = data.version;
-        document
-          .getElementById('version')
-          .classList.add(
-            data.lastVersion ? 'bg-success' : 'bg-warning text-dark'
-          );
+        if (data.version === data.lastVersion) {
+          document.getElementById('version').classList.add('bg-success');
+        } else {
+          document.getElementById('version').classList.add('bg-warning');
+          document.getElementById('version').classList.add('text-dark');
+        }
         document.getElementById('hostname').innerText = data.hostname;
       }
 
@@ -467,7 +500,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const networkMask = document.getElementById('fieldNetworkMask').value;
         const gateway = document.getElementById('fieldGateway').value;
 
-        const modal = new bootstrap.Modal('#settings-modal');
+        const modalElement = document.getElementById('settings-modal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
 
         try {
           const response = await fetch('/networkSettings', {
@@ -508,7 +542,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const username = document.getElementById('fieldUsername').value;
         const password = document.getElementById('fieldPassword').value;
 
-        const modal = new bootstrap.Modal('#settings-modal');
+        const modalElement = document.getElementById('settings-modal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
 
         try {
           const response = await fetch('/authenticationSettings', {
@@ -587,9 +622,26 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       }
 
       async function updateToLastVersion() {
-        const modal = new bootstrap.Modal('#update-version-modal');
-        const updateContainer = document.getElementById('update-container');
-        const updatingBar = document.getElementById('updating-bar');
+        const updateBannerHTML = `
+  <!-- Update banner -->
+  <div id="update-container" style="display: none">
+    <h3>Updating</h3>
+    <div
+      class="progress bg-warning"
+      id="updating-bar"
+      role="progressbar"
+      aria-label="Updating bar"
+      aria-valuenow="0"
+      aria-valuemin="0"
+      aria-valuemax="100"
+    >
+      <div class="progress-bar" style="width: 0%"></div>
+    </div>
+  </div>
+`;
+        const layoutDiv = document.querySelector('.layout');
+        const modalElement = document.getElementById('update-version-modal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
         try {
           const response = await fetch('/updateVersion', { method: 'POST' });
           const data = await response.json();
@@ -600,8 +652,11 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           );
 
           modal.hide();
+          layoutDiv.insertAdjacentHTML('afterbegin', updateBannerHTML);
+          const updateContainer = document.getElementById('update-container');
+          updateContainer.style.display = 'flex';
+          const updatingBar = document.getElementById('updating-bar');
           document.body.classList.add('blurred');
-          updateContainer.style.display = 'block';
 
           let progress = 0;
           const duration = 30000; // 30 seconds
@@ -807,9 +862,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       .blinking {
         animation: blink-animation 1s infinite;
       }
-      .blinking {
-        animation: blink-animation 1s infinite;
-      }
 
       @keyframes blink-animation {
         0% {
@@ -822,21 +874,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           opacity: 1;
         }
       }
-      @keyframes blink-animation {
-        0% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0;
-        }
-        100% {
-          opacity: 1;
-        }
-      }
 
-      .status-circle.green {
-        background-color: green;
-      }
       .status-circle.green {
         background-color: green;
       }
@@ -889,31 +927,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
   </head>
   <body>
     <div class="layout">
-      <!-- Loading -->
-      <l-bouncy
-        id="loader"
-        size="54"
-        speed="1.9"
-        color="white"
-        style="display: none"
-      ></l-bouncy>
-
-      <!-- Update banner -->
-      <div id="update-container" style="display: none">
-        <h3>Updating</h3>
-        <div
-          class="progress bg-warning"
-          id="updating-bar"
-          role="progressbar"
-          aria-label="Updating bar"
-          aria-valuenow="0"
-          aria-valuemin="0"
-          aria-valuemax="100"
-        >
-          <div class="progress-bar" style="width: 0%"></div>
-        </div>
-      </div>
-
       <header class="d-flex justify-content-end p-3">
         <button
           id="darkModeToggle"
