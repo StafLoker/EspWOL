@@ -26,6 +26,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       src="https://cdn.jsdelivr.net/npm/ldrs/dist/auto/bouncy.js"
     ></script>
     <script>
+      let selectedFile = null;
+
       document.addEventListener('DOMContentLoaded', async function () {
         // Light-Dark mode toggle
         const htmlElement = document.documentElement;
@@ -91,10 +93,15 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                   validateUsername,
                   'Username must be at least 3 characters long.'
                 );
-                break;
             }
           });
         });
+
+        document
+          .getElementById('importFormFile')
+          .addEventListener('change', function (event) {
+            selectedFile = event.target.files[0];
+          });
 
         // Load all hosts
         const loaderHTML = `
@@ -144,6 +151,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             case 'editAuthenticationSettingsForm':
               await updateAuthentication();
               break;
+            case 'importForm':
+              await importDatabaseFromCSV();
           }
         } catch (error) {
           console.error('Error during processing form', error);
@@ -575,6 +584,98 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         }
       }
 
+      async function exportDatabase2CSV() {
+        const modalElement = document.getElementById('export-import-modal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        const response = await fetch('/hosts', { method: 'GET' });
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const data = await response.json();
+        if (!Array.isArray(data)) throw new Error('Expected an array');
+
+        let csvContent = 'data:text/csv;charset=utf-8,';
+
+        csvContent += 'Name, MAC Address, IP Address, Periodic ping\n';
+
+        data.forEach((host) => {
+          let row = `${host.name}, ${host.mac}, ${host.ip}, ${host.periodicPing}`;
+          csvContent += row + '\n';
+        });
+
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const timestamp = `${year}-${month}-${day}--${hours}-${minutes}-${seconds}`;
+        const filename = `export-db-hosts-espwol-${timestamp}.csv`;
+
+        modal.hide();
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      async function importDatabaseFromCSV() {
+        const modalElement = document.getElementById('export-import-modal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        
+        const reader = new FileReader();
+        reader.onload = async function (e) {
+          const csvData = e.target.result;
+          const lines = csvData
+            .split('\n')
+            .map((line) => line.trim())
+            .filter((line) => line);
+
+          const hosts = lines
+            .slice(1)
+            .map((line) => {
+              const values = line.split(',').map((value) => value.trim());
+              const host = {};
+              if (values[0]) host.name = values[0];
+              if (values[1]) host.mac = values[1];
+              if (values[2]) host.ip = values[2];
+              if (values[3]) host.periodicPing = values[3];
+              return host;
+            })
+            .filter((host) => Object.keys(host).length > 0);
+
+          try {
+            const response = await fetch('/import', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(hosts)
+            });
+
+            const data = await response.json();
+            showNotification(
+              data.message,
+              data.success ? 'success' : 'danger',
+              data.success ? 'Import' : 'Error'
+            );
+            modal.hide();
+            await getAllHost();
+          } catch (error) {
+            console.error('Error importing CSV:', error);
+            showNotification(
+              'Error importing CSV. Please try again.',
+              'danger',
+              'Error'
+            );
+          }
+        };
+
+        reader.readAsText(selectedFile);
+      }
+
       async function resetWiFiSettings() {
         try {
           const response = await fetch('/resetWifi', { method: 'POST' });
@@ -945,6 +1046,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           <div class="ml-auto">
             <button
               class="btn btn-success"
+              title="Add"
               data-bs-toggle="modal"
               data-bs-target="#add-host-modal"
             >
@@ -956,6 +1058,14 @@ const char htmlPage[] PROGMEM = R"rawliteral(
               onclick="getSettings()"
             >
               <i class="fas fa-cog"></i>
+            </button>
+            <button
+              class="btn btn-warning btn-md"
+              title="Export"
+              data-bs-toggle="modal"
+              data-bs-target="#export-import-modal"
+            >
+              <i class="fas fa-file-export"></i>
             </button>
           </div>
         </h2>
@@ -1237,7 +1347,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 <h5 class="modal-title">Network</h5>
               </div>
               <div class="card-body">
-                <form id="editNetworkSettingsForm">
+                <form id="editNetworkSettingsForm" novalidate>
                   <div class="form-check form-check-inline mb-3">
                     <input
                       class="form-check-input"
@@ -1329,7 +1439,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 <h5 class="modal-title">Authentication</h5>
               </div>
               <div class="card-body">
-                <form id="editAuthenticationSettingsForm">
+                <form id="editAuthenticationSettingsForm" novalidate>
                   <div class="form-check form-switch mb-3">
                     <input
                       class="form-check-input"
@@ -1385,6 +1495,91 @@ const char htmlPage[] PROGMEM = R"rawliteral(
               data-bs-dismiss="modal"
             >
               Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export/import modal -->
+    <div
+      class="modal fade"
+      id="export-import-modal"
+      tabindex="-1"
+      aria-labelledby="exportLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exportLabel">Export & Import</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <!-- Export card -->
+            <div class="card">
+              <div class="card-header">
+                <h5 class="modal-title">Export</h5>
+              </div>
+              <div class="card-body">
+                <p class="card-text">Export your database to CSV file.</p>
+              </div>
+              <div class="card-footer">
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  id="exportButton"
+                  onclick="exportDatabase2CSV()"
+                >
+                  Export
+                </button>
+              </div>
+            </div>
+            <hr />
+
+            <!-- Import card -->
+            <div class="card">
+              <div class="card-header">
+                <h5 class="modal-title">Import</h5>
+              </div>
+              <div class="card-body">
+                <form class="needs-validation" id="importForm" novalidate>
+                  <p class="card-text">Import your database from CSV file.</p>
+                  <div class="mb-3">
+                    <input
+                      class="form-control"
+                      type="file"
+                      id="importFormFile"
+                      accept=".csv"
+                      required
+                    />
+                  </div>
+                </form>
+              </div>
+              <div class="card-footer">
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  id="importButton"
+                  form="importForm"
+                >
+                  Import
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancel
             </button>
           </div>
         </div>
