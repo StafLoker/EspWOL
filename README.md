@@ -54,11 +54,41 @@
 
 ## Installation
 
-1. **Clone the Repository**:  
-   `git clone [repository-url]`  
-2. **Open Project**: Open the cloned project in the Arduino IDE.  
-3. **Install Libraries**: Install all required libraries via the Arduino IDE’s **Library Manager**.  
-4. **Upload Code**: Connect your ESP8266 board and upload the code.  
+### Requirements  
+
+Installation of the CH341 driver is required. Use the following links to download and install it:  
+
+- **Windows:** [Download CH341SER.EXE](https://wch-ic.com/downloads/CH341SER_EXE.html)  
+- **MacOS:** [Download CH341SER_MAC.ZIP](https://wch-ic.com/downloads/CH341SER_MAC_ZIP.html)  
+
+After installation, add the following URL to the **Arduino IDE** settings:  
+
+```
+http://arduino.esp8266.com/stable/package_esp8266com_index.json
+```  
+
+Then, install the latest version of the **ESP8266** board package via the **Boards Manager** in the Arduino IDE.  
+
+---
+
+### Method 1: Using Arduino IDE  
+
+1. **Clone the Repository:**  
+   ```bash
+   git clone [repository-url]
+   ```  
+2. **Open the Project:** Open the cloned project in the **Arduino IDE**.  
+3. **Install Required Libraries:** Use the **Library Manager** in the Arduino IDE to install all necessary libraries.  
+4. **Upload the Code:** Connect your ESP8266 board and upload the code.  
+
+---
+
+### Method 2: Using Precompiled Binary  
+
+1. **Download the Binary File** (`EspWOL.bin`) from the latest release.  
+2. **Flash the Firmware:** Use one of the following online tools to flash the binary:  
+   - [ESP Huhn](https://esp.huhn.me)  
+   - [ESPHome Web](https://web.esphome.io)  
 
 ## Usage
 

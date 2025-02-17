@@ -64,13 +64,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           updateThemeIcon(newTheme);
         });
 
-        const tooltipTriggerList = document.querySelectorAll(
-          '[data-bs-toggle="tooltip"]'
-        );
-        const tooltipList = [...tooltipTriggerList].map(
-          (tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl)
-        );
-
         // Forms validation
         document.querySelectorAll('form.needs-validation').forEach((form) => {
           form.addEventListener('submit', handleFormSubmit);
@@ -296,7 +289,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             data.success ? 'Notification' : 'Error'
           );
         } catch (error) {
-          modal.hide();
           disabledLoaderButton(button, `Add`);
 
           showNotification('Error adding host', 'danger', 'Error');
@@ -377,7 +369,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             data.success ? 'Notification' : 'Error'
           );
         } catch (error) {
-          modal.hide();
           disabledLoaderButton(button, `Save changes`);
 
           showNotification('Error edit host', 'danger', 'Error');
@@ -398,11 +389,11 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             method: 'DELETE'
           });
           const data = await response.json();
+          modal.hide();
+          disabledLoaderButton(button, `Delete`);
           if (data.success) {
             await getAllHostWithLoader();
           }
-          modal.hide();
-          disabledLoaderButton(button, `Delete`);
 
           showNotification(
             data.message,
@@ -410,7 +401,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             data.success ? 'Notification' : 'Error'
           );
         } catch (error) {
-          modal.hide();
           disabledLoaderButton(button, `Delete`);
           showNotification('Error delete host', 'danger', 'Error');
           console.error('Error delete host:', error);
@@ -486,7 +476,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const versionContainer = document.getElementById('version-container');
         versionElement.innerText = data.version;
         if (data.version === data.lastVersion) {
-          document.getElementById('version').classList.add('bg-success');
+          versionElement.classList.add('bg-success');
           const notificationCircle = versionContainer.querySelector(
             '.notification-circle'
           );
@@ -494,8 +484,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             notificationCircle.remove();
           }
         } else {
-          document.getElementById('version').classList.add('bg-warning');
-          document.getElementById('version').classList.add('text-dark');
+          versionElement.classList.add('bg-warning');
+          versionElement.classList.add('text-dark');
           if (!versionContainer.querySelector('.notification-circle')) {
             const notificationCircle = document.createElement('span');
             notificationCircle.className =
@@ -589,7 +579,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             }, 500);
           }
         } catch (error) {
-          modal.hide();
           disabledLoaderButton(button, `Update`);
 
           showNotification(
@@ -635,7 +624,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             }, 500);
           }
         } catch (error) {
-          modal.hide();
           disabledLoaderButton(button, `Update`);
 
           showNotification(
@@ -766,7 +754,9 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           );
           disabledLoaderButton(button, `Reset`);
           if (data.success) {
-            location.reload();
+            setTimeout(() => {
+              location.reload();
+            }, 500);
           }
         } catch (error) {
           disabledLoaderButton(button, `Reset`);
@@ -863,6 +853,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             location.reload();
           }, duration);
         } catch (error) {
+          disabledLoaderButton(button, `Update`);
           showNotification(
             'Error to updating to last version',
             'danger',
@@ -1081,11 +1072,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
   <body>
     <div class="layout">
       <header class="d-flex justify-content-end p-3">
-        <button
-          id="darkModeToggle"
-          class="btn btn-outline-secondary"
-          data-bs-toggle="tooltip"
-        >
+        <button id="darkModeToggle" class="btn btn-outline-secondary">
           <i id="darkModeIcon" class="fas"></i>
         </button>
       </header>
