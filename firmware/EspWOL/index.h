@@ -64,13 +64,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           updateThemeIcon(newTheme);
         });
 
-        const tooltipTriggerList = document.querySelectorAll(
-          '[data-bs-toggle="tooltip"]'
-        );
-        const tooltipList = [...tooltipTriggerList].map(
-          (tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl)
-        );
-
         // Forms validation
         document.querySelectorAll('form.needs-validation').forEach((form) => {
           form.addEventListener('submit', handleFormSubmit);
@@ -1084,7 +1077,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         <button
           id="darkModeToggle"
           class="btn btn-outline-secondary"
-          data-bs-toggle="tooltip"
         >
           <i id="darkModeIcon" class="fas"></i>
         </button>
