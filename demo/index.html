@@ -173,6 +173,8 @@
             case 'editAuthenticationSettingsForm':
               await updateAuthentication();
               break;
+            case 'importForm':
+              await importDatabaseFromCSV();
           }
         } catch (error) {
           console.error('Error during processing form', error);
@@ -293,7 +295,6 @@
           );
         } catch (error) {
           setTimeout(() => {
-            modal.hide();
             disabledLoaderButton(button, `Add`);
           }, 1000);
           showNotification('Error adding host', 'danger', 'Error');
@@ -308,36 +309,34 @@
         document
           .getElementById('edit-host-modal')
           .setAttribute('data-index', index);
-
         const modal = new bootstrap.Modal('#edit-host-modal');
-        try {
-          document.getElementById('edit-host-name').value = host.name;
-          document.getElementById('edit-host-mac').value = host.mac;
-          document.getElementById('edit-host-ip').value = host.ip;
-          document.getElementById('edit-select-periodic-ping').value =
-            host.periodicPing;
-          if (
-            typeof host.lastPing === 'number' &&
-            !isNaN(host.lastPing) &&
-            host.lastPing >= 0
-          ) {
-            const lastPingMinutes = Math.floor(host.lastPing / 60);
-            document.getElementById(
-              'edit-last-ping'
-            ).innerText = `Last ping: ${lastPingMinutes} mins ago`;
-          } else {
-            document.getElementById('edit-last-ping').innerText =
-              'Last ping: N/A';
+        setTimeout(() => {
+          try {
+            document.getElementById('edit-host-name').value = host.name;
+            document.getElementById('edit-host-mac').value = host.mac;
+            document.getElementById('edit-host-ip').value = host.ip;
+            document.getElementById('edit-select-periodic-ping').value =
+              host.periodicPing;
+            if (
+              typeof host.lastPing === 'number' &&
+              !isNaN(host.lastPing) &&
+              host.lastPing >= 0
+            ) {
+              const lastPingMinutes = Math.floor(host.lastPing / 60);
+              document.getElementById(
+                'edit-last-ping'
+              ).innerText = `Last ping: ${lastPingMinutes} mins ago`;
+            } else {
+              document.getElementById('edit-last-ping').innerText =
+                'Last ping: N/A';
+            }
+            modal.show();
+          } catch (error) {
+            showNotification('Error edit host', 'danger', 'Error');
+            console.error('Error edit host:', error);
           }
-          modal.show();
-        } catch (error) {
-          showNotification('Error edit host', 'danger', 'Error');
-          console.error('Error edit host:', error);
-        } finally {
-          setTimeout(() => {
-            disabledLoaderButton(button, '<i class="fas fa-edit"></i>');
-          }, 1000);
-        }
+          disabledLoaderButton(button, '<i class="fas fa-edit"></i>');
+        }, 1000);
       }
 
       async function saveEditHost() {
@@ -362,22 +361,21 @@
             periodicPing,
             lastPing: hosts[index].lastPing
           };
-          setTimeout(() => {
+          setTimeout(async () => {
             modal.hide();
             disabledLoaderButton(button, `Save changes`);
+            await getAllHostWithLoader();
+            showNotification(
+              'Host updated successfully',
+              'success',
+              'Notification'
+            );
           }, 1000);
-          await getAllHostWithLoader();
-          showNotification(
-            'Host updated successfully',
-            'success',
-            'Notification'
-          );
         } catch (error) {
           setTimeout(() => {
-            modal.hide();
             disabledLoaderButton(button, `Save changes`);
+            showNotification('Error edit host', 'danger', 'Error');
           }, 1000);
-          showNotification('Error edit host', 'danger', 'Error');
           console.error('Error edit host:', error);
         }
       }
@@ -392,22 +390,21 @@
 
         try {
           hosts.splice(index, 1);
-          await getAllHostWithLoader();
-          setTimeout(() => {
+          setTimeout(async () => {
             modal.hide();
             disabledLoaderButton(button, `Delete`);
+            await getAllHostWithLoader();
+            showNotification(
+              'Host deleted successfully',
+              'success',
+              'Notification'
+            );
           }, 1000);
-          showNotification(
-            'Host deleted successfully',
-            'success',
-            'Notification'
-          );
         } catch (error) {
           setTimeout(() => {
-            modal.hide();
             disabledLoaderButton(button, `Delete`);
+            showNotification('Error delete host', 'danger', 'Error');
           }, 1000);
-          showNotification('Error delete host', 'danger', 'Error');
           console.error('Error delete host:', error);
         }
       }
@@ -466,16 +463,15 @@
           console.error("WOL packet don't sent:", error);
         } finally {
           setTimeout(() => {
-            modal.hide();
             disabledLoaderButton(button, '<i class="fas fa-play"></i>');
-          }, 1000);
+          }, 500);
         }
       }
 
       const simulatedData = {
         about: {
-          version: '1.0.0',
-          lastVersion: '1.1.0',
+          version: '2.0.0',
+          lastVersion: '2.0.1',
           hostname: 'demo-host'
         },
         networkSettings: {
@@ -552,7 +548,6 @@
           document.getElementById('switchEnableAuthentication').checked =
             data.enable;
           document.getElementById('fieldUsername').value = data.username;
-          document.getElementById('fieldPassword').value = data.password;
 
           const form = document.getElementById(
             'editAuthenticationSettingsForm'
@@ -576,22 +571,21 @@
       async function getSettings() {
         const button = document.getElementById(`settings-button`);
         enableLoaderButton(button);
-        try {
-          await Promise.all([
-            getAbout(),
-            getNetworkSettings(),
-            getAuthentication()
-          ]);
-          const modal = new bootstrap.Modal('#settings-modal');
-          modal.show();
-        } catch (error) {
-          console.error('Error loading settings:', error);
-          showNotification('Failed to load settings', 'danger', 'Error');
-        } finally {
-          setTimeout(() => {
-            disabledLoaderButton(button, '<i class="fas fa-cog"></i>');
-          }, 1000);
-        }
+        setTimeout(async () => {
+          try {
+            await Promise.all([
+              getAbout(),
+              getNetworkSettings(),
+              getAuthentication()
+            ]);
+            const modal = new bootstrap.Modal('#settings-modal');
+            modal.show();
+          } catch (error) {
+            console.error('Error loading settings:', error);
+            showNotification('Failed to load settings', 'danger', 'Error');
+          }
+          disabledLoaderButton(button, '<i class="fas fa-cog"></i>');
+        }, 1000);
       }
 
       async function updateNetworkSettings() {
@@ -611,7 +605,7 @@
           setTimeout(() => {
             modal.hide();
             disabledLoaderButton(button, `Update`);
-          }, 1000);
+          }, 500);
 
           showNotification(
             'Network settings updated successfully',
@@ -621,14 +615,13 @@
 
           if (enable) {
             setTimeout(() => {
-              window.location.href = `http://${ip}`;
-            }, 1500);
+              location.reload();
+            }, 1000);
           }
         } catch (error) {
           setTimeout(() => {
-            modal.hide();
             disabledLoaderButton(button, `Update`);
-          }, 1000);
+          }, 500);
           showNotification(
             'Error updating network settings',
             'danger',
@@ -654,7 +647,7 @@
           setTimeout(() => {
             modal.hide();
             disabledLoaderButton(button, `Update`);
-          }, 1000);
+          }, 500);
 
           showNotification(
             'Authentication settings updated successfully',
@@ -664,12 +657,11 @@
 
           setTimeout(() => {
             location.reload();
-          }, 1500);
+          }, 1000);
         } catch (error) {
           setTimeout(() => {
-            modal.hide();
             disabledLoaderButton(button, `Update`);
-          }, 1000);
+          }, 500);
           showNotification(
             'Error updating authentication settings',
             'danger',
@@ -743,7 +735,7 @@
               if (values[0]) host.name = values[0];
               if (values[1]) host.mac = values[1];
               if (values[2]) host.ip = values[2];
-              if (values[3]) host.periodicPing = parseInt(values[3], 10);
+              host.periodicPing = values[3] ? parseInt(values[3], 10) : 0;
               return host;
             })
             .filter((host) => host);
@@ -754,12 +746,11 @@
             const data = await response.json();
             showNotification('All is imported.', 'success', 'Import');
 
-            setTimeout(() => {
+            setTimeout(async () => {
               modal.hide();
               disabledLoaderButton(button, `Import`);
+              await getAllHostWithLoader();
             }, 1000);
-
-            await getAllHostWithLoader();
           } catch (error) {
             setTimeout(() => {
               disabledLoaderButton(button, `Import`);
@@ -789,11 +780,11 @@
           );
           setTimeout(() => {
             disabledLoaderButton(button, `Reset`);
-          }, 1000);
+          }, 500);
 
           setTimeout(() => {
             location.reload();
-          }, 500);
+          }, 1000);
         } catch (error) {
           setTimeout(() => {
             disabledLoaderButton(button, `Reset`);
@@ -854,35 +845,34 @@
           setTimeout(() => {
             modal.hide();
             disabledLoaderButton(button, `Update`);
-          }, 1000);
+            layoutDiv.insertAdjacentHTML('afterbegin', updateBannerHTML);
+            const updateContainer = document.getElementById('update-container');
+            updateContainer.style.display = 'flex';
+            const updatingBar = document.getElementById('updating-bar');
+            document.body.classList.add('blurred');
 
-          layoutDiv.insertAdjacentHTML('afterbegin', updateBannerHTML);
-          const updateContainer = document.getElementById('update-container');
-          updateContainer.style.display = 'flex';
-          const updatingBar = document.getElementById('updating-bar');
-          document.body.classList.add('blurred');
+            let progress = 0;
+            const duration = 30000;
 
-          let progress = 0;
-          const duration = 30000;
-
-          function updateProgress() {
-            if (progress < 100) {
-              progress += 100 / (duration / 100);
-              updatingBar.style.width = `${progress}%`;
-            } else {
-              clearInterval(progressInterval);
+            function updateProgress() {
+              if (progress < 100) {
+                progress += 100 / (duration / 100);
+                updatingBar.style.width = `${progress}%`;
+              } else {
+                clearInterval(progressInterval);
+              }
             }
-          }
 
-          const progressInterval = setInterval(updateProgress, 100);
+            const progressInterval = setInterval(updateProgress, 100);
 
-          setTimeout(() => {
-            location.reload();
-          }, duration);
+            setTimeout(() => {
+              location.reload();
+            }, duration);
+          }, 1000);
         } catch (error) {
           setTimeout(() => {
             disabledLoaderButton(button, `Update`);
-          }, 1000);
+          }, 500);
           showNotification(
             'Error updating to last version',
             'danger',

@@ -289,7 +289,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             data.success ? 'Notification' : 'Error'
           );
         } catch (error) {
-          modal.hide();
           disabledLoaderButton(button, `Add`);
 
           showNotification('Error adding host', 'danger', 'Error');
@@ -370,7 +369,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             data.success ? 'Notification' : 'Error'
           );
         } catch (error) {
-          modal.hide();
           disabledLoaderButton(button, `Save changes`);
 
           showNotification('Error edit host', 'danger', 'Error');
@@ -391,11 +389,11 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             method: 'DELETE'
           });
           const data = await response.json();
+          modal.hide();
+          disabledLoaderButton(button, `Delete`);
           if (data.success) {
             await getAllHostWithLoader();
           }
-          modal.hide();
-          disabledLoaderButton(button, `Delete`);
 
           showNotification(
             data.message,
@@ -403,7 +401,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             data.success ? 'Notification' : 'Error'
           );
         } catch (error) {
-          modal.hide();
           disabledLoaderButton(button, `Delete`);
           showNotification('Error delete host', 'danger', 'Error');
           console.error('Error delete host:', error);
@@ -582,7 +579,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             }, 500);
           }
         } catch (error) {
-          modal.hide();
           disabledLoaderButton(button, `Update`);
 
           showNotification(
@@ -628,7 +624,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             }, 500);
           }
         } catch (error) {
-          modal.hide();
           disabledLoaderButton(button, `Update`);
 
           showNotification(

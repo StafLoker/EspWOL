@@ -287,7 +287,6 @@
             data.success ? 'Notification' : 'Error'
           );
         } catch (error) {
-          modal.hide();
           disabledLoaderButton(button, `Add`);
 
           showNotification('Error adding host', 'danger', 'Error');
@@ -368,7 +367,6 @@
             data.success ? 'Notification' : 'Error'
           );
         } catch (error) {
-          modal.hide();
           disabledLoaderButton(button, `Save changes`);
 
           showNotification('Error edit host', 'danger', 'Error');
@@ -389,11 +387,11 @@
             method: 'DELETE'
           });
           const data = await response.json();
+          modal.hide();
+          disabledLoaderButton(button, `Delete`);
           if (data.success) {
             await getAllHostWithLoader();
           }
-          modal.hide();
-          disabledLoaderButton(button, `Delete`);
 
           showNotification(
             data.message,
@@ -401,7 +399,6 @@
             data.success ? 'Notification' : 'Error'
           );
         } catch (error) {
-          modal.hide();
           disabledLoaderButton(button, `Delete`);
           showNotification('Error delete host', 'danger', 'Error');
           console.error('Error delete host:', error);
@@ -580,7 +577,6 @@
             }, 500);
           }
         } catch (error) {
-          modal.hide();
           disabledLoaderButton(button, `Update`);
 
           showNotification(
@@ -626,7 +622,6 @@
             }, 500);
           }
         } catch (error) {
-          modal.hide();
           disabledLoaderButton(button, `Update`);
 
           showNotification(
