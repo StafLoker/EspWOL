@@ -479,7 +479,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const versionContainer = document.getElementById('version-container');
         versionElement.innerText = data.version;
         if (data.version === data.lastVersion) {
-          document.getElementById('version').classList.add('bg-success');
+          versionElement.classList.add('bg-success');
           const notificationCircle = versionContainer.querySelector(
             '.notification-circle'
           );
@@ -487,8 +487,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             notificationCircle.remove();
           }
         } else {
-          document.getElementById('version').classList.add('bg-warning');
-          document.getElementById('version').classList.add('text-dark');
+          versionElement.classList.add('bg-warning');
+          versionElement.classList.add('text-dark');
           if (!versionContainer.querySelector('.notification-circle')) {
             const notificationCircle = document.createElement('span');
             notificationCircle.className =
@@ -759,7 +759,9 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           );
           disabledLoaderButton(button, `Reset`);
           if (data.success) {
-            location.reload();
+            setTimeout(() => {
+              location.reload();
+            }, 500);
           }
         } catch (error) {
           disabledLoaderButton(button, `Reset`);
@@ -856,6 +858,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             location.reload();
           }, duration);
         } catch (error) {
+          disabledLoaderButton(button, `Update`);
           showNotification(
             'Error to updating to last version',
             'danger',
@@ -1074,10 +1077,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
   <body>
     <div class="layout">
       <header class="d-flex justify-content-end p-3">
-        <button
-          id="darkModeToggle"
-          class="btn btn-outline-secondary"
-        >
+        <button id="darkModeToggle" class="btn btn-outline-secondary">
           <i id="darkModeIcon" class="fas"></i>
         </button>
       </header>
