@@ -98,7 +98,9 @@ static void addHost() {
   }
   int id = hosts.size();
   hosts[id] = host;
-  timers[id] = GTimer<millis>(host.periodicPing, true);
+  if (host.periodicPing) {
+    timers[id] = GTimer<millis>(host.periodicPing, true);
+  }
   saveHostsData();
   server.send(200, "application/json", "{ \"success\": true, \"message\": \"Host added\" }");
 }
@@ -480,7 +482,9 @@ void handleImportDatabase() {
       }
       id = hosts.size();
       hosts[id] = host;
-      timers[id] = GTimer<millis>(host.periodicPing, true);
+      if (host.periodicPing) {
+        timers[id] = GTimer<millis>(host.periodicPing, true);
+      }
 
       importedCount++;
     }
