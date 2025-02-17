@@ -1,47 +1,125 @@
-# EspWOL
+<div align="center">
+   <img width="150" height="150" src="logo.jpeg" alt="Logo">
+   <h1><b>EspWOL</b></h1>
+   <p><i>~ Wake & play! ~</i></p>
+   <p align="center">
+      <a href="https://stafloker.github.io/EspWOL/">Demo</a> ·
+      <a href="https://github.com/StafLoker/EspWOL/releases">Releases</a>
+   </p>
+</div>
 
-This project provides a web-based interface for starting PCs using an ESP8266 and Wake On Lan magic packets.
+<div align="center">
+   <a href="https://github.com/StafLoker/EspWOL/releases"><img src="https://img.shields.io/github/downloads/StafLoker/EspWOL/total.svg?style=flat" alt="downloads"/></a>
+   <a href="https://github.com/StafLoker/EspWOL/releases"><img src="https://img.shields.io/github/release-pre/StafLoker/EspWOL.svg?style=flat" alt="latest version"/></a>
+   <a href="https://github.com/StafLoker/EspWOL/blob/main/LICENSE"><img src="https://img.shields.io/github/license/StafLoker/EspWOL.svg?style=flat" alt="license"/></a>
+   <a href="https://github.com/MonitorControl/MonitorControl"><img src="https://img.shields.io/badge/platform-ESP8266-blue.svg?style=flat" alt="platform"/></a>
 
-<img src="ui.png" title="Main Screenshot">
+   <p>This project provides a web-based interface for power on hosts using an ESP8266 and Wake On Lan magic packets.</p>
+
+<img src="ui.png" width="824" alt="Screenshot">
+</div>
+
+## Alerts
+> [!IMPORTANT]
+> [Instruction](#migration-from-v1xx-to-v2xx) of migration to version `2.x.x`.
 
 ## Features
 
-- **Add PC**: Add new PCs to the list with their name, MAC address, and IP address.
-- **Edit PC**: Edit the name, MAC address, or IP address of a PC.
-- **Delete PC**: Remove a PC from the list (via modal window).
-- **Wake on LAN**: Send a WOL request to wake a PC remotely.
-- **Real-time Updates**: Changes to the PC list are updated in real-time without reloading the page.
-- **Basic HTTP Authentication**: Enable or disable authentication, and update the username or password as needed.
+- **CRUD Host Management**: CRUD functionality to manage host information.
+- **Wake on LAN (WoL)**: Send a WoL request to wake a host remotely.
+- **Basic HTTP Authentication**: Enable/disable authentication and update credentials (username/password) as needed.
 - **Network Configuration**: Switch seamlessly between static IP and DHCP modes.
 - **Host Ping Utility**: Test connectivity by pinging a specified host.
-- **OTA**: Password: `ber#912NerYi`
+- **Over-The-Air (OTA) Updates**: Secure OTA updates with password: `ber#912NerYi`.
+- **Auto-Update**: Update to the latest version without using an IDE via internet.
+- **Dark Mode**: Toggle between light and dark themes.
+- **Periodic Ping**: Configure periodic pings; if a ping fails, the program attempts to wake the host.
+- **Export database**: Export database to **CSV** file.  
+- **Import database**: Import database from **CSV** file.
 
 ## Requirements
 
-- ESP8266 board (e.g., NodeMCU, Wemos D1 Mini)
-- Arduino IDE
-- ESP8266 library
-- [WakeOnLan library](https://github.com/a7md0/WakeOnLan)
-- [WIFI Manager library](https://github.com/tzapu/WiFiManager)
-- [ArduinoJson library](https://github.com/bblanchon/ArduinoJson)
-- [ESP8266Ping library](https://github.com/dancol90/ESP8266Ping)
-- [ArduinoOTA](https://github.com/JAndrassy/ArduinoOTA)
+- **Hardware**: ESP8266 board (e.g., NodeMCU, Wemos D1 Mini).
+- **Software**:
+  - Arduino IDE
+  - ESP8266 Core for Arduino
+- **Libraries**:
+  - [WakeOnLan](https://github.com/a7md0/WakeOnLan)
+  - [WiFiManager](https://github.com/tzapu/WiFiManager)
+  - [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
+  - [ESP8266Ping](https://github.com/dancol90/ESP8266Ping)
+  - [ArduinoOTA](https://github.com/JAndrassy/ArduinoOTA)
+  - [GTimer](https://github.com/GyverLibs/GTimer)
+  - [AutoOTA](https://github.com/GyverLibs/AutoOTA)
 
 ## Installation
 
-1. Clone this repository:
-2. Open the project in the Arduino IDE.
-3. Install the required libraries from the Library Manager
-4. Upload the code to your ESP8266 board.
+### Requirements  
+
+Installation of the CH341 driver is required. Use the following links to download and install it:  
+
+- **Windows:** [Download CH341SER.EXE](https://wch-ic.com/downloads/CH341SER_EXE.html)  
+- **MacOS:** [Download CH341SER_MAC.ZIP](https://wch-ic.com/downloads/CH341SER_MAC_ZIP.html)  
+
+After installation, add the following URL to the **Arduino IDE** settings:  
+
+```
+http://arduino.esp8266.com/stable/package_esp8266com_index.json
+```  
+
+Then, install the latest version of the **ESP8266** board package via the **Boards Manager** in the Arduino IDE.  
+
+---
+
+### Method 1: Using Arduino IDE  
+
+1. **Clone the Repository:**  
+   ```bash
+   git clone [repository-url]
+   ```  
+2. **Open the Project:** Open the cloned project in the **Arduino IDE**.  
+3. **Install Required Libraries:** Use the **Library Manager** in the Arduino IDE to install all necessary libraries.  
+4. **Upload the Code:** Connect your ESP8266 board and upload the code.  
+
+---
+
+### Method 2: Using Precompiled Binary  
+
+1. **Download the Binary File** (`EspWOL.bin`) from the latest release.  
+2. **Flash the Firmware:** Use one of the following online tools to flash the binary:  
+   - [ESP Huhn](https://esp.huhn.me)  
+   - [ESPHome Web](https://web.esphome.io)  
 
 ## Usage
 
-1. Once the ESP8266 is powered and connected to Wi-Fi, navigate to the IP address displayed in the Serial Monitor using your web browser.
-2. Use the web interface to manage your registered PCs:
-   - Click the `+` button next to the **Registered PCs** title to add a new PC.
-   - Click the **settings** button next to any PC to edit its details.
-   - Use the **play** button to send a Wake-on-LAN request to a PC.
+1. **Access Web Interface**:  
+   - Power the ESP8266 and connect it to Wi-Fi.  
+   - Open the IP address shown in the Serial Monitor using a web browser.  
 
-## References
+2. **Manage Hosts**:  
+   - **Add Host**: Click the `+` button under **Registered Hosts**.  
+   - **Wake Host**: Click the **play** button (▶️) next to a host to send a WoL request.  
 
-- Fork of project: [EspWOL](https://github.com/Tirarex/EspWOL)
+### Updating to the Latest Version
+
+1. **Open Settings**:  
+   - Click the **Settings** button.  
+     - **Green Badge**: Indicates the latest version is installed.  
+     - **Yellow Badge**: An update is available.  
+
+2. **Start Update**:  
+   - Click the yellow badge, then click **Update** in the next window.  
+
+3. **Wait for Completion**:  
+   - Do not disconnect power until the update finishes.
+
+## Migration from v1.x.x to v2.x.x  
+
+1. Ensure your firmware version is **1.2.3**.  
+2. Click the **Export** button.  
+3. Export the database and download the export file.  
+4. Upload **version 2.x.x** to the device with the **"All Flash Contents"** option enabled.  
+5. Click the **Export** button again.  
+6. Upload the previously exported file.  
+7. Click **Import**.  
+8. Migration complete!
