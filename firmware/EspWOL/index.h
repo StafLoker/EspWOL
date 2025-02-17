@@ -72,7 +72,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         );
 
         // Forms validation
-        document.querySelectorAll('.needs-validation').forEach((form) => {
+        document.querySelectorAll('form.needs-validation').forEach((form) => {
           form.addEventListener('submit', handleFormSubmit);
         });
 
@@ -137,6 +137,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       }
 
       async function handleFormSubmit(event) {
+        console.log('Interceptando submit del formulario:', event.target.id);
         event.preventDefault();
         event.stopPropagation();
 
@@ -580,8 +581,12 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           );
           if (data.success) {
             setTimeout(() => {
-              window.location.href = `http://${ip}`;
-            }, 1500);
+              if (enable) {
+                window.location.replace('http://' + ip);
+              } else {
+                location.reload();
+              }
+            }, 500);
           }
         } catch (error) {
           modal.hide();
@@ -627,7 +632,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           if (data.success) {
             setTimeout(() => {
               location.reload();
-            }, 1500);
+            }, 500);
           }
         } catch (error) {
           modal.hide();
@@ -926,11 +931,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const isStaticIP = document.getElementById(
           'inlineRadioStaticIP'
         ).checked;
-        const form = document.getElementById('editNetworkSettingsForm');
         const fields = ['fieldIP', 'fieldNetworkMask', 'fieldGateway'];
-        const updateButton = document.getElementById(
-          'updateNetworkSettingsButton'
-        );
 
         fields.forEach((fieldId) => {
           const field = document.getElementById(fieldId);
@@ -942,29 +943,13 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             field.removeAttribute('required');
           }
         });
-
-        if (isStaticIP) {
-          form.classList.add('needs-validation');
-          updateButton.setAttribute('form', 'editNetworkSettingsForm');
-          updateButton.setAttribute('type', 'submit');
-          updateButton.removeAttribute('onclick');
-        } else {
-          form.classList.remove('needs-validation');
-          updateButton.removeAttribute('form');
-          updateButton.setAttribute('type', 'button');
-          updateButton.setAttribute('onclick', 'updateNetworkSettings()');
-        }
       }
 
       function toggleAuthenticationFields() {
         const isEnabled = document.getElementById(
           'switchEnableAuthentication'
         ).checked;
-        const form = document.getElementById('editAuthenticationSettingsForm');
         const fields = ['fieldUsername', 'fieldPassword'];
-        const updateButton = document.getElementById(
-          'updateAuthenticationButton'
-        );
 
         fields.forEach((fieldId) => {
           const field = document.getElementById(fieldId);
@@ -976,18 +961,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             field.removeAttribute('required');
           }
         });
-
-        if (isEnabled) {
-          form.classList.add('needs-validation');
-          updateButton.setAttribute('form', 'editAuthenticationSettingsForm');
-          updateButton.setAttribute('type', 'submit');
-          updateButton.removeAttribute('onclick');
-        } else {
-          form.classList.remove('needs-validation');
-          updateButton.removeAttribute('form');
-          updateButton.setAttribute('type', 'button');
-          updateButton.setAttribute('onclick', 'updateAuthentication()');
-        }
       }
     </script>
     <style>
@@ -1441,7 +1414,11 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 <h5 class="modal-title">Network</h5>
               </div>
               <div class="card-body">
-                <form id="editNetworkSettingsForm" novalidate>
+                <form
+                  class="needs-validation"
+                  id="editNetworkSettingsForm"
+                  novalidate
+                >
                   <div class="form-check form-check-inline mb-3">
                     <input
                       class="form-check-input"
@@ -1506,10 +1483,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
               </div>
               <div class="card-footer">
                 <button
-                  type="button"
+                  type="submit"
                   class="btn btn-primary"
+                  form="editNetworkSettingsForm"
                   id="updateNetworkSettingsButton"
-                  onclick="updateNetworkSettings()"
                 >
                   Update
                 </button>
@@ -1533,7 +1510,11 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                 <h5 class="modal-title">Authentication</h5>
               </div>
               <div class="card-body">
-                <form id="editAuthenticationSettingsForm" novalidate>
+                <form
+                  class="needs-validation"
+                  id="editAuthenticationSettingsForm"
+                  novalidate
+                >
                   <div class="form-check form-switch mb-3">
                     <input
                       class="form-check-input"
@@ -1572,10 +1553,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
               </div>
               <div class="card-footer">
                 <button
-                  type="button"
+                  type="submit"
                   class="btn btn-primary"
                   id="updateAuthenticationButton"
-                  onclick="updateAuthentication()"
+                  form="editAuthenticationSettingsForm"
                 >
                   Update
                 </button>
