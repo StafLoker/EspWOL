@@ -257,12 +257,16 @@ static void updateNetworkSettings() {
   String ip_str = doc["ip"].as<String>();
   String networkMask_str = doc["networkMask"].as<String>();
   String gateway_str = doc["gateway"].as<String>();
-  if (!doc["enable"].is<bool>() || !isValidIPAddress(ip_str) || !isValidIPAddress(networkMask_str) || !isValidIPAddress(gateway_str)) {
+  if (!doc["enable"].is<bool>()) {
     server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid data format\" }");
     return;
   }
   networkConfig.enable = doc["enable"];
   if (networkConfig.enable) {
+    if (!isValidIPAddress(ip_str) || !isValidIPAddress(networkMask_str) || !isValidIPAddress(gateway_str)) {
+      server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid data format\" }");
+      return;
+    }
     IPAddress ip;
     IPAddress networkMask;
     IPAddress gateway;
@@ -298,12 +302,16 @@ static void updateAuthenticationSettings() {
   }
   String username = doc["username"].as<String>();
   String password = doc["password"].as<String>();
-  if (!doc["enable"].is<bool>() || username.length() < 3 || !isValidPassword(password)) {
+  if (!doc["enable"].is<bool>()) {
     server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid data format\" }");
     return;
   }
   authentication.enable = doc["enable"];
   if (authentication.enable) {
+    if (username.length() < 3 || !isValidPassword(password)) {
+      server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid data format\" }");
+      return;
+    }
     authentication.username = username;
     authentication.password = password;
   }
