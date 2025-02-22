@@ -494,20 +494,15 @@ void handleImportDatabase() {
         continue;
       }
 
-      long periodicPing = 0;
-      if (v.containsKey("periodicPing")) {
-        periodicPing = v["periodicPing"].as<long>();
-        if (!isValidPeriodicPing(periodicPing)) {
-          periodicPing = 0;
-        }
-      }
+      long periodicPing = v.containsKey("periodicPing") ? v["periodicPing"].as<long>() : 0;
+      if (!isValidPeriodicPing(periodicPing)) periodicPing = 0;
 
       Host host = { name, mac, ip, periodicPing * 1000 };
-
       if (isHostDuplicate(host)) {
         ignoredCount++;
         continue;
       }
+
       id = hosts.size();
       hosts[id] = host;
       if (host.periodicPing) {
