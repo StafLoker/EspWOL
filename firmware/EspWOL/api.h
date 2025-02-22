@@ -1,5 +1,43 @@
 #ifndef API_H
 #define API_H
+
+/**
+ * @brief Sends a JSON response with a status code and message.
+ * 
+ * Constructs a JSON object containing a success flag and a message,
+ * then sends it as a response to the client.
+ * 
+ * @param statusCode The HTTP status code to send.
+ * @param message The message to include in the JSON response.
+ * @param success A boolean indicating whether the request was successful.
+ */
+static void sendJsonResponse(int statusCode, const String &message, bool success);
+
+/**
+ * @brief Sends a JSON response with a status code and a JSON document.
+ * 
+ * Serializes the given JSON document and sends it as a response to the client.
+ * 
+ * @param statusCode The HTTP status code to send.
+ * @param doc The JSON document to serialize and send.
+ */
+static void sendJsonResponse(int statusCode, const JsonDocument &doc);
+
+/**
+ * @brief Validates the host data received in a JSON document.
+ * 
+ * Checks if the required fields are present and have valid formats.
+ * If validation fails, an appropriate JSON error response is sent.
+ * 
+ * @param doc The JSON document containing the host data.
+ * @param name Reference to a String variable to store the validated name.
+ * @param mac Reference to a String variable to store the validated MAC address.
+ * @param ip Reference to a String variable to store the validated IP address.
+ * @param periodicPing Reference to a long variable to store the validated periodic ping value.
+ * @return True if all validations pass, otherwise false.
+ */
+static bool validateHostData(const JsonDocument &doc, String &name, String &mac, String &ip, long &periodicPing);
+
 /**
  * @brief Checks if the user is authenticated.
  * 

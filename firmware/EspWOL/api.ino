@@ -2,6 +2,37 @@
 #include "validation.h"
 #include "memory.h"
 
+static void sendJsonResponse(int statusCode, const String &message, bool success) {
+  String jsonResponse;
+  jsonResponse = String("{\"success\":") + (success ? "true" : "false") + ",\"message\":\"" + message + "\"}";
+  server.send(statusCode, "application/json", jsonResponse);
+}
+
+static void sendJsonResponse(int statusCode, const JsonDocument &doc) {
+  String jsonResponse;
+  serializeJson(doc, jsonResponse);
+  server.send(statusCode, "application/json", jsonResponse);
+}
+
+static bool validateHostData(const JsonDocument &doc, String &name, String &mac, String &ip, long &periodicPing) {
+  if (!doc.containsKey("name") || !doc.containsKey("mac") || !doc.containsKey("ip") || !doc.containsKey("periodicPing")) {
+    sendJsonResponse(400, "Missing required fields", false);
+    return false;
+  }
+
+  name = doc["name"].as<String>();
+  mac = doc["mac"].as<String>();
+  ip = doc["ip"].as<String>();
+  periodicPing = doc["periodicPing"].as<long>();
+
+  if (name.isEmpty() || !isValidMACAddress(mac) || !isValidIPAddress(ip) || !isValidPeriodicPing(periodicPing)) {
+    sendJsonResponse(400, "Invalid data format", false);
+    return false;
+  }
+
+  return true;
+}
+
 static bool isAuthenticated() {
   if (authentication.enable && !server.authenticate(authentication.username.c_str(), authentication.password.c_str())) {
     server.requestAuthentication();
@@ -19,8 +50,7 @@ void handleRoot() {
 
 // API: GET '/hosts'
 static void getHostList() {
-  String jsonResponse;
-  DynamicJsonDocument doc(1024);
+  JsonDocument doc;
   JsonArray array = doc.to<JsonArray>();
   for (const auto &pair : hosts) {
     const Host &host = pair.second;
@@ -31,8 +61,7 @@ static void getHostList() {
     obj["ip"] = host.ip;
     obj["periodicPing"] = host.periodicPing / 1000;
   }
-  serializeJson(doc, jsonResponse);
-  server.send(200, "application/json", jsonResponse);
+  sendJsonResponse(200, doc);
 }
 
 // API: GET '/hosts?id={index}'
@@ -40,8 +69,7 @@ static void getHost(const String &id) {
   int index = id.toInt();
   if (index >= 0 && index < hosts.size()) {
     Host &host = hosts[index];
-    String jsonResponse;
-    StaticJsonDocument<256> doc;
+    JsonDocument doc;
     doc["name"] = host.name;
     doc["mac"] = host.mac;
     doc["ip"] = host.ip;
@@ -51,110 +79,85 @@ static void getHost(const String &id) {
     } else {
       doc["lastPing"] = -1;
     }
-    serializeJson(doc, jsonResponse);
-    server.send(200, "application/json", jsonResponse);
+    sendJsonResponse(200, doc);
   } else {
-    server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
+    sendJsonResponse(400, "Host not found", false);
   }
 }
 
 // API: POST '/hosts'
 static void addHost() {
   if (!server.hasArg("plain")) {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing body\" }");
-    return;
-  }
-  String body = server.arg("plain");
-  DynamicJsonDocument doc(1024);
-  if (deserializeJson(doc, body)) {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid JSON\" }");
+    sendJsonResponse(400, "Missing body", false);
     return;
   }
 
-  if (!doc.containsKey("name") || !doc.containsKey("mac") || !doc.containsKey("ip") || !doc.containsKey("periodicPing")) {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing required fields\" }");
+  JsonDocument doc;
+  if (deserializeJson(doc, server.arg("plain"))) {
+    sendJsonResponse(400, "Invalid JSON", false);
     return;
   }
-  String name = doc["name"].as<String>();
-  String mac = doc["mac"].as<String>();
-  String ip = doc["ip"].as<String>();
-  if (name.isEmpty() || !isValidMACAddress(mac) || !isValidIPAddress(ip)) {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid data format\" }");
-    return;
-  }
-  long periodicPing = doc["periodicPing"].as<long>();
-  if (!isValidPeriodicPing(periodicPing)) {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid periodicPing value\" }");
-    return;
-  }
-  Host host;
-  host.name = name;
-  host.mac = mac;
-  host.ip = ip;
-  host.periodicPing = periodicPing * 1000;
+
+  String name, mac, ip;
+  long periodicPing;
+  if (!validateHostData(doc, name, mac, ip, periodicPing)) return;
+
+  Host host = { name, mac, ip, periodicPing * 1000 };
+
   if (isHostDuplicate(host)) {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Is duplicated host.\" }");
+    sendJsonResponse(400, "Duplicate host", false);
     return;
   }
+
   int id = hosts.size();
   hosts[id] = host;
   if (host.periodicPing) {
     timers[id] = GTimer<millis>(host.periodicPing, true);
   }
+
   saveHostsData();
-  server.send(200, "application/json", "{ \"success\": true, \"message\": \"Host added\" }");
+  sendJsonResponse(200, "Host added", true);
 }
 
 // API: PUT '/hosts?id={index}'
 static void editHost(const String &id) {
   if (!server.hasArg("plain")) {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing body\" }");
+    sendJsonResponse(400, "Missing body", false);
     return;
   }
+
   int index = id.toInt();
-  String body = server.arg("plain");
-  DynamicJsonDocument doc(1024);
-  if (deserializeJson(doc, body)) {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid JSON\" }");
+  if (index < 0 || index >= hosts.size()) {
+    sendJsonResponse(400, "Host not found", false);
     return;
   }
 
-  if (!doc.containsKey("name") || !doc.containsKey("mac") || !doc.containsKey("ip") || !doc.containsKey("periodicPing")) {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing required fields\" }");
+  JsonDocument doc;
+  if (deserializeJson(doc, server.arg("plain"))) {
+    sendJsonResponse(400, "Invalid JSON", false);
     return;
   }
 
-  String name = doc["name"].as<String>();
-  String mac = doc["mac"].as<String>();
-  String ip = doc["ip"].as<String>();
-  if (name.isEmpty() || !isValidMACAddress(mac) || !isValidIPAddress(ip)) {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid data format\" }");
-    return;
-  }
-  long periodicPing = doc["periodicPing"].as<long>();
-  if (!isValidPeriodicPing(periodicPing)) {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid periodicPing value\" }");
-    return;
-  }
+  String name, mac, ip;
+  long periodicPing;
+  if (!validateHostData(doc, name, mac, ip, periodicPing)) return;
 
-  if (index >= 0 && index < hosts.size()) {
-    Host &host = hosts[index];
-    host.name = name;
-    host.mac = mac;
-    host.ip = ip;
-    host.periodicPing = periodicPing * 1000;
-    if (host.periodicPing) {
-      GTimer<millis> &timer = timers[index];
-      timer.setTime(host.periodicPing);
-      timer.start();
-    } else {
-      timers.erase(index);
-    }
-    saveHostsData();
-    server.send(200, "application/json", "{ \"success\": true, \"message\": \"Host updated\" }");
+  Host &host = hosts[index];
+  host.name = name;
+  host.mac = mac;
+  host.ip = ip;
+  host.periodicPing = periodicPing * 1000;
+
+  if (host.periodicPing) {
+    GTimer<millis> &timer = timers[index];
+    timer.setTime(host.periodicPing);
+    timer.start();
   } else {
-    server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
+    timers.erase(index);
   }
+
+  saveHostsData();
+  sendJsonResponse(200, "Host updated", true);
 }
 
 // API: DELETE '/hosts?id={index}'
@@ -165,9 +168,9 @@ static void deleteHost(const String &id) {
     timers.erase(index);
     lastPings.erase(index);
     saveHostsData();
-    server.send(200, "application/json", "{ \"success\": true, \"message\": \"Host deleted\" }");
+    sendJsonResponse(200, "Host deleted", true);
   } else {
-    server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
+    sendJsonResponse(400, "Host not found", false);
   }
 }
 
@@ -179,7 +182,7 @@ void handleHosts() {
       } else if (server.method() == HTTP_POST) {
         addHost();
       } else {
-        server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
+        sendJsonResponse(405, "HTTP Method Not Allowed", false);
       }
     } else {
       if (server.method() == HTTP_GET) {
@@ -189,7 +192,7 @@ void handleHosts() {
       } else if (server.method() == HTTP_DELETE) {
         deleteHost(server.arg("id"));
       } else {
-        server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
+        sendJsonResponse(405, "HTTP Method Not Allowed", false);
       }
     }
   }
@@ -203,15 +206,15 @@ void handleWakeHost() {
       if (index >= 0 && index < hosts.size()) {
         Host &host = hosts[index];
         if (wol.sendMagicPacket(host.mac.c_str())) {
-          server.send(200, "application/json", "{ \"success\": true, \"message\": \"WOL packet sent\" }");
+          sendJsonResponse(200, "WOL packet sent", true);
         } else {
-          server.send(200, "application/json", "{ \"success\": false, \"message\": \"Failed to send WOL packet\" }");
+          sendJsonResponse(200, "Failed to send WOL packet", false);
         }
       } else {
-        server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
+        sendJsonResponse(400, "Host not found", false);
       }
     } else {
-      server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
+      sendJsonResponse(405, "HTTP Method Not Allowed", false);
     }
   }
 }
@@ -226,16 +229,16 @@ void handlePingHost() {
         Host &host = hosts[index];
         IPAddress ip;
         ip.fromString(host.ip);
-        if (Ping.ping(ip)) {
-          server.send(200, "application/json", "{ \"success\": true, \"message\": \"Pinging\" }");
+        if (Ping.ping(ip, 3)) {
+          sendJsonResponse(200, "Pinging", true);
         } else {
-          server.send(200, "application/json", "{ \"success\": false, \"message\": \"Failed ping\" }");
+          sendJsonResponse(200, "Failed ping", false);
         }
       } else {
-        server.send(200, "application/json", "{ \"success\": false, \"message\": \"Host not found\" }");
+        sendJsonResponse(400, "Host not found", false);
       }
     } else {
-      server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
+      sendJsonResponse(405, "HTTP Method Not Allowed", false);
     }
   }
 }
@@ -243,30 +246,32 @@ void handlePingHost() {
 // API: PUT '/networkSettings'
 static void updateNetworkSettings() {
   if (!server.hasArg("plain")) {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing body\" }");
+    sendJsonResponse(400, "Missing body", false);
     return;
   }
-  String body = server.arg("plain");
-  DynamicJsonDocument doc(1024);
-  if (deserializeJson(doc, body)) {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid JSON\" }");
+
+  JsonDocument doc;
+  if (deserializeJson(doc, server.arg("plain"))) {
+    sendJsonResponse(400, "Invalid JSON", false);
     return;
   }
+
   if (!doc.containsKey("enable") || !doc.containsKey("ip") || !doc.containsKey("networkMask") || !doc.containsKey("gateway")) {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing required fields\" }");
+    sendJsonResponse(400, "Missing required fields", false);
     return;
   }
   String ip_str = doc["ip"].as<String>();
   String networkMask_str = doc["networkMask"].as<String>();
   String gateway_str = doc["gateway"].as<String>();
+
   if (!doc["enable"].is<bool>()) {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid data format\" }");
+    sendJsonResponse(400, "Invalid data format", false);
     return;
   }
   networkConfig.enable = doc["enable"];
   if (networkConfig.enable) {
     if (!isValidIPAddress(ip_str) || !isValidIPAddress(networkMask_str) || !isValidIPAddress(gateway_str)) {
-      server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid data format\" }");
+      sendJsonResponse(400, "Invalid data format", false);
       return;
     }
     IPAddress ip;
@@ -281,50 +286,50 @@ static void updateNetworkSettings() {
   }
   saveNetworkConfig();
   updateIPWifiSettings();
-  server.send(200, "application/json", "{ \"success\": true, \"message\": \"Network settings updated\" }");
-  delay(100);
+  sendJsonResponse(200, "Network settings updated", true);
+  delay(300);
   ESP.restart();
 }
 
 // API: PUT '/authenticationSettings'
 static void updateAuthenticationSettings() {
   if (!server.hasArg("plain")) {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing body\" }");
+    sendJsonResponse(400, "Missing body", false);
     return;
   }
-  String body = server.arg("plain");
-  DynamicJsonDocument doc(1024);
-  if (deserializeJson(doc, body)) {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid JSON\" }");
+
+  JsonDocument doc;
+  if (deserializeJson(doc, server.arg("plain"))) {
+    sendJsonResponse(400, "Invalid JSON", false);
     return;
   }
+
   if (!doc.containsKey("enable") || !doc.containsKey("username") || !doc.containsKey("password")) {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing required fields\" }");
+    sendJsonResponse(400, "Missing required fields", false);
     return;
   }
   String username = doc["username"].as<String>();
   String password = doc["password"].as<String>();
   if (!doc["enable"].is<bool>()) {
-    server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid data format\" }");
+    sendJsonResponse(400, "Invalid data format", false);
     return;
   }
   authentication.enable = doc["enable"];
   if (authentication.enable) {
     if (username.length() < 3 || !isValidPassword(password)) {
-      server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid data format\" }");
+      sendJsonResponse(400, "Invalid data format", false);
       return;
     }
     authentication.username = username;
     authentication.password = password;
   }
   saveAuthentication();
-  server.send(200, "application/json", "{ \"success\": true, \"message\": \"Authentication updated\" }");
+  sendJsonResponse(200, "Authentication updated", true);
 }
 
 // API: GET '/networkSettings'
 static void getNetworkSettings() {
-  String jsonResponse;
-  StaticJsonDocument<256> doc;
+  JsonDocument doc;
   doc["enable"] = networkConfig.enable;
   if (networkConfig.enable) {
     doc["ip"] = networkConfig.ip.toString();
@@ -335,18 +340,15 @@ static void getNetworkSettings() {
     doc["networkMask"] = WiFi.subnetMask().toString();
     doc["gateway"] = WiFi.gatewayIP().toString();
   }
-  serializeJson(doc, jsonResponse);
-  server.send(200, "application/json", jsonResponse);
+  sendJsonResponse(200, doc);
 }
 
 // API: GET '/authenticationSettings'
 static void getAuthenticationSettings() {
-  String jsonResponse;
-  StaticJsonDocument<256> doc;
+  JsonDocument doc;
   doc["enable"] = authentication.enable;
   doc["username"] = authentication.username;
-  serializeJson(doc, jsonResponse);
-  server.send(200, "application/json", jsonResponse);
+  sendJsonResponse(200, doc);
 }
 
 void handleNetworkSettings() {
@@ -356,7 +358,7 @@ void handleNetworkSettings() {
     } else if (server.method() == HTTP_PUT) {
       updateNetworkSettings();
     } else {
-      server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
+      sendJsonResponse(405, "HTTP Method Not Allowed", false);
     }
   }
 }
@@ -368,7 +370,7 @@ void handleAuthenticationSettings() {
     } else if (server.method() == HTTP_PUT) {
       updateAuthenticationSettings();
     } else {
-      server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
+      sendJsonResponse(405, "HTTP Method Not Allowed", false);
     }
   }
 }
@@ -395,62 +397,48 @@ static const char *errorToString(AutoOTA::Error error) {
 // API: GET '/about'
 void handleGetAbout() {
   if (isAuthenticated()) {
-    String jsonResponse;
-    StaticJsonDocument<256> doc;
+    JsonDocument doc;
+
     ota.checkUpdate();
     if (ota.hasError()) {
-      char response[256];
-      snprintf(response, sizeof(response),
-               "{ \"success\": false, \"message\": \"Check update error: %s\" }",
-               errorToString(ota.getError()));
-      server.send(400, "application/json", response);
+      sendJsonResponse(400, String("Check update error: ") + errorToString(ota.getError()), false);
       return;
     }
 
     doc["version"] = ota.version();
     doc["lastVersion"] = !ota.hasUpdate();
     doc["hostname"] = wifiManager.getWiFiHostname();
-    serializeJson(doc, jsonResponse);
-    server.send(200, "application/json", jsonResponse);
+
+    sendJsonResponse(200, doc);
   }
 }
 
 // API: GET '/updateVersion'
 static void getInformationToUpdate() {
-  String lastVersion;
-  String jsonResponse;
-  StaticJsonDocument<256> doc;
+  JsonDocument doc;
 
+  String lastVersion;
   ota.checkUpdate(&lastVersion);
   if (ota.hasError()) {
-    char response[256];
-    snprintf(response, sizeof(response),
-             "{ \"success\": false, \"message\": \"Check update error: %s\" }",
-             errorToString(ota.getError()));
-    server.send(400, "application/json", response);
+    sendJsonResponse(400, String("Check update error: ") + errorToString(ota.getError()), false);
     return;
   }
 
   doc["version"] = ota.version();
   doc["lastVersion"] = lastVersion;
-  serializeJson(doc, jsonResponse);
-  server.send(200, "application/json", jsonResponse);
+  sendJsonResponse(200, doc);
 }
 
 // API: POST '/updateVersion'
 static void updateToLastVersion() {
   ota.checkUpdate();
   if (ota.hasError()) {
-    char response[256];
-    snprintf(response, sizeof(response),
-             "{ \"success\": false, \"message\": \"Check update error: %s\" }",
-             errorToString(ota.getError()));
-    server.send(400, "application/json", response);
+    sendJsonResponse(400, String("Check update error: ") + errorToString(ota.getError()), false);
     return;
   }
   if (ota.hasUpdate()) {
-    server.send(200, "application/json", "{ \"success\": true, \"message\": \"Update process will start in 1 second. Please wait for the update to complete.\" }");
-    delay(1000);
+    sendJsonResponse(200, "Update process will start in 1 second. Please wait for the update to complete.", true);
+    delay(500);
     ota.updateNow();
   }
 }
@@ -462,7 +450,7 @@ void handleUpdateVersion() {
     } else if (server.method() == HTTP_POST) {
       updateToLastVersion();
     } else {
-      server.send(405, "application/json", "{ \"success\": false, \"message\": \"HTTP Method Not Allowed\" }");
+      sendJsonResponse(405, "HTTP Method Not Allowed", false);
     }
   }
 }
@@ -471,20 +459,18 @@ void handleUpdateVersion() {
 void handleImportDatabase() {
   if (isAuthenticated()) {
     if (!server.hasArg("plain")) {
-      server.send(400, "application/json", "{ \"success\": false, \"message\": \"Missing body\" }");
+      sendJsonResponse(400, "Missing body", false);
       return;
     }
 
-    String body = server.arg("plain");
-    DynamicJsonDocument doc(1024);
-
-    if (deserializeJson(doc, body)) {
-      server.send(400, "application/json", "{ \"success\": false, \"message\": \"Invalid JSON\" }");
+    JsonDocument doc;
+    if (deserializeJson(doc, server.arg("plain"))) {
+      sendJsonResponse(400, "Invalid JSON", false);
       return;
     }
 
     if (!doc.is<JsonArray>()) {
-      server.send(400, "application/json", "{ \"success\": false, \"message\": \"Expected JSON array\" }");
+      sendJsonResponse(400, "Expected JSON array", false);
       return;
     }
 
@@ -516,11 +502,7 @@ void handleImportDatabase() {
         }
       }
 
-      Host host;
-      host.name = name;
-      host.mac = mac;
-      host.ip = ip;
-      host.periodicPing = periodicPing * 1000;
+      Host host = { name, mac, ip, periodicPing * 1000 };
 
       if (isHostDuplicate(host)) {
         ignoredCount++;
@@ -537,10 +519,6 @@ void handleImportDatabase() {
 
     saveHostsData();
 
-    char response[256];
-    snprintf(response, sizeof(response),
-             "{ \"success\": true, \"message\": \"Imported %d hosts from %d. %d hosts ignored. Hosts in database after import: %d.\" }",
-             importedCount, arr.size(), ignoredCount, hosts.size());
-    server.send(200, "application/json", response);
+    sendJsonResponse(200, String("Imported ") + importedCount + " hosts from " + arr.size() + ". " + ignoredCount + " hosts ignored. Hosts in database after import: " + hosts.size() + ".", true);
   }
 }
