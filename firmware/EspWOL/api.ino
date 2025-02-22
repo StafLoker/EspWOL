@@ -202,7 +202,7 @@ void handleWakeHost() {
       int index = server.arg("id").toInt();
       if (index >= 0 && index < hosts.size()) {
         Host &host = hosts[index];
-        if (WOL.sendMagicPacket(host.mac.c_str())) {
+        if (wol.sendMagicPacket(host.mac.c_str())) {
           server.send(200, "application/json", "{ \"success\": true, \"message\": \"WOL packet sent\" }");
         } else {
           server.send(200, "application/json", "{ \"success\": false, \"message\": \"Failed to send WOL packet\" }");
@@ -373,13 +373,42 @@ void handleAuthenticationSettings() {
   }
 }
 
+static const char *errorToString(AutoOTA::Error error) {
+  switch (error) {
+    case AutoOTA::Error::None: return "No error";
+    case AutoOTA::Error::Connect: return "Connection failed";
+    case AutoOTA::Error::Timeout: return "Timeout";
+    case AutoOTA::Error::HTTP: return "HTTP error";
+    case AutoOTA::Error::NoVersion: return "No version found";
+    case AutoOTA::Error::NoPlatform: return "Platform not supported";
+    case AutoOTA::Error::NoPath: return "No path found";
+    case AutoOTA::Error::NoUpdates: return "No updates available";
+    case AutoOTA::Error::NoFile: return "File not found";
+    case AutoOTA::Error::OtaStart: return "OTA start failed";
+    case AutoOTA::Error::OtaEnd: return "OTA end failed";
+    case AutoOTA::Error::PathError: return "Invalid path";
+    case AutoOTA::Error::NoPort: return "No port specified";
+    default: return "Unknown error";
+  }
+}
+
 // API: GET '/about'
 void handleGetAbout() {
   if (isAuthenticated()) {
     String jsonResponse;
     StaticJsonDocument<256> doc;
+    ota.checkUpdate();
+    if (ota.hasError()) {
+      char response[256];
+      snprintf(response, sizeof(response),
+               "{ \"success\": false, \"message\": \"Check update error: %s\" }",
+               errorToString(ota.getError()));
+      server.send(400, "application/json", response);
+      return;
+    }
+
     doc["version"] = ota.version();
-    doc["lastVersion"] = ota.hasUpdate();
+    doc["lastVersion"] = !ota.hasUpdate();
     doc["hostname"] = wifiManager.getWiFiHostname();
     serializeJson(doc, jsonResponse);
     server.send(200, "application/json", jsonResponse);
@@ -393,6 +422,14 @@ static void getInformationToUpdate() {
   StaticJsonDocument<256> doc;
 
   ota.checkUpdate(&lastVersion);
+  if (ota.hasError()) {
+    char response[256];
+    snprintf(response, sizeof(response),
+             "{ \"success\": false, \"message\": \"Check update error: %s\" }",
+             errorToString(ota.getError()));
+    server.send(400, "application/json", response);
+    return;
+  }
 
   doc["version"] = ota.version();
   doc["lastVersion"] = lastVersion;
@@ -402,6 +439,15 @@ static void getInformationToUpdate() {
 
 // API: POST '/updateVersion'
 static void updateToLastVersion() {
+  ota.checkUpdate();
+  if (ota.hasError()) {
+    char response[256];
+    snprintf(response, sizeof(response),
+             "{ \"success\": false, \"message\": \"Check update error: %s\" }",
+             errorToString(ota.getError()));
+    server.send(400, "application/json", response);
+    return;
+  }
   if (ota.hasUpdate()) {
     server.send(200, "application/json", "{ \"success\": true, \"message\": \"Update process will start in 1 second. Please wait for the update to complete.\" }");
     delay(1000);

@@ -170,6 +170,17 @@ void handleAuthenticationSettings();
 void handleGetAbout();
 
 /**
+ * @brief Converts an AutoOTA::Error enum value to a human-readable string.
+ * 
+ * This function takes an error from the AutoOTA class and returns a string representation
+ * of the error message.
+ * 
+ * @param error The AutoOTA::Error enum value to convert.
+ * @return A constant character pointer to the corresponding error message.
+ */
+static const char *errorToString(AutoOTA::Error error);
+
+/**
  * @brief Retrieves information about the current and latest available firmware versions.
  * 
  * API Endpoint: GET '/updateVersion'

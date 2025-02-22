@@ -467,8 +467,13 @@
 
       async function getAbout() {
         const response = await fetch('/about');
-        if (!response.ok) throw new Error('Failed to fetch About information');
-
+        if (!response.ok) {
+          if (response.status === 400) {
+            const data = await response.json();
+            showNotification(data.message, 'danger', 'Error');
+          }
+          throw new Error('Failed to fetch About information');
+        }
         const data = await response.json();
         const versionElement = document.getElementById('version');
         const versionContainer = document.getElementById('version-container');
@@ -769,18 +774,26 @@
           const response = await fetch('/updateVersion');
           const data = await response.json();
 
-          const textBody = document.getElementById('update-version-text-body');
-          const updateButton = document.getElementById('button-update-version');
-
-          if (data.version === data.lastVersion) {
-            textBody.textContent = `You are up to date!`;
-            updateButton.style.display = 'none';
+          if (response.status === 400) {
+            showNotification(data.message, 'danger', 'Error');
           } else {
-            textBody.innerHTML = `New version available: <span class="badge rounded-pill bg-primary">${data.lastVersion}</span>.
+            const textBody = document.getElementById(
+              'update-version-text-body'
+            );
+            const updateButton = document.getElementById(
+              'button-update-version'
+            );
+
+            if (data.version === data.lastVersion) {
+              textBody.textContent = `You are up to date!`;
+              updateButton.style.display = 'none';
+            } else {
+              textBody.innerHTML = `New version available: <span class="badge rounded-pill bg-primary">${data.lastVersion}</span>.
                 You are using version <span class="badge rounded-pill bg-secondary">${data.version}</span>.`;
-            updateButton.style.display = 'block';
+              updateButton.style.display = 'block';
+            }
+            modal.show();
           }
-          modal.show();
         } catch (error) {
           showNotification(
             'Error to get information about updating',

@@ -1,17 +1,17 @@
 {
-    "name": "EspWOL",
-    "about": "Simple ESP8266 Wake On Lan web server with modern ui",
-    "version": "2.0.0",
-    "notes": "New global version",
-    "builds": [
-      {
-        "chipFamily": "ESP8266",
-        "parts": [
-          {
-            "path": "https://github.com/StafLoker/EspWOL/releases/latest/download/EspWOL.bin",
-            "offset": 0
-          }
-        ]
-      }
-    ]
-  }
+  "name": "EspWOL",
+  "about": "Simple ESP8266 Wake On Lan web server with modern ui",
+  "version": "2.0.0",
+  "notes": "New global version",
+  "builds": [
+    {
+      "chipFamily": "ESP8266",
+      "parts": [
+        {
+          "path": "https://github.com/StafLoker/EspWOL/releases/latest/download/EspWOL.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}
