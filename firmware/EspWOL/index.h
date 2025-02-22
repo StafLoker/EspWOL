@@ -890,7 +890,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         toast.setAttribute('aria-live', 'assertive');
         toast.setAttribute('aria-atomic', 'true');
         toast.setAttribute('data-bs-autohide', 'true');
-        toast.setAttribute('data-bs-delay', '3000');
+        toast.setAttribute('data-bs-delay', '5000');
         toast.style.opacity = 1;
 
         toast.innerHTML = `
