@@ -5,7 +5,7 @@ void loadHostsData() {
   if (LittleFS.begin()) {
     File file = LittleFS.open(hostsFile, "r");
     if (file) {
-      StaticJsonDocument<1024> doc;
+      JsonDocument doc;
       DeserializationError error = deserializeJson(doc, file);
       if (!error) {
         hosts.clear();  // Clear the existing list before loading new data
@@ -29,7 +29,7 @@ void saveHostsData() {
   if (LittleFS.begin()) {
     File file = LittleFS.open(hostsFile, "w");
     if (file) {
-      StaticJsonDocument<1024> doc;
+      JsonDocument doc;
       JsonArray array = doc.to<JsonArray>();
       for (const auto& pair : hosts) {
         const Host& host = pair.second;
@@ -51,7 +51,7 @@ void saveNetworkConfig() {
   if (LittleFS.begin()) {
     File file = LittleFS.open(networkConfigFile, "w");
     if (file) {
-      StaticJsonDocument<256> doc;
+      JsonDocument doc;
       doc["enable"] = networkConfig.enable;
       doc["ip"] = networkConfig.ip.toString();
       doc["networkMask"] = networkConfig.networkMask.toString();
@@ -69,7 +69,7 @@ void loadNetworkConfig() {
     if (LittleFS.exists(networkConfigFile)) {
       File file = LittleFS.open(networkConfigFile, "r");
       if (file) {
-        StaticJsonDocument<256> doc;
+        JsonDocument doc;
         DeserializationError error = deserializeJson(doc, file);
         if (!error) {
           networkConfig.enable = doc["enable"];
@@ -97,7 +97,7 @@ void saveAuthentication() {
   if (LittleFS.begin()) {
     File file = LittleFS.open(authenticationFile, "w");
     if (file) {
-      StaticJsonDocument<256> doc;
+      JsonDocument doc;
       doc["enable"] = authentication.enable;
       doc["username"] = authentication.username;
       doc["password"] = authentication.password;
@@ -114,7 +114,7 @@ void loadAuthentication() {
     if (LittleFS.exists(authenticationFile)) {
       File file = LittleFS.open(authenticationFile, "r");
       if (file) {
-        StaticJsonDocument<1024> doc;
+        JsonDocument doc;
         DeserializationError error = deserializeJson(doc, file);
         if (!error) {
           authentication.enable = doc["enable"];
