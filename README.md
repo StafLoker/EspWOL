@@ -58,8 +58,9 @@
 
 Installation of the CH341 driver is required. Use the following links to download and install it:  
 
-- **Windows:** [Download CH341SER.EXE](https://wch-ic.com/downloads/CH341SER_EXE.html)  
-- **MacOS:** [Download CH341SER_MAC.ZIP](https://wch-ic.com/downloads/CH341SER_MAC_ZIP.html)  
+- **Windows:** [Download CH341SER.EXE](https://wch-ic.com/downloads/CH341SER_EXE.html)
+- **Linux** [Download CH341SER_LINUX_ZIP](https://wch-ic.com/downloads/CH341SER_LINUX_ZIP.html)
+- **MacOS:** [Download CH341SER_MAC.ZIP](https://wch-ic.com/downloads/CH341SER_MAC_ZIP.html)
 
 After installation, add the following URL to the **Arduino IDE** settings:  
 
@@ -101,6 +102,9 @@ Then, install the latest version of the **ESP8266** board package via the **Boar
    - **Wake Host**: Click the **play** button (▶️) next to a host to send a WoL request.  
 
 ### Updating to the Latest Version
+
+> [!WARNING]
+> In version `2.0.0`, it is not possible to perform an update. This functionality is available starting from version `2.0.1`.
 
 1. **Open Settings**:  
    - Click the **Settings** button.  
