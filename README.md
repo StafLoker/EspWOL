@@ -12,7 +12,7 @@
    <a href="https://github.com/StafLoker/EspWOL/releases"><img src="https://img.shields.io/github/downloads/StafLoker/EspWOL/total.svg?style=flat" alt="downloads"/></a>
    <a href="https://github.com/StafLoker/EspWOL/releases"><img src="https://img.shields.io/github/release-pre/StafLoker/EspWOL.svg?style=flat" alt="latest version"/></a>
    <a href="https://github.com/StafLoker/EspWOL/blob/main/LICENSE"><img src="https://img.shields.io/github/license/StafLoker/EspWOL.svg?style=flat" alt="license"/></a>
-   <a href="https://github.com/MonitorControl/MonitorControl"><img src="https://img.shields.io/badge/platform-ESP8266-blue.svg?style=flat" alt="platform"/></a>
+   <img src="https://img.shields.io/badge/platform-ESP8266-blue.svg?style=flat" alt="platform"/>
 
    <p>This project provides a web-based interface for power on hosts using an ESP8266 and Wake On Lan magic packets.</p>
 
@@ -94,10 +94,10 @@ Then, install the latest version of the **ESP8266** board package via the **Boar
 
 1. **Access Web Interface**:  
    - Power the ESP8266 and connect it to Wi-Fi.  
-   - Open the IP address shown in the Serial Monitor using a web browser.  
+   - Open the IP address of the board in a web browser (the IP is set using the DHCP protocol).
 
 2. **Manage Hosts**:  
-   - **Add Host**: Click the `+` button under **Registered Hosts**.  
+   - **Add Host**: Click the `+` button.  
    - **Wake Host**: Click the **play** button (▶️) next to a host to send a WoL request.  
 
 ### Updating to the Latest Version
