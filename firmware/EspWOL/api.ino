@@ -256,13 +256,14 @@ static void updateNetworkSettings() {
     return;
   }
 
-  if (!doc.containsKey("enable") || !doc.containsKey("ip") || !doc.containsKey("networkMask") || !doc.containsKey("gateway")) {
-    sendJsonResponse(400, "Missing required fields", false);
-    return;
-  }
+  if (!doc.containsKey("enable") || !doc.containsKey("ip") || !doc.containsKey("networkMask") || !doc.containsKey("gateway") || !doc.containsKey("dns")) {
+      sendJsonResponse(400, "Missing required fields", false);
+      return;
+    }
   String ip_str = doc["ip"].as<String>();
   String networkMask_str = doc["networkMask"].as<String>();
   String gateway_str = doc["gateway"].as<String>();
+  String dns_str = doc["dns"].as<String>();
 
   if (!doc["enable"].is<bool>()) {
     sendJsonResponse(400, "Invalid data format", false);
@@ -270,19 +271,22 @@ static void updateNetworkSettings() {
   }
   networkConfig.enable = doc["enable"];
   if (networkConfig.enable) {
-    if (!isValidIPAddress(ip_str) || !isValidIPAddress(networkMask_str) || !isValidIPAddress(gateway_str)) {
+    if (!isValidIPAddress(ip_str) || !isValidIPAddress(networkMask_str) || !isValidIPAddress(gateway_str) || !isValidIPAddress(dns_str)) {
       sendJsonResponse(400, "Invalid data format", false);
       return;
     }
     IPAddress ip;
     IPAddress networkMask;
     IPAddress gateway;
+    IPAddress dns;
     ip.fromString(ip_str);
     networkMask.fromString(networkMask_str);
     gateway.fromString(gateway_str);
+    dns.fromString(dns_str);
     networkConfig.ip = ip;
     networkConfig.networkMask = networkMask;
     networkConfig.gateway = gateway;
+    networkConfig.dns = dns;
   }
   saveNetworkConfig();
   updateIPWifiSettings();
@@ -335,10 +339,12 @@ static void getNetworkSettings() {
     doc["ip"] = networkConfig.ip.toString();
     doc["networkMask"] = networkConfig.networkMask.toString();
     doc["gateway"] = networkConfig.gateway.toString();
+    doc["dns"] = networkConfig.dns.toString();
   } else {
     doc["ip"] = WiFi.localIP().toString();
     doc["networkMask"] = WiFi.subnetMask().toString();
     doc["gateway"] = WiFi.gatewayIP().toString();
+    doc["dns"] = WiFi.dnsIP().toString();
   }
   sendJsonResponse(200, doc);
 }

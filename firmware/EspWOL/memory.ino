@@ -56,6 +56,7 @@ void saveNetworkConfig() {
       doc["ip"] = networkConfig.ip.toString();
       doc["networkMask"] = networkConfig.networkMask.toString();
       doc["gateway"] = networkConfig.gateway.toString();
+      doc["dns"] = networkConfig.dns.toString();
       serializeJson(doc, file);
       file.close();
     }
@@ -76,12 +77,15 @@ void loadNetworkConfig() {
           IPAddress ip;
           IPAddress networkMask;
           IPAddress gateway;
+          IPAddress dns;
           ip.fromString(doc["ip"].as<String>());
           networkMask.fromString(doc["networkMask"].as<String>());
           gateway.fromString(doc["gateway"].as<String>());
+          dns.fromString(doc["dns"].as<String>());
           networkConfig.ip = ip;
           networkConfig.networkMask = networkMask;
           networkConfig.gateway = gateway;
+          networkConfig.dns = dns;
         }
         file.close();
       }

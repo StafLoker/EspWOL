@@ -63,6 +63,7 @@ struct NetworkConfig {
   IPAddress ip;
   IPAddress networkMask;
   IPAddress gateway;
+  IPAddress dns;
 } networkConfig;
 
 // Structure for Authentication settings
@@ -91,7 +92,7 @@ void setupOTA() {
 // Function to update WiFi settings
 void updateIPWifiSettings() {
   if (networkConfig.enable) {
-    wifiManager.setSTAStaticIPConfig(networkConfig.ip, networkConfig.gateway, networkConfig.networkMask);
+    wifiManager.setSTAStaticIPConfig(networkConfig.ip, networkConfig.gateway, networkConfig.networkMask, networkConfig.dns);
   } else {
     wifi_station_dhcpc_start();
   }

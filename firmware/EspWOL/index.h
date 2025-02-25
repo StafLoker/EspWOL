@@ -336,8 +336,11 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             document.getElementById('edit-last-ping').innerText =
               'Last ping: N/A';
           }
+          disabledLoaderButton(button, `<i class="fas fa-edit"></i>`);
           modal.show();
         } catch (error) {
+          disabledLoaderButton(button, `<i class="fas fa-edit"></i>`);
+
           showNotification('Error edit host', 'danger', 'Error');
           console.error('Error edit host:', error);
         }
@@ -489,7 +492,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const versionElement = document.getElementById('version');
         const versionContainer = document.getElementById('version-container');
         versionElement.innerText = data.version;
-        if (data.version === data.lastVersion) {
+        if (data.lastVersion) {
           versionElement.classList.add('bg-success');
           const notificationCircle = versionContainer.querySelector(
             '.notification-circle'
@@ -520,6 +523,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         document.getElementById('fieldIP').value = data.ip;
         document.getElementById('fieldNetworkMask').value = data.networkMask;
         document.getElementById('fieldGateway').value = data.gateway;
+        document.getElementById('fieldDNS').value = data.dns;
 
         toggleNetworkFields();
       }
@@ -563,6 +567,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const ip = document.getElementById('fieldIP').value;
         const networkMask = document.getElementById('fieldNetworkMask').value;
         const gateway = document.getElementById('fieldGateway').value;
+        const dns = document.getElementById('fieldDNS').value;
 
         const modalElement = document.getElementById('settings-modal');
         const modal = bootstrap.Modal.getInstance(modalElement);
@@ -571,7 +576,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           const response = await fetch('/networkSettings', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ enable, ip, networkMask, gateway })
+            body: JSON.stringify({ enable, ip, networkMask, gateway, dns})
           });
           const data = await response.json();
 
@@ -947,7 +952,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const isStaticIP = document.getElementById(
           'inlineRadioStaticIP'
         ).checked;
-        const fields = ['fieldIP', 'fieldNetworkMask', 'fieldGateway'];
+        const fields = ['fieldIP', 'fieldNetworkMask', 'fieldGateway', 'fieldDNS'];
 
         fields.forEach((fieldId) => {
           const field = document.getElementById(fieldId);
@@ -1489,6 +1494,18 @@ const char htmlPage[] PROGMEM = R"rawliteral(
                       name="ip"
                       id="fieldGateway"
                       placeholder="192.168.2.1"
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label for="static-dns" class="form-label"
+                      >DNS server:</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="ip"
+                      id="fieldDNS"
+                      placeholder="8.8.8.8"
                     />
                   </div>
                 </form>

@@ -175,7 +175,8 @@
      "enable": boolean,
      "ip": "string",
      "networkMask": "string",
-     "gateway": "string"
+     "gateway": "string",
+     "dns": "string"
    }
    ```
 
@@ -193,7 +194,8 @@
       "enable": boolean,
       "ip": "string",
       "networkMask": "string",
-      "gateway": "string"
+      "gateway": "string",
+      "dns": "string"
     }
     ```
 
