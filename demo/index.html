@@ -470,8 +470,10 @@
 
       const simulatedData = {
         about: {
-          version: '2.0.0',
-          lastVersion: '2.1.0',
+          version: '2.1.0',
+          lastVersion: '2.0.0',
+          notesLastVersion:
+            'Add DNS field to network configuration and fix update functionality to the latest version. Enhance UI user experience.',
           hostname: 'demo-host'
         },
         networkSettings: {
@@ -603,7 +605,13 @@
         const modal = bootstrap.Modal.getInstance(modalElement);
 
         try {
-          simulatedData.networkSettings = { enable, ip, networkMask, gateway, dns};
+          simulatedData.networkSettings = {
+            enable,
+            ip,
+            networkMask,
+            gateway,
+            dns
+          };
 
           setTimeout(() => {
             modal.hide();
@@ -808,8 +816,17 @@
             textBody.textContent = `You are up to date!`;
             updateButton.style.display = 'none';
           } else {
-            textBody.innerHTML = `New version available: <span class="badge rounded-pill bg-primary">${data.lastVersion}</span>.
-          You are using version <span class="badge rounded-pill bg-secondary">${data.version}</span>.`;
+            textBody.innerHTML = `
+          New version available: <span class="badge rounded-pill bg-primary">${data.lastVersion}</span>.
+          You are using version <span class="badge rounded-pill bg-secondary">${data.version}</span>.
+          <p>
+            <h5>Detail of new release:</h5> 
+            <span>${data.notesLastVersion}</span>
+            <p>
+              <a href="https://github.com/StafLoker/EspWOL/releases/tag/v${data.lastVersion}" target="_blank">Learn more</a>
+            </p>
+          </p>
+        `;
             updateButton.style.display = 'block';
           }
           modal.show();

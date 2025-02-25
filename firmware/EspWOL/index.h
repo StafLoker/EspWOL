@@ -807,8 +807,17 @@ const char htmlPage[] PROGMEM = R"rawliteral(
               textBody.textContent = `You are up to date!`;
               updateButton.style.display = 'none';
             } else {
-              textBody.innerHTML = `New version available: <span class="badge rounded-pill bg-primary">${data.lastVersion}</span>.
-                You are using version <span class="badge rounded-pill bg-secondary">${data.version}</span>.`;
+              textBody.innerHTML = `
+          New version available: <span class="badge rounded-pill bg-primary">${data.lastVersion}</span>.
+          You are using version <span class="badge rounded-pill bg-secondary">${data.version}</span>.
+          <p>
+            <h5>Detail of new release:</h5> 
+            <span>${data.notesLastVersion}</span>
+            <p>
+              <a href="https://github.com/StafLoker/EspWOL/releases/tag/v${data.lastVersion}" target="_blank">Learn more</a>
+            </p>
+          </p>
+        `;
               updateButton.style.display = 'block';
             }
             modal.show();

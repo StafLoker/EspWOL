@@ -279,7 +279,8 @@
     ```json
     {
       "version": "string",
-      "lastVersion": "string"
+      "lastVersion": "string",
+      "notesLastVersion": "string" // just if has new version
     }
     ```
 
