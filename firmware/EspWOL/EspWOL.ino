@@ -134,7 +134,6 @@ void setup() {
 #endif
 
   // Load data at startup
-  LittleFS.begin();
   loadNetworkConfig();
   loadAuthentication();
   loadHostsData();

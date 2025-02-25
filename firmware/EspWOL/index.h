@@ -576,7 +576,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           const response = await fetch('/networkSettings', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ enable, ip, networkMask, gateway, dns})
+            body: JSON.stringify({ enable, ip, networkMask, gateway, dns })
           });
           const data = await response.json();
 
@@ -952,7 +952,12 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         const isStaticIP = document.getElementById(
           'inlineRadioStaticIP'
         ).checked;
-        const fields = ['fieldIP', 'fieldNetworkMask', 'fieldGateway', 'fieldDNS'];
+        const fields = [
+          'fieldIP',
+          'fieldNetworkMask',
+          'fieldGateway',
+          'fieldDNS'
+        ];
 
         fields.forEach((fieldId) => {
           const field = document.getElementById(fieldId);
