@@ -252,6 +252,15 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         button.removeAttribute('disabled');
       }
 
+      function resetValidation(modalElement) {
+        if (modalElement) {
+          modalElement.querySelectorAll('input').forEach((input) => {
+            input.classList.remove('is-valid', 'is-invalid');
+            input.setCustomValidity('');
+          });
+        }
+      }
+
       async function addHost() {
         const button = document.getElementById(`add-button`);
         enableLoaderButton(button);
@@ -282,6 +291,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             document.getElementById('host-mac').value = '';
             document.getElementById('host-ip').value = '';
             document.getElementById('add-select-periodic-ping').value = 0;
+            resetValidation(modalElement);
           }
           showNotification(
             data.message,
@@ -330,8 +340,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         } catch (error) {
           showNotification('Error edit host', 'danger', 'Error');
           console.error('Error edit host:', error);
-        } finally {
-          disabledLoaderButton(button, '<i class="fas fa-edit"></i>');
         }
       }
 
@@ -362,6 +370,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
           modal.hide();
           disabledLoaderButton(button, `Save changes`);
+          resetValidation(modalElement);
 
           showNotification(
             data.message,
@@ -568,6 +577,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
           modal.hide();
           disabledLoaderButton(button, `Update`);
+          resetValidation(modalElement);
 
           showNotification(
             data.message,
@@ -617,6 +627,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
           modal.hide();
           disabledLoaderButton(button, `Update`);
+          resetValidation(modalElement);
 
           showNotification(
             data.message,
@@ -728,6 +739,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
             modal.hide();
             disabledLoaderButton(button, `Import`);
+            resetValidation(modalElement);
 
             await getAllHostWithLoader();
           } catch (error) {

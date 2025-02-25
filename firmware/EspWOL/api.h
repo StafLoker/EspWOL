@@ -219,6 +219,17 @@ void handleGetAbout();
 static const char *errorToString(AutoOTA::Error error);
 
 /**
+ * @brief Checks for available OTA updates.
+ * 
+ * @param version Pointer to a String where the new version number will be stored (optional).
+ * @param notes Pointer to a String where the release notes will be stored (optional).
+ * @param bin Pointer to a String where the binary file path will be stored (optional).
+ * @return true if no errors occurred during the update check or if no updates are available.
+ * @return false if an error occurred (excluding the "No Updates" error).
+ */
+static bool checkUpdate(String *version, String *notes, String *bin);
+
+/**
  * @brief Retrieves information about the current and latest available firmware versions.
  * 
  * API Endpoint: GET '/updateVersion'

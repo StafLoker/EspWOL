@@ -394,14 +394,21 @@ static const char *errorToString(AutoOTA::Error error) {
   }
 }
 
+static bool checkUpdate(String *version = nullptr, String *notes = nullptr, String *bin = nullptr) {
+  ota.checkUpdate(version, notes, bin);
+  if (ota.hasError() && ota.getError() != AutoOTA::Error::NoUpdates) {
+    sendJsonResponse(400, String("Check update error: ") + errorToString(ota.getError()), false);
+    return false;
+  }
+  return true;
+}
+
 // API: GET '/about'
 void handleGetAbout() {
   if (isAuthenticated()) {
     JsonDocument doc;
 
-    ota.checkUpdate();
-    if (ota.hasError()) {
-      sendJsonResponse(400, String("Check update error: ") + errorToString(ota.getError()), false);
+    if (!checkUpdate()) {
       return;
     }
 
@@ -418,9 +425,7 @@ static void getInformationToUpdate() {
   JsonDocument doc;
 
   String lastVersion;
-  ota.checkUpdate(&lastVersion);
-  if (ota.hasError()) {
-    sendJsonResponse(400, String("Check update error: ") + errorToString(ota.getError()), false);
+  if (!checkUpdate(&lastVersion)) {
     return;
   }
 
@@ -431,9 +436,7 @@ static void getInformationToUpdate() {
 
 // API: POST '/updateVersion'
 static void updateToLastVersion() {
-  ota.checkUpdate();
-  if (ota.hasError()) {
-    sendJsonResponse(400, String("Check update error: ") + errorToString(ota.getError()), false);
+  if (!checkUpdate()) {
     return;
   }
   if (ota.hasUpdate()) {
