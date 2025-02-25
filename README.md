@@ -23,6 +23,9 @@
 > [!IMPORTANT]
 > [Instruction](#migration-from-v1xx-to-v2xx) of migration to version `2.x.x`.
 
+> [!IMPORTANT]
+> Same [instruction](#migration-from-v1xx-to-v2xx) to upgrade from version `2.0.0` to version >= `2.1.0`.
+
 ## Features
 
 - **CRUD Host Management**: CRUD functionality to manage host information.
@@ -104,7 +107,7 @@ Then, install the latest version of the **ESP8266** board package via the **Boar
 ### Updating to the Latest Version
 
 > [!WARNING]
-> In version `2.0.0`, it is not possible to perform an update. This functionality is available starting from version `2.0.1`.
+> In version `2.0.0`, it is not possible to perform an update. This functionality is available starting from version `2.1.0`. [Instruction](#migration-from-v1xx-to-v2xx) to upgrade from version `2.0.0` to version >= `2.1.0`.
 
 1. **Open Settings**:  
    - Click the **Settings** button.  
