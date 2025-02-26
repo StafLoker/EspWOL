@@ -39,6 +39,7 @@
 - **Periodic Ping**: Configure periodic pings; if a ping fails, the program attempts to wake the host.
 - **Export database**: Export database to **CSV** file.  
 - **Import database**: Import database from **CSV** file.
+- **mDNS**: You can access the web page using a domain name. The default is `wol.local`.
 
 ## Requirements
 
