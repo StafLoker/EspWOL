@@ -11,6 +11,12 @@
 #include <WiFiManager.h>
 #include <ESP8266Ping.h>
 
+#define ENABLE_mDNS 1  // Values: 1 to enable, != 1 to disable
+
+#if ENABLE_mDNS == 1
+#include <ESP8266mDNS.h>
+#endif
+
 /* Memory */
 #include <LittleFS.h>
 #include <ArduinoJson.h>
@@ -142,6 +148,12 @@ void setup() {
 
   wifiManager.autoConnect(SSID);  // Auto connect
 
+#if ENABLE_mDNS == 1
+  // Set up mDNS responder
+  //  the fully-qualified domain name is "wol.local"
+  MDNS.begin(hostname);
+#endif
+
   server.on("/", HTTP_GET, handleRoot);
   server.on("/hosts", HTTP_ANY, handleHosts);
   server.on("/ping", HTTP_POST, handlePingHost);
@@ -160,14 +172,26 @@ void setup() {
   });
   server.begin();
 
+#if ENABLE_mDNS == 1
+  MDNS.addService("http", "tcp", 80);
+#endif
+
   setupPeriodicPingToHosts();
 }
 
 void loop() {
+
+#if ENABLE_mDNS == 1
+  MDNS.update();
+#endif
+
   server.handleClient();
+
 #if ENABLE_STANDARD_OTA == 1
   ArduinoOTA.handle();
 #endif
+
   checkTimers();
+
   delay(1);  // Reduce power consumption by 60% with a delay https://hackaday.com/2022/10/28/esp8266-web-server-saves-60-power-with-a-1-ms-delay/
 }
