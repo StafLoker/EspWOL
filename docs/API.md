@@ -175,7 +175,8 @@
      "enable": boolean,
      "ip": "string",
      "networkMask": "string",
-     "gateway": "string"
+     "gateway": "string",
+     "dns": "string"
    }
    ```
 
@@ -193,7 +194,8 @@
       "enable": boolean,
       "ip": "string",
       "networkMask": "string",
-      "gateway": "string"
+      "gateway": "string",
+      "dns": "string"
     }
     ```
 
@@ -277,7 +279,8 @@
     ```json
     {
       "version": "string",
-      "lastVersion": "string"
+      "lastVersion": "string",
+      "notesLastVersion": "string" // just if has new version
     }
     ```
 

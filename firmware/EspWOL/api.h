@@ -1,5 +1,43 @@
 #ifndef API_H
 #define API_H
+
+/**
+ * @brief Sends a JSON response with a status code and message.
+ * 
+ * Constructs a JSON object containing a success flag and a message,
+ * then sends it as a response to the client.
+ * 
+ * @param statusCode The HTTP status code to send.
+ * @param message The message to include in the JSON response.
+ * @param success A boolean indicating whether the request was successful.
+ */
+static void sendJsonResponse(int statusCode, const String &message, bool success);
+
+/**
+ * @brief Sends a JSON response with a status code and a JSON document.
+ * 
+ * Serializes the given JSON document and sends it as a response to the client.
+ * 
+ * @param statusCode The HTTP status code to send.
+ * @param doc The JSON document to serialize and send.
+ */
+static void sendJsonResponse(int statusCode, const JsonDocument &doc);
+
+/**
+ * @brief Validates the host data received in a JSON document.
+ * 
+ * Checks if the required fields are present and have valid formats.
+ * If validation fails, an appropriate JSON error response is sent.
+ * 
+ * @param doc The JSON document containing the host data.
+ * @param name Reference to a String variable to store the validated name.
+ * @param mac Reference to a String variable to store the validated MAC address.
+ * @param ip Reference to a String variable to store the validated IP address.
+ * @param periodicPing Reference to a long variable to store the validated periodic ping value.
+ * @return True if all validations pass, otherwise false.
+ */
+static bool validateHostData(const JsonDocument &doc, String &name, String &mac, String &ip, long &periodicPing);
+
 /**
  * @brief Checks if the user is authenticated.
  * 
@@ -168,6 +206,28 @@ void handleAuthenticationSettings();
  * Returns device version and hostname in JSON format.
  */
 void handleGetAbout();
+
+/**
+ * @brief Converts an AutoOTA::Error enum value to a human-readable string.
+ * 
+ * This function takes an error from the AutoOTA class and returns a string representation
+ * of the error message.
+ * 
+ * @param error The AutoOTA::Error enum value to convert.
+ * @return A constant character pointer to the corresponding error message.
+ */
+static const char *errorToString(AutoOTA::Error error);
+
+/**
+ * @brief Checks for available OTA updates.
+ * 
+ * @param version Pointer to a String where the new version number will be stored (optional).
+ * @param notes Pointer to a String where the release notes will be stored (optional).
+ * @param bin Pointer to a String where the binary file path will be stored (optional).
+ * @return true if no errors occurred during the update check or if no updates are available.
+ * @return false if an error occurred (excluding the "No Updates" error).
+ */
+static bool checkUpdate(String *version, String *notes, String *bin);
 
 /**
  * @brief Retrieves information about the current and latest available firmware versions.

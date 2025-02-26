@@ -250,6 +250,15 @@
         button.removeAttribute('disabled');
       }
 
+      function resetValidation(modalElement) {
+        if (modalElement) {
+          modalElement.querySelectorAll('input').forEach((input) => {
+            input.classList.remove('is-valid', 'is-invalid');
+            input.setCustomValidity('');
+          });
+        }
+      }
+
       async function addHost() {
         const button = document.getElementById(`add-button`);
         enableLoaderButton(button);
@@ -280,6 +289,7 @@
             document.getElementById('host-mac').value = '';
             document.getElementById('host-ip').value = '';
             document.getElementById('add-select-periodic-ping').value = 0;
+            resetValidation(modalElement);
           }
           showNotification(
             data.message,
@@ -324,12 +334,13 @@
             document.getElementById('edit-last-ping').innerText =
               'Last ping: N/A';
           }
+          disabledLoaderButton(button, `<i class="fas fa-edit"></i>`);
           modal.show();
         } catch (error) {
+          disabledLoaderButton(button, `<i class="fas fa-edit"></i>`);
+
           showNotification('Error edit host', 'danger', 'Error');
           console.error('Error edit host:', error);
-        } finally {
-          disabledLoaderButton(button, '<i class="fas fa-edit"></i>');
         }
       }
 
@@ -360,6 +371,7 @@
 
           modal.hide();
           disabledLoaderButton(button, `Save changes`);
+          resetValidation(modalElement);
 
           showNotification(
             data.message,
@@ -467,13 +479,18 @@
 
       async function getAbout() {
         const response = await fetch('/about');
-        if (!response.ok) throw new Error('Failed to fetch About information');
-
+        if (!response.ok) {
+          if (response.status === 400) {
+            const data = await response.json();
+            showNotification(data.message, 'danger', 'Error');
+          }
+          throw new Error('Failed to fetch About information');
+        }
         const data = await response.json();
         const versionElement = document.getElementById('version');
         const versionContainer = document.getElementById('version-container');
         versionElement.innerText = data.version;
-        if (data.version === data.lastVersion) {
+        if (data.lastVersion) {
           versionElement.classList.add('bg-success');
           const notificationCircle = versionContainer.querySelector(
             '.notification-circle'
@@ -504,6 +521,7 @@
         document.getElementById('fieldIP').value = data.ip;
         document.getElementById('fieldNetworkMask').value = data.networkMask;
         document.getElementById('fieldGateway').value = data.gateway;
+        document.getElementById('fieldDNS').value = data.dns;
 
         toggleNetworkFields();
       }
@@ -547,6 +565,7 @@
         const ip = document.getElementById('fieldIP').value;
         const networkMask = document.getElementById('fieldNetworkMask').value;
         const gateway = document.getElementById('fieldGateway').value;
+        const dns = document.getElementById('fieldDNS').value;
 
         const modalElement = document.getElementById('settings-modal');
         const modal = bootstrap.Modal.getInstance(modalElement);
@@ -555,12 +574,13 @@
           const response = await fetch('/networkSettings', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ enable, ip, networkMask, gateway })
+            body: JSON.stringify({ enable, ip, networkMask, gateway, dns })
           });
           const data = await response.json();
 
           modal.hide();
           disabledLoaderButton(button, `Update`);
+          resetValidation(modalElement);
 
           showNotification(
             data.message,
@@ -610,6 +630,7 @@
 
           modal.hide();
           disabledLoaderButton(button, `Update`);
+          resetValidation(modalElement);
 
           showNotification(
             data.message,
@@ -721,6 +742,7 @@
 
             modal.hide();
             disabledLoaderButton(button, `Import`);
+            resetValidation(modalElement);
 
             await getAllHostWithLoader();
           } catch (error) {
@@ -769,18 +791,36 @@
           const response = await fetch('/updateVersion');
           const data = await response.json();
 
-          const textBody = document.getElementById('update-version-text-body');
-          const updateButton = document.getElementById('button-update-version');
-
-          if (data.version === data.lastVersion) {
-            textBody.textContent = `You are up to date!`;
-            updateButton.style.display = 'none';
+          if (response.status === 400) {
+            showNotification(data.message, 'danger', 'Error');
           } else {
-            textBody.innerHTML = `New version available: <span class="badge rounded-pill bg-primary">${data.lastVersion}</span>.
-                You are using version <span class="badge rounded-pill bg-secondary">${data.version}</span>.`;
-            updateButton.style.display = 'block';
+            const textBody = document.getElementById(
+              'update-version-text-body'
+            );
+            const updateButton = document.getElementById(
+              'button-update-version'
+            );
+
+            if (data.version === data.lastVersion) {
+              textBody.textContent = `You are up to date!`;
+              updateButton.style.display = 'none';
+            } else {
+              textBody.innerHTML = `
+          New version available: <span class="badge rounded-pill bg-primary">${data.lastVersion}</span>.
+          You are using version <span class="badge rounded-pill bg-secondary">${data.version}</span>.
+          <hr />
+          <p>
+            <h5>Detail of new release:</h5> 
+            <span>${data.notesLastVersion}</span>
+            <p>
+              <a href="https://github.com/StafLoker/EspWOL/releases/tag/v${data.lastVersion}" target="_blank">Learn more</a>
+            </p>
+          </p>
+        `;
+              updateButton.style.display = 'block';
+            }
+            modal.show();
           }
-          modal.show();
         } catch (error) {
           showNotification(
             'Error to get information about updating',
@@ -875,7 +915,7 @@
         toast.setAttribute('aria-live', 'assertive');
         toast.setAttribute('aria-atomic', 'true');
         toast.setAttribute('data-bs-autohide', 'true');
-        toast.setAttribute('data-bs-delay', '3000');
+        toast.setAttribute('data-bs-delay', '5000');
         toast.style.opacity = 1;
 
         toast.innerHTML = `
@@ -920,7 +960,12 @@
         const isStaticIP = document.getElementById(
           'inlineRadioStaticIP'
         ).checked;
-        const fields = ['fieldIP', 'fieldNetworkMask', 'fieldGateway'];
+        const fields = [
+          'fieldIP',
+          'fieldNetworkMask',
+          'fieldGateway',
+          'fieldDNS'
+        ];
 
         fields.forEach((fieldId) => {
           const field = document.getElementById(fieldId);
@@ -1462,6 +1507,18 @@
                       name="ip"
                       id="fieldGateway"
                       placeholder="192.168.2.1"
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label for="static-dns" class="form-label"
+                      >DNS server:</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="ip"
+                      id="fieldDNS"
+                      placeholder="8.8.8.8"
                     />
                   </div>
                 </form>

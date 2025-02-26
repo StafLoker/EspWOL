@@ -33,13 +33,13 @@
 #include "memory.h"
 #include "api.h"
 
-#define VERSION "2.0.0"
+#define VERSION "2.1.0"
 
 AutoOTA ota(VERSION, "StafLoker/EspWOL");
 
 ESP8266WebServer server(80);
 WiFiUDP UDP;
-WakeOnLan WOL(UDP);
+WakeOnLan wol(UDP);
 WiFiManager wifiManager;
 
 const char* hostsFile = "/hosts.json";
@@ -63,6 +63,7 @@ struct NetworkConfig {
   IPAddress ip;
   IPAddress networkMask;
   IPAddress gateway;
+  IPAddress dns;
 } networkConfig;
 
 // Structure for Authentication settings
@@ -91,7 +92,7 @@ void setupOTA() {
 // Function to update WiFi settings
 void updateIPWifiSettings() {
   if (networkConfig.enable) {
-    wifiManager.setSTAStaticIPConfig(networkConfig.ip, networkConfig.gateway, networkConfig.networkMask);
+    wifiManager.setSTAStaticIPConfig(networkConfig.ip, networkConfig.gateway, networkConfig.networkMask, networkConfig.dns);
   } else {
     wifi_station_dhcpc_start();
   }
@@ -103,9 +104,7 @@ void resetWiFiSettings() {
 }
 
 void setupPeriodicPingToHosts() {
-  for (const auto& pair : hosts) {
-    int id = pair.first;
-    const Host& host = pair.second;
+  for (auto& [id, host] : hosts) {
     if (host.periodicPing) {
       timers[id] = GTimer<millis>(host.periodicPing, true);
     }
@@ -113,16 +112,14 @@ void setupPeriodicPingToHosts() {
 }
 
 void checkTimers() {
-  for (auto& pair : timers) {
-    int id = pair.first;
-    GTimer<millis>& timer = pair.second;
+  for (auto& [id, timer] : timers) {
     if (timer.tick()) {
-      Host& host = hosts[id];
+      const Host& host = hosts[id];
       IPAddress ip;
       ip.fromString(host.ip);
       lastPings[id] = millis();
       if (!Ping.ping(ip)) {
-        WOL.sendMagicPacket(host.mac.c_str());
+        wol.sendMagicPacket(host.mac.c_str());
       }
     }
   }
@@ -137,7 +134,6 @@ void setup() {
 #endif
 
   // Load data at startup
-  LittleFS.begin();
   loadNetworkConfig();
   loadAuthentication();
   loadHostsData();

@@ -12,7 +12,7 @@
    <a href="https://github.com/StafLoker/EspWOL/releases"><img src="https://img.shields.io/github/downloads/StafLoker/EspWOL/total.svg?style=flat" alt="downloads"/></a>
    <a href="https://github.com/StafLoker/EspWOL/releases"><img src="https://img.shields.io/github/release-pre/StafLoker/EspWOL.svg?style=flat" alt="latest version"/></a>
    <a href="https://github.com/StafLoker/EspWOL/blob/main/LICENSE"><img src="https://img.shields.io/github/license/StafLoker/EspWOL.svg?style=flat" alt="license"/></a>
-   <a href="https://github.com/MonitorControl/MonitorControl"><img src="https://img.shields.io/badge/platform-ESP8266-blue.svg?style=flat" alt="platform"/></a>
+   <img src="https://img.shields.io/badge/platform-ESP8266-blue.svg?style=flat" alt="platform"/>
 
    <p>This project provides a web-based interface for power on hosts using an ESP8266 and Wake On Lan magic packets.</p>
 
@@ -22,6 +22,9 @@
 ## Alerts
 > [!IMPORTANT]
 > [Instruction](#migration-from-v1xx-to-v2xx) of migration to version `2.x.x`.
+
+> [!IMPORTANT]
+> Same [instruction](#migration-from-v1xx-to-v2xx) to upgrade from version `2.0.0` to version >= `2.1.0`.
 
 ## Features
 
@@ -58,8 +61,9 @@
 
 Installation of the CH341 driver is required. Use the following links to download and install it:  
 
-- **Windows:** [Download CH341SER.EXE](https://wch-ic.com/downloads/CH341SER_EXE.html)  
-- **MacOS:** [Download CH341SER_MAC.ZIP](https://wch-ic.com/downloads/CH341SER_MAC_ZIP.html)  
+- **Windows:** [Download CH341SER.EXE](https://wch-ic.com/downloads/CH341SER_EXE.html)
+- **Linux** [Download CH341SER_LINUX_ZIP](https://wch-ic.com/downloads/CH341SER_LINUX_ZIP.html)
+- **MacOS:** [Download CH341SER_MAC.ZIP](https://wch-ic.com/downloads/CH341SER_MAC_ZIP.html)
 
 After installation, add the following URL to the **Arduino IDE** settings:  
 
@@ -94,13 +98,16 @@ Then, install the latest version of the **ESP8266** board package via the **Boar
 
 1. **Access Web Interface**:  
    - Power the ESP8266 and connect it to Wi-Fi.  
-   - Open the IP address shown in the Serial Monitor using a web browser.  
+   - Open the IP address of the board in a web browser (the IP is set using the DHCP protocol).
 
 2. **Manage Hosts**:  
-   - **Add Host**: Click the `+` button under **Registered Hosts**.  
+   - **Add Host**: Click the `+` button.  
    - **Wake Host**: Click the **play** button (▶️) next to a host to send a WoL request.  
 
 ### Updating to the Latest Version
+
+> [!WARNING]
+> In version `2.0.0`, it is not possible to perform an update. This functionality is available starting from version `2.1.0`. [Instruction](#migration-from-v1xx-to-v2xx) to upgrade from version `2.0.0` to version >= `2.1.0`.
 
 1. **Open Settings**:  
    - Click the **Settings** button.  

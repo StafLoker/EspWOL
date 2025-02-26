@@ -5,7 +5,7 @@ void loadHostsData() {
   if (LittleFS.begin()) {
     File file = LittleFS.open(hostsFile, "r");
     if (file) {
-      StaticJsonDocument<1024> doc;
+      JsonDocument doc;
       DeserializationError error = deserializeJson(doc, file);
       if (!error) {
         hosts.clear();  // Clear the existing list before loading new data
@@ -29,7 +29,7 @@ void saveHostsData() {
   if (LittleFS.begin()) {
     File file = LittleFS.open(hostsFile, "w");
     if (file) {
-      StaticJsonDocument<1024> doc;
+      JsonDocument doc;
       JsonArray array = doc.to<JsonArray>();
       for (const auto& pair : hosts) {
         const Host& host = pair.second;
@@ -51,11 +51,12 @@ void saveNetworkConfig() {
   if (LittleFS.begin()) {
     File file = LittleFS.open(networkConfigFile, "w");
     if (file) {
-      StaticJsonDocument<256> doc;
+      JsonDocument doc;
       doc["enable"] = networkConfig.enable;
       doc["ip"] = networkConfig.ip.toString();
       doc["networkMask"] = networkConfig.networkMask.toString();
       doc["gateway"] = networkConfig.gateway.toString();
+      doc["dns"] = networkConfig.dns.toString();
       serializeJson(doc, file);
       file.close();
     }
@@ -69,19 +70,22 @@ void loadNetworkConfig() {
     if (LittleFS.exists(networkConfigFile)) {
       File file = LittleFS.open(networkConfigFile, "r");
       if (file) {
-        StaticJsonDocument<256> doc;
+        JsonDocument doc;
         DeserializationError error = deserializeJson(doc, file);
         if (!error) {
           networkConfig.enable = doc["enable"];
           IPAddress ip;
           IPAddress networkMask;
           IPAddress gateway;
+          IPAddress dns;
           ip.fromString(doc["ip"].as<String>());
           networkMask.fromString(doc["networkMask"].as<String>());
           gateway.fromString(doc["gateway"].as<String>());
+          dns.fromString(doc["dns"].as<String>());
           networkConfig.ip = ip;
           networkConfig.networkMask = networkMask;
           networkConfig.gateway = gateway;
+          networkConfig.dns = dns;
         }
         file.close();
       }
@@ -97,7 +101,7 @@ void saveAuthentication() {
   if (LittleFS.begin()) {
     File file = LittleFS.open(authenticationFile, "w");
     if (file) {
-      StaticJsonDocument<256> doc;
+      JsonDocument doc;
       doc["enable"] = authentication.enable;
       doc["username"] = authentication.username;
       doc["password"] = authentication.password;
@@ -114,7 +118,7 @@ void loadAuthentication() {
     if (LittleFS.exists(authenticationFile)) {
       File file = LittleFS.open(authenticationFile, "r");
       if (file) {
-        StaticJsonDocument<1024> doc;
+        JsonDocument doc;
         DeserializationError error = deserializeJson(doc, file);
         if (!error) {
           authentication.enable = doc["enable"];
