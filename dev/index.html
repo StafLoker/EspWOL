@@ -865,31 +865,33 @@
           modal.hide();
           disabledLoaderButton(button, `Update`);
 
-          layoutDiv.insertAdjacentHTML('afterbegin', updateBannerHTML);
-          const updateContainer = document.getElementById('update-container');
-          updateContainer.style.display = 'flex';
-          const updatingBar = document.getElementById('updating-bar');
-          document.body.classList.add('blurred');
+          if (data.success) {
+            layoutDiv.insertAdjacentHTML('afterbegin', updateBannerHTML);
+            const updateContainer = document.getElementById('update-container');
+            updateContainer.style.display = 'flex';
+            const updatingBar = document.getElementById('updating-bar');
+            document.body.classList.add('blurred');
 
-          let progress = 0;
-          const duration = 30000; // 30 seconds
+            let progress = 0;
+            const duration = 30000; // 30 seconds
 
-          // Function to increment the progress
-          function updateProgress() {
-            if (progress < 100) {
-              progress += 100 / (duration / 100); // Increase by 1% every 100ms
-              updatingBar.style.width = `${progress}%`;
-            } else {
-              clearInterval(progressInterval); // Stop the interval when it reaches 100%
+            // Function to increment the progress
+            function updateProgress() {
+              if (progress < 100) {
+                progress += 100 / (duration / 100); // Increase by 1% every 100ms
+                updatingBar.style.width = `${progress}%`;
+              } else {
+                clearInterval(progressInterval); // Stop the interval when it reaches 100%
+              }
             }
+
+            // Start the interval to update the progress every 200ms
+            const progressInterval = setInterval(updateProgress, 200);
+
+            setTimeout(() => {
+              location.reload();
+            }, duration);
           }
-
-          // Start the interval to update the progress every 100ms
-          const progressInterval = setInterval(updateProgress, 100);
-
-          setTimeout(() => {
-            location.reload();
-          }, duration);
         } catch (error) {
           disabledLoaderButton(button, `Update`);
           showNotification(

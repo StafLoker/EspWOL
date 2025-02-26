@@ -452,6 +452,8 @@ static void updateToLastVersion() {
     sendJsonResponse(200, "Update process will start in 1 second. Please wait for the update to complete.", true);
     delay(500);
     ota.updateNow();
+  } else {
+    sendJsonResponse(200, "Nothing to upgrade. You are up to date!", false);
   }
 }
 
