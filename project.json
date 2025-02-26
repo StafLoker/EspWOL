@@ -1,8 +1,8 @@
 {
   "name": "EspWOL",
-  "about": "Simple ESP8266 Wake On Lan web server with modern ui",
-  "version": "2.1.0",
-  "notes": "Add DNS field to network configuration and fix update functionality to the latest version. Enhance UI user experience.",
+  "about": "ESP8266 Wake On Lan web server with modern ui",
+  "version": "2.2.0",
+  "notes": "Added mDNS support. Now you can access the web page using a domain name. Enhance UI user experience.",
   "builds": [
     {
       "chipFamily": "ESP8266",
