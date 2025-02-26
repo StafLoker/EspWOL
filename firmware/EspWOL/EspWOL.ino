@@ -27,6 +27,7 @@
 
 #if ENABLE_STANDARD_OTA == 1
 #include <ArduinoOTA.h>
+#define ArduinoOTA_PORT 8266
 #endif
 
 #include <AutoOTA.h>
@@ -39,7 +40,7 @@
 #include "memory.h"
 #include "api.h"
 
-#define VERSION "2.2.0"
+#define VERSION "2.2.1"
 
 AutoOTA ota(VERSION, "StafLoker/EspWOL");
 
@@ -91,7 +92,8 @@ std::map<int, GTimer<millis>> timers;
 void setupOTA() {
   ArduinoOTA.setHostname(hostname);
   ArduinoOTA.setPassword((const char*)"ber#912NerYi");
-  ArduinoOTA.begin();
+  ArduinoOTA.setPort(ArduinoOTA_PORT);
+  ArduinoOTA.begin(false);
 }
 #endif
 
@@ -152,6 +154,10 @@ void setup() {
   // Set up mDNS responder
   //  the fully-qualified domain name is "wol.local"
   MDNS.begin(hostname);
+  MDNS.addService("http", "tcp", 80);
+#if ENABLE_STANDARD_OTA == 1
+  MDNS.enableArduino(ArduinoOTA_PORT, true);
+#endif
 #endif
 
   server.on("/", HTTP_GET, handleRoot);
@@ -172,24 +178,20 @@ void setup() {
   });
   server.begin();
 
-#if ENABLE_mDNS == 1
-  MDNS.addService("http", "tcp", 80);
-#endif
-
   setupPeriodicPingToHosts();
 }
 
 void loop() {
+
+#if ENABLE_STANDARD_OTA == 1
+  ArduinoOTA.handle();
+#endif
 
 #if ENABLE_mDNS == 1
   MDNS.update();
 #endif
 
   server.handleClient();
-
-#if ENABLE_STANDARD_OTA == 1
-  ArduinoOTA.handle();
-#endif
 
   checkTimers();
 

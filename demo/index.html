@@ -873,22 +873,21 @@
             document.body.classList.add('blurred');
 
             let progress = 0;
-            const duration = 30000;
+            const duration = 30000; // 30 seconds
+            const stepTime = 200; // ms
+            const increment = 100 / (duration / stepTime); // Increase per step
 
             function updateProgress() {
               if (progress < 100) {
-                progress += 100 / (duration / 100);
+                progress += increment;
                 updatingBar.style.width = `${progress}%`;
               } else {
                 clearInterval(progressInterval);
+                location.reload();
               }
             }
 
-            const progressInterval = setInterval(updateProgress, 200);
-
-            setTimeout(() => {
-              location.reload();
-            }, duration);
+            const progressInterval = setInterval(updateProgress, stepTime);
           }, 1000);
         } catch (error) {
           setTimeout(() => {

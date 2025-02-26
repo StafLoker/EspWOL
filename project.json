@@ -1,14 +1,14 @@
 {
   "name": "EspWOL",
   "about": "ESP8266 Wake On Lan web server with modern ui",
-  "version": "2.2.0",
-  "notes": "Added mDNS support. Now you can access the web page using a domain name. Enhance UI user experience.",
+  "version": "2.2.1",
+  "notes": "Fix detection of OTA. Enhance UI user experience.",
   "builds": [
     {
       "chipFamily": "ESP8266",
       "parts": [
         {
-          "path": "https://github.com/StafLoker/EspWOL/releases/latest/download/EspWOL.bin",
+          "path": "https://raw.githubusercontent.com/StafLoker/EspWOL/main/bin/EspWOL.bin",
           "offset": 0
         }
       ]
