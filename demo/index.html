@@ -471,14 +471,17 @@
       const simulatedData = {
         about: {
           version: '2.0.0',
-          lastVersion: '2.0.1',
+          lastVersion: '2.1.0',
+          notesLastVersion:
+            'Add DNS field to network configuration and fix update functionality to the latest version. Enhance UI user experience.',
           hostname: 'demo-host'
         },
         networkSettings: {
           enable: true,
           ip: '192.168.1.100',
           networkMask: '255.255.255.0',
-          gateway: '192.168.1.1'
+          gateway: '192.168.1.1',
+          dns: '8.8.8.8'
         },
         authenticationSettings: {
           enable: true,
@@ -530,6 +533,7 @@
           document.getElementById('fieldIP').value = data.ip;
           document.getElementById('fieldNetworkMask').value = data.networkMask;
           document.getElementById('fieldGateway').value = data.gateway;
+          document.getElementById('fieldDNS').value = data.dns;
 
           toggleNetworkFields();
         } catch (error) {
@@ -595,12 +599,19 @@
         const ip = document.getElementById('fieldIP').value;
         const networkMask = document.getElementById('fieldNetworkMask').value;
         const gateway = document.getElementById('fieldGateway').value;
+        const dns = document.getElementById('fieldDNS').value;
 
         const modalElement = document.getElementById('settings-modal');
         const modal = bootstrap.Modal.getInstance(modalElement);
 
         try {
-          simulatedData.networkSettings = { enable, ip, networkMask, gateway };
+          simulatedData.networkSettings = {
+            enable,
+            ip,
+            networkMask,
+            gateway,
+            dns
+          };
 
           setTimeout(() => {
             modal.hide();
@@ -805,8 +816,18 @@
             textBody.textContent = `You are up to date!`;
             updateButton.style.display = 'none';
           } else {
-            textBody.innerHTML = `New version available: <span class="badge rounded-pill bg-primary">${data.lastVersion}</span>.
-          You are using version <span class="badge rounded-pill bg-secondary">${data.version}</span>.`;
+            textBody.innerHTML = `
+          New version available: <span class="badge rounded-pill bg-primary">${data.lastVersion}</span>.
+          You are using version <span class="badge rounded-pill bg-secondary">${data.version}</span>.
+          <hr />
+          <p>
+            <h5>Detail of new release:</h5> 
+            <span>${data.notesLastVersion}</span>
+            <p>
+              <a href="https://github.com/StafLoker/EspWOL/releases/tag/v${data.lastVersion}" target="_blank">Learn more</a>
+            </p>
+          </p>
+        `;
             updateButton.style.display = 'block';
           }
           modal.show();
@@ -941,7 +962,12 @@
         const isStaticIP = document.getElementById(
           'inlineRadioStaticIP'
         ).checked;
-        const fields = ['fieldIP', 'fieldNetworkMask', 'fieldGateway'];
+        const fields = [
+          'fieldIP',
+          'fieldNetworkMask',
+          'fieldGateway',
+          'fieldDNS'
+        ];
 
         fields.forEach((fieldId) => {
           const field = document.getElementById(fieldId);
@@ -1483,6 +1509,18 @@
                       name="ip"
                       id="fieldGateway"
                       placeholder="192.168.2.1"
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label for="static-dns" class="form-label"
+                      >DNS server:</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="ip"
+                      id="fieldDNS"
+                      placeholder="8.8.8.8"
                     />
                   </div>
                 </form>

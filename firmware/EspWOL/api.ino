@@ -430,13 +430,16 @@ void handleGetAbout() {
 static void getInformationToUpdate() {
   JsonDocument doc;
 
-  String lastVersion;
-  if (!checkUpdate(&lastVersion)) {
+  String lastVersion, notesLastVersion;
+  if (!checkUpdate(&lastVersion, &notesLastVersion)) {
     return;
   }
 
   doc["version"] = ota.version();
   doc["lastVersion"] = lastVersion;
+  if (!ota.version().equalsIgnoreCase(lastVersion)) {
+    doc["notesLastVersion"] = notesLastVersion;
+  }
   sendJsonResponse(200, doc);
 }
 
