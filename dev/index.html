@@ -874,23 +874,20 @@
 
             let progress = 0;
             const duration = 30000; // 30 seconds
+            const stepTime = 200; // ms
+            const increment = 100 / (duration / stepTime); // Increase per step
 
-            // Function to increment the progress
             function updateProgress() {
               if (progress < 100) {
-                progress += 100 / (duration / 100); // Increase by 1% every 100ms
+                progress += increment;
                 updatingBar.style.width = `${progress}%`;
               } else {
-                clearInterval(progressInterval); // Stop the interval when it reaches 100%
+                clearInterval(progressInterval);
+                location.reload();
               }
             }
 
-            // Start the interval to update the progress every 200ms
-            const progressInterval = setInterval(updateProgress, 200);
-
-            setTimeout(() => {
-              location.reload();
-            }, duration);
+            const progressInterval = setInterval(updateProgress, stepTime);
           }
         } catch (error) {
           disabledLoaderButton(button, `Update`);
