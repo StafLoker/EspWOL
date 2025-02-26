@@ -810,6 +810,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
               textBody.innerHTML = `
           New version available: <span class="badge rounded-pill bg-primary">${data.lastVersion}</span>.
           You are using version <span class="badge rounded-pill bg-secondary">${data.version}</span>.
+          <hr />
           <p>
             <h5>Detail of new release:</h5> 
             <span>${data.notesLastVersion}</span>
