@@ -41,7 +41,7 @@
 #include "memory.h"
 #include "api.h"
 
-#define VERSION "2.2.1"
+#define VERSION "2.3.0"
 
 AutoOTA ota(VERSION, "StafLoker/EspWOL");
 
