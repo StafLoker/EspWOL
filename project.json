@@ -1,14 +1,14 @@
 {
   "name": "EspWOL",
   "about": "ESP8266 Wake On Lan web server with modern ui",
-  "version": "2.2.1",
-  "notes": "Fix detection of OTA. Enhance UI user experience.",
+  "version": "2.3.0",
+  "notes": "Add beautiful Not found page. Fix server not response after wifi setting reset. Enhance UX user experience.",
   "builds": [
     {
       "chipFamily": "ESP8266",
       "parts": [
         {
-          "path": "https://raw.githubusercontent.com/StafLoker/EspWOL/main/bin/EspWOL.bin",
+          "path": "https://raw.githubusercontent.com/StafLoker/EspWOL/main/bin/EspWOL-generic-v2-3-0.bin",
           "offset": 0
         }
       ]

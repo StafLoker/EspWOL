@@ -37,10 +37,11 @@
 
 /* Project */
 #include "index.h"
+#include "404.h"
 #include "memory.h"
 #include "api.h"
 
-#define VERSION "2.2.1"
+#define VERSION "2.3.0"
 
 AutoOTA ota(VERSION, "StafLoker/EspWOL");
 
@@ -106,11 +107,6 @@ void updateIPWifiSettings() {
   }
 }
 
-// Function to reset WiFi settings
-void resetWiFiSettings() {
-  wifiManager.resetSettings();  // Reset WiFi settings
-}
-
 void setupPeriodicPingToHosts() {
   for (auto& [id, host] : hosts) {
     if (host.periodicPing) {
@@ -167,14 +163,11 @@ void setup() {
   server.on("/about", HTTP_GET, handleGetAbout);
   server.on("/networkSettings", HTTP_ANY, handleNetworkSettings);
   server.on("/authenticationSettings", HTTP_ANY, handleAuthenticationSettings);
-  server.on("/resetWifi", HTTP_POST, []() {
-    resetWiFiSettings();
-    server.send(200, "application/json", "{ \"success\": true, \"message\": \"WiFi settings reset\" }");
-  });
+  server.on("/resetWifi", HTTP_POST, handleResetWiFiSettings);
   server.on("/updateVersion", HTTP_ANY, handleUpdateVersion);
   server.on("/import", HTTP_POST, handleImportDatabase);
   server.onNotFound([]() {
-    server.send(404, "text/plain", "404: Not found");
+    server.send_P(200, "text/html", notFoundHtmlPage);
   });
   server.begin();
 

@@ -1,5 +1,5 @@
 // HTML content
-const char htmlPage[] PROGMEM = R"rawliteral(
+const char indexHtmlPage[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -765,6 +765,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
       async function resetWiFiSettings() {
         const button = document.getElementById(`reset-wifi-button`);
+        const modalElement = document.getElementById('reset-wifi-modal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
         enableLoaderButton(button);
         try {
           const response = await fetch('/resetWifi', { method: 'POST' });
@@ -774,6 +776,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             data.success ? 'success' : 'danger',
             data.success ? 'Notification' : 'Error'
           );
+          modal.hide()
           disabledLoaderButton(button, `Reset`);
           if (data.success) {
             setTimeout(() => {

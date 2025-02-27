@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Path to the source HTML file and the destination file
-HTML_FILE="index.html"
-DEST_FILE="../firmware/EspWOL/index.h"
+HTML_FILE="404.html"
+DEST_FILE="../firmware/EspWOL/404.h"
 
 # Check if the HTML file exists
 if [ ! -f "$HTML_FILE" ]; then
@@ -13,7 +13,7 @@ fi
 # Create the content of the destination file
 {
   echo "// HTML content"
-  echo "const char htmlPage[] PROGMEM = R\"rawliteral(";
+  echo "const char notFoundHtmlPage[] PROGMEM = R\"rawliteral(";
   cat "$HTML_FILE"
   echo ")rawliteral\";";
 } > "$DEST_FILE"
