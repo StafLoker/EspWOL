@@ -37,6 +37,7 @@
 
 /* Project */
 #include "index.h"
+#include "404.h"
 #include "memory.h"
 #include "api.h"
 
@@ -106,9 +107,9 @@ void updateIPWifiSettings() {
   }
 }
 
-// Function to reset WiFi settings
-void resetWiFiSettings() {
-  wifiManager.resetSettings();  // Reset WiFi settings
+void handleResetWiFiSettings() {
+  sendJsonResponse(200, "WiFi settings have been reset successfully.", true);
+  wifiManager.resetSettings();
 }
 
 void setupPeriodicPingToHosts() {
@@ -167,14 +168,11 @@ void setup() {
   server.on("/about", HTTP_GET, handleGetAbout);
   server.on("/networkSettings", HTTP_ANY, handleNetworkSettings);
   server.on("/authenticationSettings", HTTP_ANY, handleAuthenticationSettings);
-  server.on("/resetWifi", HTTP_POST, []() {
-    resetWiFiSettings();
-    server.send(200, "application/json", "{ \"success\": true, \"message\": \"WiFi settings reset\" }");
-  });
+  server.on("/resetWifi", HTTP_POST, handleResetWiFiSettings);
   server.on("/updateVersion", HTTP_ANY, handleUpdateVersion);
   server.on("/import", HTTP_POST, handleImportDatabase);
   server.onNotFound([]() {
-    server.send(404, "text/plain", "404: Not found");
+    server.send_P(200, "text/html", notFoundHtmlPage);
   });
   server.begin();
 
