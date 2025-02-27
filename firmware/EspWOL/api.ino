@@ -44,7 +44,7 @@ static bool isAuthenticated() {
 // API: '/'
 void handleRoot() {
   if (isAuthenticated()) {
-    server.send_P(200, "text/html", htmlPage);
+    server.send_P(200, "text/html", indexHtmlPage);
   }
 }
 

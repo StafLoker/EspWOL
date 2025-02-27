@@ -1,5 +1,5 @@
 // HTML content
-const char htmlPage[] PROGMEM = R"rawliteral(
+const char indexHtmlPage[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
   <head>
