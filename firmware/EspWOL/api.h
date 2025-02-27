@@ -267,4 +267,14 @@ void handleUpdateVersion();
  */
 void handleImportDatabase();
 
+/**
+ * @brief Reset WiFi settings.
+ * 
+ * API Endpoint: POST '/resetWifi'
+ * 
+ * This function handles resetting the WiFi settings of the device. It sends a JSON response
+ * indicating success, resets the WiFi settings using the WiFi manager, and restarts the ESP device.
+ */
+void handleResetWiFiSettings();
+
 #endif

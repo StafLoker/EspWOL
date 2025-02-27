@@ -531,3 +531,10 @@ void handleImportDatabase() {
     sendJsonResponse(200, String("Imported ") + importedCount + " hosts from " + arr.size() + ". " + ignoredCount + " hosts ignored. Hosts in database after import: " + hosts.size() + ".", true);
   }
 }
+
+// API: POST '/resetWifi'
+void handleResetWiFiSettings() {
+  sendJsonResponse(200, "WiFi settings have been reset successfully.", true);
+  wifiManager.resetSettings();
+  ESP.restart();
+}

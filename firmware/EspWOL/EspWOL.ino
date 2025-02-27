@@ -107,11 +107,6 @@ void updateIPWifiSettings() {
   }
 }
 
-void handleResetWiFiSettings() {
-  sendJsonResponse(200, "WiFi settings have been reset successfully.", true);
-  wifiManager.resetSettings();
-}
-
 void setupPeriodicPingToHosts() {
   for (auto& [id, host] : hosts) {
     if (host.periodicPing) {
