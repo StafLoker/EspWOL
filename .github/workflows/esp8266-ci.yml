@@ -1,0 +1,60 @@
+name: Build and Release ESP8266 Firmware
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Compile Firmware
+        run: platformio run
+
+      - name: Get Firmware Binary
+        run: |
+          mkdir -p firmware
+          find .pio/build -name "*.bin" -exec cp {} firmware/ \;
+
+      - name: Upload Firmware Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: esp8266-firmware
+          path: firmware/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Download Firmware Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: esp8266-firmware
+          path: firmware/
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: firmware/*.bin
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ github.ref_name }}
+          name: "${{ github.ref_name }}"
+          draft: false
+          prerelease: false
