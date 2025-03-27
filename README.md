@@ -40,6 +40,15 @@
 - **Export database**: Export database to **CSV** file.  
 - **Import database**: Import database from **CSV** file.
 - **mDNS**: You can access the web page using a domain name. The default is `wol.local`.
+- **Mobile-Friendly UI**: The web interface is optimized for mobile screens.
+
+## Build Status
+
+<div align="center">
+   <a href="https://github.com/StafLoker/EspWOL/actions/workflows/esp8266-ci.yml">
+      <img src="https://github.com/StafLoker/EspWOL/actions/workflows/esp8266-ci.yml/badge.svg" alt="ESP8266 CI Build Status"/>
+   </a>
+</div>
 
 ## Requirements
 

@@ -1,0 +1,43 @@
+name: Validate ESP8266 Release Before Merge
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  validate:
+    if: startsWith(github.head_ref, 'release/') # Only run if PR is from a release/* branch
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Compile ESP8266 Firmware
+        run: platformio run
+
+      - name: Check Firmware Size
+        run: |
+          FIRMWARE_SIZE=$(find .pio/build -name "*.bin" -exec du -b {} + | awk '{print $1}')
+          MAX_SIZE=1048576  # 1MB typical limit for ESP8266
+          if [ "$FIRMWARE_SIZE" -gt "$MAX_SIZE" ]; then
+            echo "::error::Firmware is too large (${FIRMWARE_SIZE} bytes). Maximum allowed is ${MAX_SIZE} bytes."
+            exit 1
+          fi
+          echo "Firmware size check passed: ${FIRMWARE_SIZE} bytes"
+
+      - name: Run Code Quality Check
+        run: platformio check --severity=high
