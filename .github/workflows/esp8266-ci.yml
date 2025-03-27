@@ -3,7 +3,7 @@ name: Build and Release ESP8266 Firmware
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*' # "vX.X.X"
 
 jobs:
   build:
@@ -24,16 +24,30 @@ jobs:
       - name: Compile Firmware
         run: platformio run
 
-      - name: Get Firmware Binary
+      - name: Prepare Binary
         run: |
-          mkdir -p firmware
-          find .pio/build -name "*.bin" -exec cp {} firmware/ \;
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          BIN_NAME="EspWOL-generic-${TAG_NAME}.bin"
+          mkdir -p bin
+          rm -f bin/*.bin
+          find .pio/build -name "*.bin" -exec mv {} bin/$BIN_NAME \;
+        shell: bash
+
+      - name: Commit and Push Binary
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add bin/
+          git commit -m "Update firmware binary for ${{ github.ref_name }}"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Firmware Artifact
         uses: actions/upload-artifact@v4
         with:
           name: esp8266-firmware
-          path: firmware/
+          path: bin/
 
   release:
     needs: build
@@ -46,13 +60,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: esp8266-firmware
-          path: firmware/
+          path: bin/
 
       - name: Create GitHub Release
-        id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          files: firmware/*.bin
+          files: bin/*.bin
           token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ github.ref_name }}
           name: "${{ github.ref_name }}"
