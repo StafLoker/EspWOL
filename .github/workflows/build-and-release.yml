@@ -16,10 +16,32 @@ jobs:
       - name: Setup Arduino CLI
         uses: arduino/setup-arduino-cli@v2.0.0
         
-      - name: Install platform
+      - name: Install platform and libraries
         run: |
           arduino-cli core update-index --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
           arduino-cli core install esp8266:esp8266 --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          
+          # Instalar librerías requeridas
+          arduino-cli lib install WiFiManager
+          arduino-cli lib install ArduinoJson
+          
+          # Librerías de GitHub
+          mkdir -p ~/Arduino/libraries
+          
+          # WakeOnLan
+          git clone https://github.com/a7md0/WakeOnLan ~/Arduino/libraries/WakeOnLan
+          
+          # ESP8266Ping
+          git clone https://github.com/dancol90/ESP8266Ping ~/Arduino/libraries/ESP8266Ping
+          
+          # ArduinoOTA
+          git clone https://github.com/JAndrassy/ArduinoOTA ~/Arduino/libraries/ArduinoOTA
+          
+          # GTimer
+          git clone https://github.com/GyverLibs/GTimer ~/Arduino/libraries/GTimer
+          
+          # AutoOTA
+          git clone https://github.com/GyverLibs/AutoOTA ~/Arduino/libraries/AutoOTA
 
       - name: Compile ESP8266 Firmware
         run: |
