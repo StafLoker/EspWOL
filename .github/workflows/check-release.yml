@@ -18,26 +18,23 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set Up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
-
-      - name: Install PlatformIO
-        run: pip install platformio
+      - name: Install Arduino CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+          arduino-cli config init
+          arduino-cli core update-index
+          arduino-cli core install esp8266:esp8266
 
       - name: Compile ESP8266 Firmware
-        run: platformio run
+        run: |
+          arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 firmware/EspWOL --output-dir bin
 
       - name: Check Firmware Size
         run: |
-          FIRMWARE_SIZE=$(find .pio/build -name "*.bin" -exec du -b {} + | awk '{print $1}')
-          MAX_SIZE=1048576  # 1MB typical limit for ESP8266
+          FIRMWARE_SIZE=$(stat -c %s bin/*.bin)
+          MAX_SIZE=1048576  # 1MB limit for ESP8266
           if [ "$FIRMWARE_SIZE" -gt "$MAX_SIZE" ]; then
             echo "::error::Firmware is too large (${FIRMWARE_SIZE} bytes). Maximum allowed is ${MAX_SIZE} bytes."
             exit 1
           fi
           echo "Firmware size check passed: ${FIRMWARE_SIZE} bytes"
-
-      - name: Run Code Quality Check
-        run: platformio check --severity=high

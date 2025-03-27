@@ -3,45 +3,34 @@ name: Build and Release ESP8266 Firmware
 on:
   push:
     tags:
-      - 'v*' # "vX.X.X"
+      - 'v*' # Runs on tag pushes like vX.X.X
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set Up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
+      - name: Install Arduino CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+          arduino-cli config init
+          arduino-cli core update-index
+          arduino-cli core install esp8266:esp8266
 
-      - name: Install PlatformIO
-        run: pip install platformio
-
-      - name: Compile Firmware
-        run: platformio run
-
+      - name: Compile ESP8266 Firmware
+        run: |
+          arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 firmware/EspWOL --output-dir bin
+          
       - name: Prepare Binary
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
           BIN_NAME="EspWOL-generic-${TAG_NAME}.bin"
           mkdir -p bin
           rm -f bin/*.bin
-          find .pio/build -name "*.bin" -exec mv {} bin/$BIN_NAME \;
-        shell: bash
-
-      - name: Commit and Push Binary
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-          git add bin/
-          git commit -m "Update firmware binary for ${{ github.ref_name }}"
-          git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          mv bin/*.bin bin/$BIN_NAME
 
       - name: Upload Firmware Artifact
         uses: actions/upload-artifact@v4
@@ -52,8 +41,9 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Repo
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Download Firmware Artifact
@@ -66,7 +56,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: bin/*.bin
-          token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ github.ref_name }}
           name: "${{ github.ref_name }}"
           draft: false
