@@ -13,26 +13,21 @@ jobs:
   validate:
     if: startsWith(github.head_ref, 'release/') # Only run if PR is from a release/* branch
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Install Arduino CLI
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-          arduino-cli config init
-          arduino-cli core update-index
-          arduino-cli core install esp8266:esp8266
-
-      - name: Compile ESP8266 Firmware
-        run: |
-          arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 firmware/EspWOL --output-dir bin
-
+      
+      - name: Test Compile for Arduino
+        uses: ArminJo/arduino-test-compile@v3
+        with:
+          arduino-board-fqbn: esp8266:esp8266:generic
+          platform-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          sketch-names: firmware/EspWOL.ino
+          
       - name: Check Firmware Size
         run: |
-          FIRMWARE_SIZE=$(stat -c %s bin/*.bin)
+          FIRMWARE_SIZE=$(stat -c %s build/esp8266.esp8266.generic/firmware/EspWOL.ino.bin)
           MAX_SIZE=1048576  # 1MB limit for ESP8266
           if [ "$FIRMWARE_SIZE" -gt "$MAX_SIZE" ]; then
             echo "::error::Firmware is too large (${FIRMWARE_SIZE} bytes). Maximum allowed is ${MAX_SIZE} bytes."

@@ -13,50 +13,42 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install Arduino CLI
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-          arduino-cli config init
-          arduino-cli core update-index
-          arduino-cli core install esp8266:esp8266
-
-      - name: Compile ESP8266 Firmware
-        run: |
-          arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 firmware/EspWOL --output-dir bin
+      - name: Test Compile for Arduino
+        uses: ArminJo/arduino-test-compile@v3
+        with:
+          arduino-board-fqbn: esp8266:esp8266:generic
+          platform-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          sketch-names: firmware/EspWOL.ino
+          build-properties: '{"SketchDir":"firmware"}'
           
       - name: Prepare Binary
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
           BIN_NAME="EspWOL-generic-${TAG_NAME}.bin"
-          mkdir -p bin
-          rm -f bin/*.bin
-          mv bin/*.bin bin/$BIN_NAME
+          mkdir -p release-bin
+          cp build/esp8266.esp8266.generic/firmware/EspWOL.ino.bin release-bin/$BIN_NAME
 
       - name: Upload Firmware Artifact
         uses: actions/upload-artifact@v4
         with:
           name: esp8266-firmware
-          path: bin/
+          path: release-bin/
 
   release:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
       - name: Download Firmware Artifact
         uses: actions/download-artifact@v4
         with:
           name: esp8266-firmware
-          path: bin/
+          path: release-bin/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: bin/*.bin
+          files: release-bin/*.bin
           tag_name: ${{ github.ref_name }}
           name: "${{ github.ref_name }}"
           draft: false
