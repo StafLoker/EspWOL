@@ -202,7 +202,7 @@
       }
 
       function validateIP(ip) {
-        return /^(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])){3}$/.test(
+        return /^(25[0-5]|2[0-4]\d|1\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d|[1-9]?\d)){3}$/.test(
           ip
         );
       }
@@ -231,21 +231,43 @@
               'list-group-item d-flex justify-content-between align-items-center';
             listItem.id = `host-item-${index}`;
             listItem.innerHTML = `
-                        <div class="d-flex align-items-center">
-                            <div class="status-circle" id="status-${index}"></div>
-                            ${host.name} - ${host.ip}
-                        </div>
-                        <div>
-                            <button id="ping-button-${index}" class="btn btn-info btn-sm me-2" onclick="pingHost(${index})">
-                                <i class="fas fa-table-tennis"></i>
-                            </button>
-                            <button id="edit-button-${index}" class="btn btn-warning btn-sm me-2" onclick="editHost(${index})" data-index="${index}">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button id="wake-button-${index}" class="btn btn-primary btn-sm" onclick="wakeHost(${index})">
-                                <i class="fas fa-play"></i>
-                            </button>
-                        </div>`;
+        <div class="d-flex align-items-center">
+          <div class="status-circle" id="status-${index}"></div>
+          ${host.name} - ${host.ip}
+        </div>
+        <div>
+          <div class="d-none d-sm-inline-block">
+            <button id="ping-button-${index}" class="btn btn-info btn-sm me-2" onclick="pingHost(${index})">
+              <i class="fas fa-table-tennis"></i>
+            </button>
+            <button id="edit-button-${index}" class="btn btn-warning btn-sm me-2" onclick="editHost(${index})" data-index="${index}">
+              <i class="fas fa-edit"></i>
+            </button>
+          </div>
+          
+          <div class="dropdown d-inline-block d-sm-none">
+            <button class="btn btn-secondary btn-sm dropdown-toggle me-2" type="button" 
+                id="hostActionMenu-${index}" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-wrench"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="hostActionMenu-${index}">
+              <li>
+                <button class="dropdown-item" onclick="pingHost(${index})">
+                  <i class="fas fa-table-tennis text-info"></i> Ping
+                </button>
+              </li>
+              <li>
+                <button class="dropdown-item" onclick="editHost(${index})" data-index="${index}">
+                  <i class="fas fa-edit text-warning"></i> Edit
+                </button>
+              </li>
+            </ul>
+          </div>
+          
+          <button id="wake-button-${index}" class="btn btn-primary btn-sm" onclick="wakeHost(${index})">
+            <i class="fas fa-play"></i>
+          </button>
+        </div>`;
             hostsList.appendChild(listItem);
           });
         } catch (error) {
@@ -754,7 +776,6 @@
           try {
             hosts.push(...host2import);
 
-            const data = await response.json();
             showNotification('All is imported.', 'success', 'Import');
 
             setTimeout(async () => {
@@ -1127,30 +1148,75 @@
         <h2 class="mt-4 d-flex justify-content-between align-items-center">
           <span>Hosts</span>
           <div class="ml-auto">
-            <button
-              class="btn btn-success"
-              title="Add"
-              data-bs-toggle="modal"
-              data-bs-target="#add-host-modal"
-            >
-              <i class="fas fa-plus"></i>
-            </button>
-            <button
-              id="settings-button"
-              class="btn btn-secondary btn-md"
-              title="Settings"
-              onclick="getSettings()"
-            >
-              <i class="fas fa-cog"></i>
-            </button>
-            <button
-              class="btn btn-warning btn-md"
-              title="Export"
-              data-bs-toggle="modal"
-              data-bs-target="#export-import-modal"
-            >
-              <i class="fas fa-file-export"></i>
-            </button>
+            <!-- Big screens -->
+            <div class="d-none d-sm-inline-block">
+              <button
+                class="btn btn-success"
+                title="Add"
+                data-bs-toggle="modal"
+                data-bs-target="#add-host-modal"
+              >
+                <i class="fas fa-plus"></i>
+              </button>
+              <button
+                id="settings-button"
+                class="btn btn-secondary btn-md"
+                title="Settings"
+                onclick="getSettings()"
+              >
+                <i class="fas fa-cog"></i>
+              </button>
+              <button
+                class="btn btn-warning btn-md"
+                title="Export"
+                data-bs-toggle="modal"
+                data-bs-target="#export-import-modal"
+              >
+                <i class="fas fa-file-export"></i>
+              </button>
+            </div>
+
+            <!-- Mobile screens -->
+            <div class="dropdown d-sm-none">
+              <button
+                class="btn btn-secondary dropdown-toggle"
+                type="button"
+                id="mobileControlMenu"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <i class="fas fa-bars"></i>
+              </button>
+              <ul
+                class="dropdown-menu dropdown-menu-end"
+                aria-labelledby="mobileControlMenu"
+              >
+                <li>
+                  <button
+                    class="dropdown-item"
+                    data-bs-toggle="modal"
+                    data-bs-target="#add-host-modal"
+                  >
+                    <i class="fas fa-plus text-success"></i> Add Host
+                  </button>
+                </li>
+                <li>
+                  <button class="dropdown-item" onclick="getSettings()">
+                    <i class="fas fa-cog text-secondary"></i> Settings
+                  </button>
+                </li>
+                <li>
+                  <button
+                    class="dropdown-item"
+                    data-bs-toggle="modal"
+                    data-bs-target="#export-import-modal"
+                  >
+                    <i class="fas fa-file-export text-warning"></i>
+                    Export/Import
+                  </button>
+                </li>
+              </ul>
+            </div>
           </div>
         </h2>
         <hr />
@@ -1423,12 +1489,13 @@
                 <p class="card-text">
                   Version:
                   <span id="version-container" class="position-relative">
-                    <span
+                    <button
                       id="version"
+                      style="border: 0px"
                       class="badge rounded-pill"
                       data-bs-dismiss="modal"
                       onclick="getUpdateVersion()"
-                    ></span>
+                    ></button>
                   </span>
                 </p>
                 <p class="card-text">
@@ -1564,6 +1631,7 @@
                       type="checkbox"
                       role="switch"
                       id="switchEnableAuthentication"
+                      aria-checked="mixed"
                       onchange="toggleAuthenticationFields()"
                     />
                     <label

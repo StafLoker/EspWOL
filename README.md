@@ -40,6 +40,17 @@
 - **Export database**: Export database to **CSV** file.  
 - **Import database**: Import database from **CSV** file.
 - **mDNS**: You can access the web page using a domain name. The default is `wol.local`.
+- **Mobile-Friendly UI**: The web interface is optimized for mobile screens.
+
+## Build Status
+
+## Build Status
+
+<div align="center">
+   <a href="https://github.com/StafLoker/EspWOL/actions/workflows/build-and-release.yml">
+      <img src="https://github.com/StafLoker/EspWOL/actions/workflows/build-and-release.yml/badge.svg" alt="Build & Release" title="Build & Release"/>
+   </a>
+</div>
 
 ## Requirements
 
