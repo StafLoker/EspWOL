@@ -13,6 +13,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Clean bin directory
+        run: |
+          rm -f bin/*.bin
+          mkdir -p bin
+
       - name: Setup Arduino CLI
         uses: arduino/setup-arduino-cli@v2.0.0
         
