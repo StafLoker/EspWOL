@@ -44,11 +44,9 @@
 
 ## Build Status
 
-## Build Status
-
 <div align="center">
    <a href="https://github.com/StafLoker/EspWOL/actions/workflows/build-and-release.yml">
-      <img src="https://github.com/StafLoker/EspWOL/actions/workflows/build-and-release.yml/badge.svg" alt="Build & Release" title="Build & Release"/>
+      <img src="https://github.com/StafLoker/EspWOL/actions/workflows/build-and-release.yml/badge.svg" alt="Build & Release"/>
    </a>
 </div>
 
