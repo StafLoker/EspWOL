@@ -1,0 +1,84 @@
+name: Build and Release ESP8266 Firmware
+
+on:
+  push:
+    tags:
+      - 'v*' # Runs on tag pushes like vX.X.X
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Clean bin directory
+        run: |
+          rm -f bin/*.bin
+          mkdir -p bin
+
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v2.0.0
+        
+      - name: Install platform and libraries
+        run: |
+          arduino-cli core update-index --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          arduino-cli core install esp8266:esp8266 --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          
+          arduino-cli lib install WiFiManager
+          arduino-cli lib install ArduinoJson
+          
+          # GitHub Libraries 
+          mkdir -p ~/Arduino/libraries
+          
+          # WakeOnLan
+          git clone https://github.com/a7md0/WakeOnLan ~/Arduino/libraries/WakeOnLan
+          
+          # ESP8266Ping
+          git clone https://github.com/dancol90/ESP8266Ping ~/Arduino/libraries/ESP8266Ping
+          
+          # ArduinoOTA
+          git clone https://github.com/JAndrassy/ArduinoOTA ~/Arduino/libraries/ArduinoOTA
+          
+          # GTimer
+          git clone https://github.com/GyverLibs/GTimer ~/Arduino/libraries/GTimer
+          
+          # AutoOTA
+          git clone https://github.com/GyverLibs/AutoOTA ~/Arduino/libraries/AutoOTA
+
+      - name: Compile ESP8266 Firmware
+        run: |
+          arduino-cli compile --fqbn esp8266:esp8266:generic firmware/EspWOL/EspWOL.ino --output-dir bin
+          
+      - name: Prepare Binary
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          BIN_NAME="EspWOL-generic-${TAG_NAME}.bin"
+          mv bin/EspWOL.ino.bin bin/$BIN_NAME
+
+      - name: Upload Firmware Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: esp8266-firmware
+          path: bin/*.bin
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Firmware Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: esp8266-firmware
+          path: release-bin/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-bin/*.bin
+          tag_name: ${{ github.ref_name }}
+          name: "${{ github.ref_name }}"
+          draft: false
+          prerelease: false
