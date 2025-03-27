@@ -1,4 +1,4 @@
-name: Validate ESP8266 Release Before Merge
+name: Validate Release Before Merge
 
 on:
   pull_request:

@@ -1,4 +1,4 @@
-name: Build and Release ESP8266 Firmware
+name: Build and Release
 
 on:
   push:
