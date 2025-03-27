@@ -13,25 +13,29 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Test Compile for Arduino
-        uses: ArminJo/arduino-test-compile@v3
-        with:
-          arduino-board-fqbn: esp8266:esp8266:generic
-          platform-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
-          sketch-names: firmware/EspWOL/EspWOL.ino
+      - name: Install Arduino CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          arduino-cli config init
+          arduino-cli core update-index --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          arduino-cli core install esp8266:esp8266 --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+
+      - name: Compile ESP8266 Firmware
+        run: |
+          arduino-cli compile --fqbn esp8266:esp8266:generic firmware/EspWOL/EspWOL.ino --output-dir bin
           
       - name: Prepare Binary
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
           BIN_NAME="EspWOL-generic-${TAG_NAME}.bin"
-          mkdir -p release-bin
-          cp build/esp8266.esp8266.generic/firmware/EspWOL/EspWOL.ino.bin release-bin/$BIN_NAME
+          mv bin/EspWOL.ino.bin bin/$BIN_NAME
 
       - name: Upload Firmware Artifact
         uses: actions/upload-artifact@v4
         with:
           name: esp8266-firmware
-          path: release-bin/
+          path: bin/*.bin
 
   release:
     needs: build
