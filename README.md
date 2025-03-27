@@ -46,7 +46,7 @@
 
 <div align="center">
    <a href="https://github.com/StafLoker/EspWOL/actions/workflows/esp8266-ci.yml">
-      <img src="https://github.com/StafLoker/EspWOL/actions/workflows/esp8266-ci.yml/badge.svg" alt="ESP8266 CI Build Status"/>
+      <img src="https://github.com/StafLoker/EspWOL/actions/workflows/esp8266-ci.yml/badge.svg" alt="ESP8266 CI Build Realize Status"/>
    </a>
 </div>
 

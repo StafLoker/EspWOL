@@ -18,15 +18,14 @@ jobs:
         with:
           arduino-board-fqbn: esp8266:esp8266:generic
           platform-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
-          sketch-names: firmware/EspWOL.ino
-          build-properties: '{"SketchDir":"firmware"}'
+          sketch-names: firmware/EspWOL/EspWOL.ino
           
       - name: Prepare Binary
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
           BIN_NAME="EspWOL-generic-${TAG_NAME}.bin"
           mkdir -p release-bin
-          cp build/esp8266.esp8266.generic/firmware/EspWOL.ino.bin release-bin/$BIN_NAME
+          cp build/esp8266.esp8266.generic/firmware/EspWOL/EspWOL.ino.bin release-bin/$BIN_NAME
 
       - name: Upload Firmware Artifact
         uses: actions/upload-artifact@v4
