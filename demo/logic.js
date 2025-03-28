@@ -1,4 +1,3 @@
-
 // Data simulation
 let hosts = [
   {
@@ -26,12 +25,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     '(prefers-color-scheme: dark)'
   ).matches;
   const currentTheme =
-    localStorage.getItem('bsTheme') ||
-    (prefersDarkScheme ? 'dark' : 'light');
+    localStorage.getItem('bsTheme') || (prefersDarkScheme ? 'dark' : 'light');
 
   function updateThemeIcon(theme) {
-    darkModeIcon.className =
-      theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+    darkModeIcon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
     updateLoaderColor(theme);
   }
 
@@ -47,9 +44,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   darkModeToggle.addEventListener('click', function () {
     const newTheme =
-      htmlElement.getAttribute('data-bs-theme') === 'dark'
-        ? 'light'
-        : 'dark';
+      htmlElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
     htmlElement.setAttribute('data-bs-theme', newTheme);
     localStorage.setItem('bsTheme', newTheme);
     updateThemeIcon(newTheme);
@@ -285,11 +280,7 @@ async function addHost() {
       modal.hide();
       disabledLoaderButton(button, `Add`);
     }, 1000);
-    showNotification(
-      'Host added successfully',
-      'success',
-      'Notification'
-    );
+    showNotification('Host added successfully', 'success', 'Notification');
   } catch (error) {
     setTimeout(() => {
       disabledLoaderButton(button, `Add`);
@@ -303,9 +294,7 @@ async function editHost(index) {
   const button = document.getElementById(`edit-button-${index}`);
   enableLoaderButton(button);
   const host = hosts[index];
-  document
-    .getElementById('edit-host-modal')
-    .setAttribute('data-index', index);
+  document.getElementById('edit-host-modal').setAttribute('data-index', index);
   const modal = new bootstrap.Modal('#edit-host-modal');
   setTimeout(() => {
     try {
@@ -324,8 +313,7 @@ async function editHost(index) {
           'edit-last-ping'
         ).innerText = `Last ping: ${lastPingMinutes} mins ago`;
       } else {
-        document.getElementById('edit-last-ping').innerText =
-          'Last ping: N/A';
+        document.getElementById('edit-last-ping').innerText = 'Last ping: N/A';
       }
       modal.show();
     } catch (error) {
@@ -362,11 +350,7 @@ async function saveEditHost() {
       modal.hide();
       disabledLoaderButton(button, `Save changes`);
       await getAllHostWithLoader();
-      showNotification(
-        'Host updated successfully',
-        'success',
-        'Notification'
-      );
+      showNotification('Host updated successfully', 'success', 'Notification');
     }, 1000);
   } catch (error) {
     setTimeout(() => {
@@ -391,11 +375,7 @@ async function confirmDelete() {
       modal.hide();
       disabledLoaderButton(button, `Delete`);
       await getAllHostWithLoader();
-      showNotification(
-        'Host deleted successfully',
-        'success',
-        'Notification'
-      );
+      showNotification('Host deleted successfully', 'success', 'Notification');
     }, 1000);
   } catch (error) {
     setTimeout(() => {
@@ -449,9 +429,7 @@ async function wakeHost(index) {
   try {
     const success = Math.random() > 0.5;
     showNotification(
-      success
-        ? 'WOL packet sent successfully'
-        : 'WOL packet failed to send',
+      success ? 'WOL packet sent successfully' : 'WOL packet failed to send',
       success ? 'info' : 'danger',
       success ? 'Notification' : 'Error'
     );
@@ -514,11 +492,7 @@ async function getAbout() {
     document.getElementById('hostname').innerText = data.hostname;
   } catch (error) {
     console.error('Error fetching About information:', error);
-    showNotification(
-      'Failed to fetch About information',
-      'danger',
-      'Error'
-    );
+    showNotification('Failed to fetch About information', 'danger', 'Error');
   }
 }
 
@@ -535,24 +509,17 @@ async function getNetworkSettings() {
     toggleNetworkFields();
   } catch (error) {
     console.error('Error fetching Network Settings:', error);
-    showNotification(
-      'Failed to fetch Network Settings',
-      'danger',
-      'Error'
-    );
+    showNotification('Failed to fetch Network Settings', 'danger', 'Error');
   }
 }
 
 async function getAuthentication() {
   try {
     const data = simulatedData.authenticationSettings;
-    document.getElementById('switchEnableAuthentication').checked =
-      data.enable;
+    document.getElementById('switchEnableAuthentication').checked = data.enable;
     document.getElementById('fieldUsername').value = data.username;
 
-    const form = document.getElementById(
-      'editAuthenticationSettingsForm'
-    );
+    const form = document.getElementById('editAuthenticationSettingsForm');
     if (data.enable) {
       form.classList.add('needs-validation');
       form.classList.add('novalidate');
@@ -630,19 +597,13 @@ async function updateNetworkSettings() {
     setTimeout(() => {
       disabledLoaderButton(button, `Update`);
     }, 500);
-    showNotification(
-      'Error updating network settings',
-      'danger',
-      'Error'
-    );
+    showNotification('Error updating network settings', 'danger', 'Error');
     console.error('Error updating network settings:', error);
   }
 }
 
 async function updateAuthentication() {
-  const enable = document.getElementById(
-    'switchEnableAuthentication'
-  ).checked;
+  const enable = document.getElementById('switchEnableAuthentication').checked;
   const username = document.getElementById('fieldUsername').value;
   const password = document.getElementById('fieldPassword').value;
 
@@ -954,15 +915,8 @@ function showNotification(message, type, title = 'Notification') {
 }
 
 function toggleNetworkFields() {
-  const isStaticIP = document.getElementById(
-    'inlineRadioStaticIP'
-  ).checked;
-  const fields = [
-    'fieldIP',
-    'fieldNetworkMask',
-    'fieldGateway',
-    'fieldDNS'
-  ];
+  const isStaticIP = document.getElementById('inlineRadioStaticIP').checked;
+  const fields = ['fieldIP', 'fieldNetworkMask', 'fieldGateway', 'fieldDNS'];
 
   fields.forEach((fieldId) => {
     const field = document.getElementById(fieldId);
