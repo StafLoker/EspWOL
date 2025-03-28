@@ -1,0 +1,112 @@
+html {
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: relative;
+  }
+
+  main {
+    flex-grow: 1;
+  }
+
+  footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    height: 40px;
+    border-radius: 9px;
+    padding: 10px;
+  }
+
+  footer span {
+    font-size: 15px;
+  }
+
+  #github {
+    text-decoration: none;
+    color: inherit;
+    margin-right: 10px;
+  }
+
+  #github i {
+    font-size: 22px;
+  }
+
+  .status-circle {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background-color: gray;
+    margin-right: 10px;
+    transition: background-color 0.3s ease;
+  }
+
+  .blinking {
+    animation: blink-animation 1s infinite;
+  }
+
+  @keyframes blink-animation {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  .status-circle.green {
+    background-color: green;
+  }
+
+  .status-circle.red {
+    background-color: red;
+  }
+
+  l-bouncy {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+  }
+
+  body.blurred main {
+    filter: blur(5px);
+  }
+
+  body.blurred button {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  #update-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: 35%;
+    z-index: 9999; /* Ensure it's above other content */
+  }
+
+  #update-container h3 {
+    margin-bottom: 20px;
+    color: white; /* Optional: if you want the text to be white */
+  }
+
+  #update-container .progress {
+    width: 80%;
+    max-width: 400px;
+  }
