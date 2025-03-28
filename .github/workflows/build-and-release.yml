@@ -66,6 +66,8 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Download Firmware Artifact
@@ -82,3 +84,5 @@ jobs:
           name: "${{ github.ref_name }}"
           draft: false
           prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
