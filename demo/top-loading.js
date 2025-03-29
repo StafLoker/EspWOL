@@ -1,85 +1,90 @@
 /**
- * Infinite Top Loading Bar Implementation
- * A continuous loading animation at the top of the page
- * Replaces circular loading animation and properly resets buttons
+ * TopLoading - Minimal top bar loading animation
+ * Lightweight, efficient loading indicator for web applications
+ * 
+ * Features:
+ * - Animated top loading bar
+ * - Button state management
+ * - Compatible with existing loading logic
+ * - No dependencies
  */
 
-// Create and inject the CSS
-(function createLoadingStyles() {
-  const style = document.createElement('style');
-  style.textContent = `
-    /* Top loading bar container */
-    .top-loading-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 3px;
-      z-index: 10000;
-      overflow: hidden;
-      background-color: #222;
-    }
+(function() {
+  // Configuration
+  const config = {
+    barHeight: '3px',
+    barColor: 'white',
+    barBackground: '#222',
+    animationDuration: '1.5s',
+    transitionDuration: '0.3s',
+    minDisplayTime: 500
+  };
 
-    /* The animated loading bar */
-    .top-loading-bar {
-      position: absolute;
-      width: 50%;
-      height: 100%;
-      background-color: white;
-      animation: loading-animation 1.5s infinite ease-in-out;
-    }
+  // State tracking
+  let activeLoading = 0;
+  let loadingBar = null;
+  let loadingBarContainer = null;
+  const buttonOriginalStates = new Map();
+  const timeouts = new Set();
 
-    /* The loading animation */
-    @keyframes loading-animation {
-      0% {
-        left: -50%;
+  // Create and inject CSS
+  (function injectStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+      .top-loading-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: ${config.barHeight};
+        z-index: 10000;
+        overflow: hidden;
+        background-color: ${config.barBackground};
+        opacity: 1;
+        transition: opacity ${config.transitionDuration} ease;
       }
-      100% {
-        left: 100%;
+
+      .top-loading-bar {
+        position: absolute;
+        width: 50%;
+        height: 100%;
+        background-color: ${config.barColor};
+        animation: top-loading-animation ${config.animationDuration} infinite ease-in-out;
       }
-    }
 
-    /* Button disabled state */
-    .fetch-disabled {
-      pointer-events: none;
-      opacity: 0.7;
-      cursor: not-allowed;
-    }
+      @keyframes top-loading-animation {
+        0% { left: -50%; }
+        100% { left: 100%; }
+      }
+
+      .top-loading-disabled {
+        pointer-events: none;
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+      
+      body.top-loading l-bouncy {
+        display: none !important;
+      }
+      
+      body.top-loading.blurred main {
+        filter: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+  })();
+
+  /**
+   * Creates and shows the loading bar
+   * @private
+   */
+  function createLoadingBar() {
+    if (loadingBarContainer) return;
     
-    /* Hide original loader when our top loader is active */
-    body.top-loading l-bouncy {
-      display: none !important;
-    }
-    
-    /* Prevent blur effect when our top loader is active */
-    body.top-loading.blurred main {
-      filter: none !important;
-    }
-  `;
-  document.head.appendChild(style);
-})();
-
-// Global tracking variables
-let activeLoadingCount = 0;
-let loadingBarContainer = null;
-let buttonStates = new Map(); // Store original button states
-
-/**
- * Shows the top loading bar and disables buttons
- * @param {Array} buttonSelectors - Array of selectors for buttons to disable
- * @return {Object} Loading elements for cleanup
- */
-function showTopLoadingBar(buttonSelectors = []) {
-  activeLoadingCount++;
-  
-  // Create loading bar if needed
-  if (!loadingBarContainer) {
     loadingBarContainer = document.createElement('div');
-    loadingBarContainer.id = 'top-loading-container';
     loadingBarContainer.className = 'top-loading-container';
     
-    const loadingBar = document.createElement('div');
-    loadingBar.id = 'top-loading-bar';
+    loadingBar = document.createElement('div');
     loadingBar.className = 'top-loading-bar';
     
     loadingBarContainer.appendChild(loadingBar);
@@ -87,293 +92,313 @@ function showTopLoadingBar(buttonSelectors = []) {
     document.body.classList.add('top-loading');
   }
 
-  // Process and disable buttons
-  const disabledButtons = [];
-  buttonSelectors.forEach(selector => {
-    let button;
-    if (typeof selector === 'string') {
-      button = document.querySelector(selector);
-    } else {
-      button = selector;
-    }
+  /**
+   * Removes the loading bar with a transition
+   * @private
+   */
+  function removeLoadingBar() {
+    if (!loadingBarContainer) return;
     
-    if (button) {
-      // Save original state if not already saved
-      if (!buttonStates.has(button)) {
-        buttonStates.set(button, {
-          html: button.innerHTML,
-          disabled: button.hasAttribute('disabled')
-        });
+    loadingBarContainer.style.opacity = '0';
+    
+    const timeout = setTimeout(() => {
+      if (loadingBarContainer && loadingBarContainer.parentNode) {
+        loadingBarContainer.parentNode.removeChild(loadingBarContainer);
+        loadingBarContainer = null;
+        loadingBar = null;
       }
-      
-      // Disable and add spinner
-      button.classList.add('fetch-disabled');
-      button.setAttribute('disabled', '');
-      button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
-      disabledButtons.push(button);
-    }
-  });
+      document.body.classList.remove('top-loading');
+      timeouts.delete(timeout);
+    }, parseInt(config.transitionDuration) * 1000);
+    
+    timeouts.add(timeout);
+  }
 
-  return {
-    buttons: disabledButtons,
-    id: activeLoadingCount
-  };
-}
+  /**
+   * Saves the original state of a button before modification
+   * @private
+   * @param {HTMLElement} button - The button element
+   */
+  function saveButtonState(button) {
+    if (!button || buttonOriginalStates.has(button)) return;
+    
+    buttonOriginalStates.set(button, {
+      html: button.innerHTML,
+      disabled: button.hasAttribute('disabled'),
+      classes: [...button.classList]
+    });
+  }
 
-/**
- * Hides the top loading bar and re-enables buttons
- * @param {Object} loadingElements - Object returned by showTopLoadingBar
- */
-function hideTopLoadingBar(loadingElements) {
-  if (!loadingElements) return;
-  
-  const { buttons, id } = loadingElements;
-  
-  // Always restore buttons to original state
-  buttons.forEach(button => {
-    if (buttonStates.has(button)) {
-      const originalState = buttonStates.get(button);
-      button.innerHTML = originalState.html;
+  /**
+   * Sets a button to loading state
+   * @private
+   * @param {HTMLElement} button - The button element
+   */
+  function setButtonLoading(button) {
+    if (!button) return;
+    
+    saveButtonState(button);
+    button.classList.add('top-loading-disabled');
+    button.setAttribute('disabled', '');
+    button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+  }
+
+  /**
+   * Restores a button to its original state
+   * @private
+   * @param {HTMLElement} button - The button element
+   * @param {string} [newHtml] - Optional new HTML content
+   */
+  function restoreButton(button, newHtml) {
+    if (!button) return;
+    
+    if (buttonOriginalStates.has(button)) {
+      const originalState = buttonOriginalStates.get(button);
       
+      // Restore classes
+      button.className = originalState.classes.join(' ');
+      
+      // Restore HTML or set new HTML
+      button.innerHTML = newHtml || originalState.html;
+      
+      // Restore disabled state
       if (!originalState.disabled) {
         button.removeAttribute('disabled');
       }
       
-      button.classList.remove('fetch-disabled');
-      buttonStates.delete(button); // Clean up the stored state
-    }
-  });
-  
-  // Decrement active count
-  activeLoadingCount--;
-  
-  // Only remove loading bar if all operations finished
-  if (activeLoadingCount <= 0) {
-    activeLoadingCount = 0;
-    
-    if (loadingBarContainer) {
-      loadingBarContainer.style.transition = 'opacity 0.3s ease';
-      loadingBarContainer.style.opacity = '0';
-      
-      setTimeout(() => {
-        if (loadingBarContainer && loadingBarContainer.parentNode) {
-          loadingBarContainer.parentNode.removeChild(loadingBarContainer);
-          loadingBarContainer = null;
-        }
-        document.body.classList.remove('top-loading');
-      }, 300);
+      buttonOriginalStates.delete(button);
+    } else {
+      // Fallback if state wasn't saved
+      button.innerHTML = newHtml || button.innerHTML;
+      button.removeAttribute('disabled');
+      button.classList.remove('top-loading-disabled');
     }
   }
-}
 
-// Store references to the original functions
-const originalFunctions = {};
+  /**
+   * Gets a button element from a selector
+   * @private
+   * @param {string|HTMLElement} selector - Button selector or element
+   * @returns {HTMLElement|null} - The button element or null
+   */
+  function getButton(selector) {
+    if (!selector) return null;
+    return typeof selector === 'string' ? document.querySelector(selector) : selector;
+  }
 
-// Helper to safely override a function
-function overrideFunction(name, newFn) {
-  if (typeof window[name] === 'function') {
-    originalFunctions[name] = window[name];
-    window[name] = newFn;
+  /**
+   * Shows the loading bar and sets buttons to loading state
+   * @param {Array} buttonSelectors - Selectors or elements of buttons to disable
+   * @returns {Object} Loading context
+   */
+  function showLoading(buttonSelectors = []) {
+    activeLoading++;
+    createLoadingBar();
+    
+    const buttons = [];
+    
+    // Process all button selectors
+    buttonSelectors.forEach(selector => {
+      const button = getButton(selector);
+      if (button) {
+        setButtonLoading(button);
+        buttons.push(button);
+      }
+    });
+    
+    return { buttons, id: activeLoading };
+  }
+
+  /**
+   * Hides loading and restores buttons
+   * @param {Object} loadingContext - Context returned from showLoading
+   */
+  function hideLoading(loadingContext) {
+    if (!loadingContext) return;
+    
+    const { buttons } = loadingContext;
+    
+    // Always restore buttons
+    buttons.forEach(button => restoreButton(button));
+    
+    // Decrease active loading counter
+    activeLoading--;
+    
+    // Only remove loading bar if all operations finished
+    if (activeLoading <= 0) {
+      activeLoading = 0;
+      removeLoadingBar();
+    }
+  }
+
+  /**
+   * Overrides an existing function
+   * @private
+   * @param {string} name - Function name
+   * @param {Function} newFunction - New implementation
+   * @returns {boolean} Success
+   */
+  function overrideFunction(name, newFunction) {
+    if (typeof window[name] !== 'function') return false;
+    
+    // Store original function
+    const original = window[name];
+    
+    // Replace with new function
+    window[name] = newFunction;
+    
+    // Store reference to original for calling
+    window[name].original = original;
+    
     return true;
   }
-  return false;
-}
 
-// Override the existing loader functions
-document.addEventListener('DOMContentLoaded', function() {
-  
-  // Override enableLoaderWithBlur
-  overrideFunction('enableLoaderWithBlur', function() {
-    showTopLoadingBar([]);
-    document.body.classList.add('blurred');
-  });
-  
-  // Override disabledLoaderWithBlur
-  overrideFunction('disabledLoaderWithBlur', function(loader) {
-    hideTopLoadingBar({buttons: [], id: activeLoadingCount});
+  /**
+   * Wraps a function with loading indicator
+   * @private
+   * @param {Function} fn - Function to wrap
+   * @param {Function} buttonSelector - Function that returns button selector
+   * @param {number} delay - Minimum delay before hiding loading
+   * @returns {Function} Wrapped function
+   */
+  function wrapWithLoading(fn, buttonSelector, delay = 0) {
+    return function() {
+      const button = getButton(buttonSelector(arguments));
+      const loadingContext = showLoading([button]);
+      
+      try {
+        const result = fn.apply(this, arguments);
+        
+        if (result instanceof Promise) {
+          return result.finally(() => {
+            setTimeout(() => hideLoading(loadingContext), delay);
+          });
+        } else {
+          setTimeout(() => hideLoading(loadingContext), delay);
+          return result;
+        }
+      } catch (error) {
+        hideLoading(loadingContext);
+        throw error;
+      }
+    };
+  }
+
+  /**
+   * Wraps an async operation with loading indicator
+   * @param {Function} asyncFn - Async function to execute
+   * @param {Array} buttonSelectors - Button selectors to disable
+   * @param {number} minDuration - Minimum loading duration in ms
+   * @returns {Promise} Result of the async function
+   */
+  async function withLoading(asyncFn, buttonSelectors = [], minDuration = config.minDisplayTime) {
+    const loadingContext = showLoading(buttonSelectors);
+    const startTime = Date.now();
     
-    setTimeout(() => {
-      document.body.classList.remove('blurred');
-      if (loader) loader.remove();
-    }, 300);
+    try {
+      const result = await asyncFn();
+      
+      // Ensure minimum duration
+      const elapsed = Date.now() - startTime;
+      if (elapsed < minDuration) {
+        await new Promise(resolve => setTimeout(resolve, minDuration - elapsed));
+      }
+      
+      return result;
+    } finally {
+      hideLoading(loadingContext);
+    }
+  }
+
+  // Initialize when DOM is ready
+  document.addEventListener('DOMContentLoaded', function() {
+    // Override loader functions
+    overrideFunction('enableLoaderWithBlur', function() {
+      showLoading([]);
+      document.body.classList.add('blurred');
+    });
+    
+    overrideFunction('disabledLoaderWithBlur', function(loader) {
+      hideLoading({ buttons: [] });
+      
+      setTimeout(() => {
+        document.body.classList.remove('blurred');
+        if (loader) loader.remove();
+      }, parseInt(config.transitionDuration) * 1000);
+    });
+    
+    overrideFunction('enableLoaderButton', function(button) {
+      setButtonLoading(button);
+    });
+    
+    overrideFunction('disabledLoaderButton', function(button, html) {
+      restoreButton(button, html);
+    });
+    
+    // Override action functions
+    const functionsToWrap = [
+      { 
+        name: 'getSettings', 
+        buttonFn: () => '#settings-button', 
+        delay: 1000 
+      },
+      { 
+        name: 'pingHost', 
+        buttonFn: (args) => `#ping-button-${args[0]}`, 
+        delay: 2000 
+      },
+      { 
+        name: 'editHost', 
+        buttonFn: (args) => `#edit-button-${args[0]}`, 
+        delay: 1000 
+      },
+      { 
+        name: 'wakeHost', 
+        buttonFn: (args) => `#wake-button-${args[0]}`, 
+        delay: 500 
+      },
+      { 
+        name: 'addHost', 
+        buttonFn: () => '#add-button', 
+        delay: 1000 
+      },
+      { 
+        name: 'saveEditHost', 
+        buttonFn: () => '#save-button', 
+        delay: 1000 
+      },
+      { 
+        name: 'confirmDelete', 
+        buttonFn: () => '#delete-button', 
+        delay: 1000 
+      }
+    ];
+    
+    functionsToWrap.forEach(({ name, buttonFn, delay }) => {
+      if (typeof window[name] === 'function') {
+        window[name] = wrapWithLoading(window[name], buttonFn, delay);
+      }
+    });
   });
-  
-  // Override enableLoaderButton
-  overrideFunction('enableLoaderButton', function(button) {
-    if (!buttonStates.has(button)) {
-      buttonStates.set(button, {
-        html: button.innerHTML,
-        disabled: button.hasAttribute('disabled')
-      });
+
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', function() {
+    if (loadingBarContainer && loadingBarContainer.parentNode) {
+      loadingBarContainer.parentNode.removeChild(loadingBarContainer);
     }
     
-    button.setAttribute('disabled', '');
-    button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
-    button.classList.add('fetch-disabled');
+    timeouts.forEach(timeout => clearTimeout(timeout));
+    timeouts.clear();
+    buttonOriginalStates.clear();
+    
+    document.body.classList.remove('top-loading', 'blurred');
   });
-  
-  // Override disabledLoaderButton
-  overrideFunction('disabledLoaderButton', function(button, html) {
-    if (buttonStates.has(button)) {
-      const originalState = buttonStates.get(button);
-      button.innerHTML = html || originalState.html;
-      
-      if (!originalState.disabled) {
-        button.removeAttribute('disabled');
-      }
-      
-      button.classList.remove('fetch-disabled');
-      buttonStates.delete(button);
-    } else {
-      button.innerHTML = html;
-      button.removeAttribute('disabled');
-      button.classList.remove('fetch-disabled');
-    }
-  });
-  
-  // -------------------------------------------
-  // Override main functions that use loading
-  // -------------------------------------------
-  
-  // Override getSettings
-  if (typeof window.getSettings === 'function') {
-    originalFunctions.getSettings = window.getSettings;
-    
-    window.getSettings = function() {
-      const button = document.querySelector('#settings-button');
-      const loadingElements = showTopLoadingBar([button]);
-      
-      try {
-        return originalFunctions.getSettings.apply(this, arguments);
-      } finally {
-        setTimeout(() => {
-          hideTopLoadingBar(loadingElements);
-        }, 1000);
-      }
-    };
-  }
-  
-  // Override pingHost
-  if (typeof window.pingHost === 'function') {
-    originalFunctions.pingHost = window.pingHost;
-    
-    window.pingHost = function(index) {
-      const button = document.querySelector(`#ping-button-${index}`);
-      const loadingElements = showTopLoadingBar([button]);
-      
-      try {
-        return originalFunctions.pingHost.apply(this, arguments);
-      } finally {
-        setTimeout(() => {
-          hideTopLoadingBar(loadingElements);
-        }, 2000);
-      }
-    };
-  }
-  
-  // Override editHost
-  if (typeof window.editHost === 'function') {
-    originalFunctions.editHost = window.editHost;
-    
-    window.editHost = function(index) {
-      const button = document.querySelector(`#edit-button-${index}`);
-      const loadingElements = showTopLoadingBar([button]);
-      
-      try {
-        return originalFunctions.editHost.apply(this, arguments);
-      } finally {
-        setTimeout(() => {
-          hideTopLoadingBar(loadingElements);
-        }, 1000);
-      }
-    };
-  }
-  
-  // Override wakeHost
-  if (typeof window.wakeHost === 'function') {
-    originalFunctions.wakeHost = window.wakeHost;
-    
-    window.wakeHost = function(index) {
-      const button = document.querySelector(`#wake-button-${index}`);
-      const loadingElements = showTopLoadingBar([button]);
-      
-      try {
-        return originalFunctions.wakeHost.apply(this, arguments);
-      } finally {
-        setTimeout(() => {
-          hideTopLoadingBar(loadingElements);
-        }, 500);
-      }
-    };
-  }
-  
-  // Override addHost
-  if (typeof window.addHost === 'function') {
-    originalFunctions.addHost = window.addHost;
-    
-    window.addHost = async function() {
-      const button = document.querySelector('#add-button');
-      const loadingElements = showTopLoadingBar([button]);
-      
-      try {
-        return await originalFunctions.addHost.apply(this, arguments);
-      } finally {
-        setTimeout(() => {
-          hideTopLoadingBar(loadingElements);
-        }, 1000);
-      }
-    };
-  }
-  
-  // Override saveEditHost
-  if (typeof window.saveEditHost === 'function') {
-    originalFunctions.saveEditHost = window.saveEditHost;
-    
-    window.saveEditHost = async function() {
-      const button = document.querySelector('#save-button');
-      const loadingElements = showTopLoadingBar([button]);
-      
-      try {
-        return await originalFunctions.saveEditHost.apply(this, arguments);
-      } finally {
-        setTimeout(() => {
-          hideTopLoadingBar(loadingElements);
-        }, 1000);
-      }
-    };
-  }
-});
 
-// Utility function for wrapping async operations
-async function withTopLoading(fetchFn, buttonSelectors = [], minDuration = 500) {
-  const loadingElements = showTopLoadingBar(buttonSelectors);
-  const startTime = Date.now();
-  
-  try {
-    const result = await fetchFn();
-    
-    // Ensure minimum duration
-    const elapsed = Date.now() - startTime;
-    if (elapsed < minDuration) {
-      await new Promise(resolve => setTimeout(resolve, minDuration - elapsed));
-    }
-    
-    return result;
-  } finally {
-    hideTopLoadingBar(loadingElements);
-  }
-}
-
-// Export functions to global scope
-window.showTopLoadingBar = showTopLoadingBar;
-window.hideTopLoadingBar = hideTopLoadingBar;
-window.withTopLoading = withTopLoading;
-
-// Cleanup on page unload
-window.addEventListener('beforeunload', function() {
-  if (loadingBarContainer && loadingBarContainer.parentNode) {
-    loadingBarContainer.parentNode.removeChild(loadingBarContainer);
-  }
-  document.body.classList.remove('top-loading');
-  buttonStates.clear();
-});
+  // Export public API
+  window.TopLoading = {
+    show: showLoading,
+    hide: hideLoading,
+    withLoading: withLoading,
+    config: config
+  };
+})();
