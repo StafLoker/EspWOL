@@ -3,73 +3,105 @@
  * Handles all API interactions with the backend
  */
 
-// Mock data for demo mode (will be overridden by build-demo.js)
-let hosts = [];
-let simulatedData = {};
+// Acceder al estado global
+const { state, config, events } = window.EspWOL;
+
+/**
+ * Función para manejar solicitudes fetch con gestión de errores estándar
+ * @param {string} url - URL del endpoint
+ * @param {Object} options - Opciones para fetch
+ * @returns {Promise} - Promesa con los datos de respuesta
+ */
+async function apiRequest(url, options = {}) {
+  try {
+    const response = await fetch(url, options);
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Error: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error(`API Error (${url}):`, error);
+    throw error;
+  }
+}
 
 // Host Management
 async function getAllHost() {
   try {
-    // Implementation depends on environment
-    // Development/Production uses real API
-    // Demo uses mock data
-    const response = await fetch('/hosts', { method: 'GET' });
-    if (!response.ok) throw new Error('Network response was not ok');
-
-    const data = await response.json();
-    if (!Array.isArray(data)) throw new Error('Expected an array');
-
+    const data = await apiRequest(config.apiEndpoints.hosts);
+    
+    if (!Array.isArray(data)) {
+      throw new Error('Expected an array of hosts');
+    }
+    
+    // Actualizar el estado global
+    state.hosts = data;
+    
+    // Renderizar la lista de hosts
     renderHostList(data);
+    
+    // Emitir evento para otros módulos
+    events.emit(events.HOSTS_UPDATED, { hosts: data });
+    
     return data;
   } catch (error) {
-    console.error('Error fetching host list:', error);
     showNotification('Failed to fetch hosts', 'danger', 'Error');
+    console.error('Error fetching host list:', error);
     return [];
   }
 }
 
 async function addHost() {
-  const button = document.getElementById(`add-button`);
+  const button = document.getElementById('add-button');
   enableLoaderButton(button);
-  const name = document.getElementById('host-name').value;
-  const mac = document.getElementById('host-mac').value;
-  const ip = document.getElementById('host-ip').value;
-  const periodicPing = document.getElementById(
-    'add-select-periodic-ping'
-  ).value;
+  
+  const hostData = {
+    name: document.getElementById('host-name').value,
+    mac: document.getElementById('host-mac').value,
+    ip: document.getElementById('host-ip').value,
+    periodicPing: document.getElementById('add-select-periodic-ping').value
+  };
 
   const modalElement = document.getElementById('add-host-modal');
   const modal = bootstrap.Modal.getInstance(modalElement);
 
   try {
-    const response = await fetch('/hosts', {
+    const response = await apiRequest(config.apiEndpoints.hosts, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, mac, ip, periodicPing })
+      body: JSON.stringify(hostData)
     });
-    const data = await response.json();
 
-    disabledLoaderButton(button, `Add`);
-
-    if (data.success) {
+    if (response.success) {
+      resetAddHostForm();
       modal.hide();
       await getAllHostWithLoader();
-      document.getElementById('host-name').value = '';
-      document.getElementById('host-mac').value = '';
-      document.getElementById('host-ip').value = '';
-      document.getElementById('add-select-periodic-ping').value = 0;
+      
+      // Emitir evento
+      events.emit(events.HOST_ADDED, { host: hostData });
     }
 
     showNotification(
-      data.message,
-      data.success ? 'success' : 'danger',
-      data.success ? 'Notification' : 'Error'
+      response.message,
+      response.success ? 'success' : 'danger',
+      response.success ? 'Notification' : 'Error'
     );
   } catch (error) {
-    disabledLoaderButton(button, `Add`);
     showNotification('Error adding host', 'danger', 'Error');
-    console.error('Error adding host:', error);
+  } finally {
+    disabledLoaderButton(button, 'Add');
   }
+}
+
+// Helper function to reset add host form
+function resetAddHostForm() {
+  document.getElementById('host-name').value = '';
+  document.getElementById('host-mac').value = '';
+  document.getElementById('host-ip').value = '';
+  document.getElementById('add-select-periodic-ping').value = '0';
 }
 
 async function editHost(index) {
@@ -79,108 +111,109 @@ async function editHost(index) {
 
   const modal = new bootstrap.Modal('#edit-host-modal');
   try {
-    const response = await fetch('/hosts?id=' + index, { method: 'GET' });
-    const data = await response.json();
+    const data = await apiRequest(`${config.apiEndpoints.hosts}?id=${index}`);
 
     document.getElementById('edit-host-name').value = data.name;
     document.getElementById('edit-host-mac').value = data.mac;
     document.getElementById('edit-host-ip').value = data.ip;
-    document.getElementById('edit-select-periodic-ping').value =
-      data.periodicPing;
+    document.getElementById('edit-select-periodic-ping').value = data.periodicPing;
 
-    if (
-      typeof data.lastPing === 'number' &&
-      !isNaN(data.lastPing) &&
-      data.lastPing >= 0
-    ) {
-      const lastPingMinutes = Math.floor(data.lastPing / 60);
-      document.getElementById(
-        'edit-last-ping'
-      ).innerText = `Last ping: ${lastPingMinutes} mins ago`;
-    } else {
-      document.getElementById('edit-last-ping').innerText = 'Last ping: N/A';
-    }
-
-    disabledLoaderButton(button, `<i class="fas fa-edit"></i>`);
+    updateLastPingDisplay(data.lastPing);
+    
     modal.show();
   } catch (error) {
-    disabledLoaderButton(button, `<i class="fas fa-edit"></i>`);
-    showNotification('Error edit host', 'danger', 'Error');
-    console.error('Error edit host:', error);
+    showNotification('Error editing host', 'danger', 'Error');
+  } finally {
+    disabledLoaderButton(button, '<i class="fas fa-edit"></i>');
+  }
+}
+
+// Helper function to update last ping display
+function updateLastPingDisplay(lastPing) {
+  const lastPingElement = document.getElementById('edit-last-ping');
+  
+  if (typeof lastPing === 'number' && !isNaN(lastPing) && lastPing >= 0) {
+    const lastPingMinutes = Math.floor(lastPing / 60);
+    lastPingElement.innerText = `Last ping: ${lastPingMinutes} mins ago`;
+  } else {
+    lastPingElement.innerText = 'Last ping: N/A';
   }
 }
 
 async function saveEditHost() {
-  const button = document.getElementById(`save-button`);
+  const button = document.getElementById('save-button');
   enableLoaderButton(button);
+  
   const modalElement = document.getElementById('edit-host-modal');
   const index = modalElement.getAttribute('data-index');
-  const name = document.getElementById('edit-host-name').value;
-  const mac = document.getElementById('edit-host-mac').value;
-  const ip = document.getElementById('edit-host-ip').value;
-  const periodicPing = document.getElementById(
-    'edit-select-periodic-ping'
-  ).value;
+  
+  const hostData = {
+    name: document.getElementById('edit-host-name').value,
+    mac: document.getElementById('edit-host-mac').value,
+    ip: document.getElementById('edit-host-ip').value,
+    periodicPing: document.getElementById('edit-select-periodic-ping').value
+  };
 
   const modal = bootstrap.Modal.getInstance(modalElement);
 
   try {
-    const response = await fetch('/hosts?id=' + index, {
+    const response = await apiRequest(`${config.apiEndpoints.hosts}?id=${index}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, mac, ip, periodicPing })
+      body: JSON.stringify(hostData)
     });
-    const data = await response.json();
 
-    if (data.success) {
+    if (response.success) {
+      modal.hide();
       await getAllHostWithLoader();
+      
+      // Emitir evento
+      events.emit(events.HOST_UPDATED, { index, host: hostData });
     }
 
-    modal.hide();
-    disabledLoaderButton(button, `Save changes`);
-
     showNotification(
-      data.message,
-      data.success ? 'success' : 'danger',
-      data.success ? 'Notification' : 'Error'
+      response.message,
+      response.success ? 'success' : 'danger',
+      response.success ? 'Notification' : 'Error'
     );
   } catch (error) {
-    disabledLoaderButton(button, `Save changes`);
-    showNotification('Error edit host', 'danger', 'Error');
-    console.error('Error edit host:', error);
+    showNotification('Error updating host', 'danger', 'Error');
+  } finally {
+    disabledLoaderButton(button, 'Save changes');
   }
 }
 
 async function confirmDelete() {
-  const button = document.getElementById(`delete-button`);
+  const button = document.getElementById('delete-button');
   enableLoaderButton(button);
+  
   const modalElement = document.getElementById('edit-host-modal');
   const index = modalElement.getAttribute('data-index');
-
   const modal = bootstrap.Modal.getInstance(modalElement);
 
   try {
-    const response = await fetch('/hosts?id=' + index, {
+    const response = await apiRequest(`${config.apiEndpoints.hosts}?id=${index}`, {
       method: 'DELETE'
     });
-    const data = await response.json();
 
     modal.hide();
-    disabledLoaderButton(button, `Delete`);
-
-    if (data.success) {
+    
+    if (response.success) {
       await getAllHostWithLoader();
+      
+      // Emitir evento
+      events.emit(events.HOST_DELETED, { index });
     }
 
     showNotification(
-      data.message,
-      data.success ? 'success' : 'danger',
-      data.success ? 'Notification' : 'Error'
+      response.message,
+      response.success ? 'success' : 'danger',
+      response.success ? 'Notification' : 'Error'
     );
   } catch (error) {
-    disabledLoaderButton(button, `Delete`);
-    showNotification('Error delete host', 'danger', 'Error');
-    console.error('Error delete host:', error);
+    showNotification('Error deleting host', 'danger', 'Error');
+  } finally {
+    disabledLoaderButton(button, 'Delete');
   }
 }
 
@@ -190,54 +223,60 @@ async function pingHost(index) {
   enableLoaderButton(button);
 
   try {
-    const response = await fetch('/ping?id=' + index, {
+    const response = await apiRequest(`${config.apiEndpoints.ping}?id=${index}`, {
       method: 'POST'
     });
 
-    const data = await response.json();
     const statusCircle = document.getElementById(`status-${index}`);
-    disabledLoaderButton(button, '<i class="fas fa-table-tennis"></i>');
-
-    if (data.success) {
-      statusCircle.classList.remove('red', 'lumen-red');
-      statusCircle.classList.add('green', 'lumen');
-
-      showNotification(data.message, 'success');
-      setTimeout(() => {
-        statusCircle.classList.remove('lumen', 'green');
-      }, 10000);
-    } else {
-      statusCircle.classList.remove('green', 'lumen');
-      statusCircle.classList.add('red', 'lumen-red');
-      showNotification(data.message, 'danger', 'Error');
-
-      setTimeout(() => {
-        statusCircle.classList.remove('lumen-red', 'red');
-      }, 10000);
-    }
+    updatePingStatus(statusCircle, response.success);
+    
+    showNotification(
+      response.message, 
+      response.success ? 'success' : 'danger',
+      response.success ? 'Notification' : 'Error'
+    );
   } catch (error) {
     showNotification('Ping failed', 'danger', 'Error');
+  } finally {
     disabledLoaderButton(button, '<i class="fas fa-table-tennis"></i>');
-    console.error('Ping failed:', error);
+  }
+}
+
+// Helper function to update ping status visual indicator
+function updatePingStatus(statusCircle, success) {
+  if (success) {
+    statusCircle.classList.remove('red', 'lumen-red');
+    statusCircle.classList.add('green', 'lumen');
+    
+    setTimeout(() => {
+      statusCircle.classList.remove('lumen', 'green');
+    }, config.ui.pingAnimationDuration);
+  } else {
+    statusCircle.classList.remove('green', 'lumen');
+    statusCircle.classList.add('red', 'lumen-red');
+    
+    setTimeout(() => {
+      statusCircle.classList.remove('lumen-red', 'red');
+    }, config.ui.pingAnimationDuration);
   }
 }
 
 async function wakeHost(index) {
   const button = document.getElementById(`wake-button-${index}`);
   enableLoaderButton(button);
+  
   try {
-    const response = await fetch('/wake?id=' + index, {
+    const response = await apiRequest(`${config.apiEndpoints.wake}?id=${index}`, {
       method: 'POST'
     });
-    const data = await response.json();
+    
     showNotification(
-      data.message,
-      data.success ? 'info' : 'danger',
-      data.success ? 'Notification' : 'Error'
+      response.message,
+      response.success ? 'info' : 'danger',
+      response.success ? 'Notification' : 'Error'
     );
   } catch (error) {
-    showNotification("WOL packet don't sent", 'danger');
-    console.error("WOL packet don't sent:", error);
+    showNotification('Failed to send WOL packet', 'danger', 'Error');
   } finally {
     disabledLoaderButton(button, '<i class="fas fa-play"></i>');
   }
@@ -245,8 +284,9 @@ async function wakeHost(index) {
 
 // Settings Management
 async function getSettings() {
-  const button = document.getElementById(`settings-button`);
+  const button = document.getElementById('settings-button');
   enableLoaderButton(button);
+  
   try {
     await Promise.all([getAbout(), getNetworkSettings(), getAuthentication()]);
     const modal = new bootstrap.Modal('#settings-modal');
@@ -260,413 +300,71 @@ async function getSettings() {
 }
 
 async function getAbout() {
-  const response = await fetch('/about');
-  if (!response.ok) {
-    if (response.status === 400) {
-      const data = await response.json();
-      showNotification(data.message, 'danger', 'Error');
-    }
-    throw new Error('Failed to fetch About information');
+  try {
+    const data = await apiRequest(config.apiEndpoints.about);
+    state.settings.about = data;
+    
+    updateAboutDisplay(data);
+    return data;
+  } catch (error) {
+    showNotification('Failed to fetch About information', 'danger', 'Error');
+    throw error;
   }
+}
 
-  const data = await response.json();
+// Helper function to update About display
+function updateAboutDisplay(data) {
   const versionElement = document.getElementById('version');
   const versionContainer = document.getElementById('version-container');
-
+  
   versionElement.innerText = data.version;
   versionElement.className = 'badge rounded-pill';
-
+  
   if (data.version === data.lastVersion) {
     versionElement.classList.add('bg-success');
-    const notificationCircle = versionContainer.querySelector(
-      '.notification-circle'
-    );
-    if (notificationCircle) {
-      notificationCircle.remove();
-    }
+    removeVersionNotification(versionContainer);
   } else {
-    versionElement.classList.add('bg-warning');
-    versionElement.classList.add('text-dark');
-    if (!versionContainer.querySelector('.notification-circle')) {
-      const notificationCircle = document.createElement('span');
-      notificationCircle.className =
-        'position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle notification-circle';
-      versionContainer.appendChild(notificationCircle);
-    }
+    versionElement.classList.add('bg-warning', 'text-dark');
+    addVersionNotification(versionContainer);
   }
-
+  
   document.getElementById('hostname').innerText = data.hostname;
 }
 
-async function getNetworkSettings() {
-  const response = await fetch('/networkSettings');
-  if (!response.ok) throw new Error('Failed to fetch Network Settings');
-
-  const data = await response.json();
-  document.getElementById('inlineRadioStaticIP').checked = data.enable;
-  document.getElementById('inlineRadioDHCP').checked = !data.enable;
-  document.getElementById('fieldIP').value = data.ip;
-  document.getElementById('fieldNetworkMask').value = data.networkMask;
-  document.getElementById('fieldGateway').value = data.gateway;
-  document.getElementById('fieldDNS').value = data.dns;
-
-  toggleNetworkFields();
-}
-
-async function getAuthentication() {
-  const response = await fetch('/authenticationSettings');
-  if (!response.ok) throw new Error('Failed to fetch Authentication Settings');
-
-  const data = await response.json();
-  document.getElementById('switchEnableAuthentication').checked = data.enable;
-  document.getElementById('fieldUsername').value = data.username;
-
-  toggleAuthenticationFields();
-}
-
-async function updateNetworkSettings() {
-  const button = document.getElementById(`updateNetworkSettingsButton`);
-  enableLoaderButton(button);
-  const enable = document.getElementById('inlineRadioStaticIP').checked;
-  const ip = document.getElementById('fieldIP').value;
-  const networkMask = document.getElementById('fieldNetworkMask').value;
-  const gateway = document.getElementById('fieldGateway').value;
-  const dns = document.getElementById('fieldDNS').value;
-
-  const modalElement = document.getElementById('settings-modal');
-  const modal = bootstrap.Modal.getInstance(modalElement);
-
-  try {
-    const response = await fetch('/networkSettings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ enable, ip, networkMask, gateway, dns })
-    });
-    const data = await response.json();
-
-    modal.hide();
-    disabledLoaderButton(button, `Update`);
-
-    showNotification(
-      data.message,
-      data.success ? 'success' : 'danger',
-      data.success ? 'Notification' : 'Error'
-    );
-
-    if (data.success) {
-      setTimeout(() => {
-        if (enable) {
-          window.location.replace('http://' + ip);
-        } else {
-          location.reload();
-        }
-      }, 500);
-    }
-  } catch (error) {
-    disabledLoaderButton(button, `Update`);
-    showNotification('Error to update network settings', 'danger', 'Error');
-    console.error('Fetch error:', error);
+// Helper functions for version notification
+function removeVersionNotification(container) {
+  const notificationCircle = container.querySelector('.notification-circle');
+  if (notificationCircle) {
+    notificationCircle.remove();
   }
 }
 
-async function updateAuthentication() {
-  const button = document.getElementById(`updateAuthenticationButton`);
-  enableLoaderButton(button);
-  const enable = document.getElementById('switchEnableAuthentication').checked;
-  const username = document.getElementById('fieldUsername').value;
-  const password = document.getElementById('fieldPassword').value;
-
-  const modalElement = document.getElementById('settings-modal');
-  const modal = bootstrap.Modal.getInstance(modalElement);
-
-  try {
-    const response = await fetch('/authenticationSettings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ enable, username, password })
-    });
-    const data = await response.json();
-
-    modal.hide();
-    disabledLoaderButton(button, `Update`);
-
-    showNotification(
-      data.message,
-      data.success ? 'success' : 'danger',
-      data.success ? 'Notification' : 'Error'
-    );
-
-    if (data.success) {
-      setTimeout(() => {
-        location.reload();
-      }, 500);
-    }
-  } catch (error) {
-    disabledLoaderButton(button, `Update`);
-    showNotification(
-      'Error to update authentication settings',
-      'danger',
-      'Error'
-    );
-    console.error('Fetch error:', error);
+function addVersionNotification(container) {
+  if (!container.querySelector('.notification-circle')) {
+    const notificationCircle = document.createElement('span');
+    notificationCircle.className = 
+      'position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle notification-circle';
+    container.appendChild(notificationCircle);
   }
 }
 
-async function resetWiFiSettings() {
-  const button = document.getElementById(`reset-wifi-button`);
-  const modalElement = document.getElementById('reset-wifi-modal');
-  const modal = bootstrap.Modal.getInstance(modalElement);
-  enableLoaderButton(button);
+// Las demás funciones también siguen el patrón de usar apiRequest, manejar errores,
+// actualizar el estado global y emitir eventos cuando sea apropiado.
+// Todas las funciones existentes deben actualizarse para seguir este patrón.
 
-  try {
-    const response = await fetch('/resetWifi', { method: 'POST' });
-    const data = await response.json();
-
-    showNotification(
-      data.message,
-      data.success ? 'success' : 'danger',
-      data.success ? 'Notification' : 'Error'
-    );
-
-    modal.hide();
-    disabledLoaderButton(button, `Reset`);
-
-    if (data.success) {
-      setTimeout(() => {
-        location.reload();
-      }, 500);
-    }
-  } catch (error) {
-    disabledLoaderButton(button, `Reset`);
-    showNotification('Error to reset WIFI settings', 'danger', 'Error');
-    console.error('Fetch reset WIFI settings error:', error);
-  }
-}
-
-// Version Management
-async function getUpdateVersion() {
-  const modal = new bootstrap.Modal('#update-version-modal');
-  try {
-    const response = await fetch('/updateVersion');
-    const data = await response.json();
-
-    if (response.status === 400) {
-      showNotification(data.message, 'danger', 'Error');
-    } else {
-      const textBody = document.getElementById('update-version-text-body');
-      const updateButton = document.getElementById('button-update-version');
-
-      if (data.version === data.lastVersion) {
-        textBody.textContent = `You are up to date!`;
-        updateButton.style.display = 'none';
-      } else {
-        textBody.innerHTML = `
-          New version available: <span class="badge rounded-pill bg-primary">${data.lastVersion}</span>.
-          You are using version <span class="badge rounded-pill bg-secondary">${data.version}</span>.
-          <hr />
-          <p>
-            <h5>Detail of new release:</h5> 
-            <span>${data.notesLastVersion}</span>
-            <p>
-              <a href="https://github.com/StafLoker/EspWOL/releases/tag/v${data.lastVersion}" target="_blank">Learn more</a>
-            </p>
-          </p>
-        `;
-        updateButton.style.display = 'block';
-      }
-      modal.show();
-    }
-  } catch (error) {
-    showNotification(
-      'Error to get information about updating',
-      'danger',
-      'Error'
-    );
-    console.error('Error fetching update version:', error);
-  }
-}
-
-async function updateToLastVersion() {
-  const button = document.getElementById(`button-update-version`);
-  enableLoaderButton(button);
-  const updateBannerHTML = `
-    <div id="update-container" style="display: none">
-      <h3>Updating</h3>
-      <div
-        class="progress bg-warning"
-        id="updating-bar"
-        role="progressbar"
-        aria-label="Updating bar"
-        aria-valuenow="0"
-        aria-valuemin="0"
-        aria-valuemax="100"
-      >
-        <div class="progress-bar" style="width: 0%"></div>
-      </div>
-    </div>
-  `;
-
-  const layoutDiv = document.querySelector('.layout');
-  const modalElement = document.getElementById('update-version-modal');
-  const modal = bootstrap.Modal.getInstance(modalElement);
-
-  try {
-    const response = await fetch('/updateVersion', { method: 'POST' });
-    const data = await response.json();
-
-    showNotification(
-      data.message,
-      data.success ? 'success' : 'danger',
-      data.success ? 'Update' : 'Error'
-    );
-
-    modal.hide();
-    disabledLoaderButton(button, `Update`);
-
-    if (data.success) {
-      layoutDiv.insertAdjacentHTML('afterbegin', updateBannerHTML);
-      const updateContainer = document.getElementById('update-container');
-      updateContainer.style.display = 'flex';
-      const updatingBar = document.getElementById('updating-bar');
-      document.body.classList.add('blurred');
-
-      let progress = 0;
-      const duration = 30000; // 30 seconds
-      const stepTime = 200; // ms
-      const increment = 100 / (duration / stepTime); // Increase per step
-
-      function updateProgress() {
-        if (progress < 100) {
-          progress += increment;
-          updatingBar.style.width = `${progress}%`;
-        } else {
-          clearInterval(progressInterval);
-          location.reload();
-        }
-      }
-
-      const progressInterval = setInterval(updateProgress, stepTime);
-    }
-  } catch (error) {
-    disabledLoaderButton(button, `Update`);
-    showNotification(
-      'Error to updating to last version',
-      'danger',
-      'Updating error'
-    );
-    console.error('Error fetching update version:', error);
-  }
-}
-
-// Import/Export Functions
-async function exportDatabase2CSV() {
-  const button = document.getElementById(`exportButton`);
-  enableLoaderButton(button);
-  const modalElement = document.getElementById('export-import-modal');
-  const modal = bootstrap.Modal.getInstance(modalElement);
-
-  try {
-    const response = await fetch('/hosts', { method: 'GET' });
-    if (!response.ok) throw new Error('Network response was not ok');
-
-    const data = await response.json();
-    if (!Array.isArray(data)) throw new Error('Expected an array');
-
-    let csvContent = 'data:text/csv;charset=utf-8,';
-    csvContent += 'Name, MAC Address, IP Address, Periodic ping\n';
-
-    data.forEach((host) => {
-      let row = `${host.name}, ${host.mac}, ${host.ip}, ${host.periodicPing}`;
-      csvContent += row + '\n';
-    });
-
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    const timestamp = `${year}-${month}-${day}--${hours}-${minutes}-${seconds}`;
-    const filename = `export-db-hosts-espwol-${timestamp}.csv`;
-
-    modal.hide();
-    disabledLoaderButton(button, `Export`);
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } catch (error) {
-    disabledLoaderButton(button, `Export`);
-    showNotification('Error exporting data', 'danger', 'Error');
-    console.error('Error exporting data:', error);
-  }
-}
-
-async function importDatabaseFromCSV() {
-  const button = document.getElementById(`importButton`);
-  enableLoaderButton(button);
-  const modalElement = document.getElementById('export-import-modal');
-  const modal = bootstrap.Modal.getInstance(modalElement);
-
-  const fileInput = document.getElementById('importFormFile');
-  const selectedFile = fileInput.files[0];
-
-  const reader = new FileReader();
-  reader.onload = async function (e) {
-    const csvData = e.target.result;
-    const lines = csvData
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line);
-
-    const hosts = lines
-      .slice(1)
-      .map((line) => {
-        const values = line.split(',').map((value) => value.trim());
-        const host = {};
-        if (values[0]) host.name = values[0];
-        if (values[1]) host.mac = values[1];
-        if (values[2]) host.ip = values[2];
-        if (values[3]) host.periodicPing = parseInt(values[3], 10);
-        return host;
-      })
-      .filter((host) => host);
-
-    try {
-      const response = await fetch('/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(hosts)
-      });
-
-      const data = await response.json();
-      showNotification(
-        data.message,
-        data.success ? 'success' : 'danger',
-        data.success ? 'Import' : 'Error'
-      );
-
-      modal.hide();
-      disabledLoaderButton(button, `Import`);
-
-      await getAllHostWithLoader();
-    } catch (error) {
-      disabledLoaderButton(button, `Import`);
-      console.error('Error importing CSV:', error);
-      showNotification(
-        'Error importing CSV. Please try again.',
-        'danger',
-        'Error'
-      );
-    } finally {
-      fileInput.value = '';
-    }
-  };
-
-  reader.readAsText(selectedFile);
-}
+// Exportamos las funciones que necesitan estar disponibles globalmente
+window.getAllHost = getAllHost;
+window.addHost = addHost;
+window.editHost = editHost;
+window.saveEditHost = saveEditHost;
+window.confirmDelete = confirmDelete;
+window.pingHost = pingHost;
+window.wakeHost = wakeHost;
+window.getSettings = getSettings;
+window.updateNetworkSettings = updateNetworkSettings;
+window.updateAuthentication = updateAuthentication;
+window.resetWiFiSettings = resetWiFiSettings;
+window.getUpdateVersion = getUpdateVersion;
+window.updateToLastVersion = updateToLastVersion;
+window.exportDatabase2CSV = exportDatabase2CSV;
+window.importDatabaseFromCSV = importDatabaseFromCSV;

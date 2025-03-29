@@ -13,7 +13,7 @@ const chalk = require('chalk');
 
 // Paths
 const SRC_DIR = path.join(__dirname, '../src');
-const FIRMWARE_DIR = path.join(__dirname, '../../firmware/EspWOL'); // Ruta corregida
+const FIRMWARE_DIR = path.join(__dirname, '../../firmware/EspWOL');
 
 // Options
 const htmlMinifyOptions = {
@@ -29,6 +29,16 @@ const htmlMinifyOptions = {
   minifyURLs: true
 };
 
+// JavaScript files in correct loading order
+const JS_FILES_ORDER = [
+  'config.js',       // Primero cargamos la configuración global
+  'top-loading.js',  // Luego el sistema de carga
+  'core.js',         // Luego núcleo de la aplicación
+  'validation.js',   // Validación
+  'ui.js',           // Funciones de UI
+  'api.js'           // Y finalmente API que depende de todos los anteriores
+];
+
 // Ensure the firmware directory exists
 fs.ensureDirSync(FIRMWARE_DIR);
 
@@ -41,21 +51,37 @@ const char ${variableName}[] PROGMEM = R"rawliteral(${content})rawliteral";`;
 }
 
 /**
- * Minify and combine JavaScript
+ * Minify and combine JavaScript in correct order
  */
 async function processJavaScript() {
   console.log(chalk.blue('📦 Processing JavaScript files...'));
   
   try {
-    // Get all JS files
-    const jsFiles = await glob('**/*.js', { cwd: path.join(SRC_DIR, 'js') });
-    
-    // Read and combine all JS files
+    // Read and combine all JS files in specified order
     let combinedJs = '';
-    for (const file of jsFiles) {
-      console.log(chalk.dim(`  Processing ${file}...`));
-      const content = await fs.readFile(path.join(SRC_DIR, 'js', file), 'utf8');
-      combinedJs += `// ${file}\n${content}\n\n`;
+    for (const fileName of JS_FILES_ORDER) {
+      const filePath = path.join(SRC_DIR, 'js', fileName);
+      if (await fs.pathExists(filePath)) {
+        console.log(chalk.dim(`  Processing ${fileName}...`));
+        const content = await fs.readFile(filePath, 'utf8');
+        combinedJs += `// ${fileName}\n${content}\n\n`;
+      } else {
+        console.warn(chalk.yellow(`  ⚠️ Warning: ${fileName} not found, skipping`));
+      }
+    }
+    
+    // Check for any missed JS files
+    const allJsFiles = await glob('**/*.js', { cwd: path.join(SRC_DIR, 'js') });
+    const missedFiles = allJsFiles.filter(file => !JS_FILES_ORDER.includes(file));
+    
+    if (missedFiles.length > 0) {
+      console.warn(chalk.yellow(`  ⚠️ Warning: Found JS files not in predefined order: ${missedFiles.join(', ')}`));
+      
+      for (const fileName of missedFiles) {
+        console.log(chalk.dim(`  Adding ${fileName}...`));
+        const content = await fs.readFile(path.join(SRC_DIR, 'js', fileName), 'utf8');
+        combinedJs += `// ${fileName}\n${content}\n\n`;
+      }
     }
     
     // Minify the combined JS
@@ -68,7 +94,9 @@ async function processJavaScript() {
         keep_fargs: false,
         passes: 3
       },
-      mangle: true,
+      mangle: {
+        properties: false
+      },
       output: {
         beautify: false,
         comments: false
@@ -76,6 +104,7 @@ async function processJavaScript() {
     });
     
     const minifiedJs = result.code;
+    
     console.log(chalk.dim(`  Original size: ${formatBytes(combinedJs.length)}`));
     console.log(chalk.dim(`  Minified size: ${formatBytes(minifiedJs.length)}`));
     console.log(chalk.dim(`  Reduction: ${((1 - minifiedJs.length / combinedJs.length) * 100).toFixed(2)}%`));
@@ -139,13 +168,21 @@ async function processHTML(minifiedJS, minifiedCSS) {
     // Process index.html
     let indexHtml = await fs.readFile(path.join(SRC_DIR, 'index.html'), 'utf8');
     
-    // Replace CSS and JS links with inline content for faster loading
+    // Replace CSS link with inline CSS
     indexHtml = indexHtml.replace(
       /<link rel="stylesheet" href="css\/style.css">/,
       `<style>${minifiedCSS}</style>`
     );
     
-    // Replace all script tags with a single inline script
+    // Remove all script tags for our JS files
+    for (const file of JS_FILES_ORDER) {
+      indexHtml = indexHtml.replace(
+        new RegExp(`<script src="js/${file}"><\/script>`, 'g'),
+        ''
+      );
+    }
+    
+    // Additional cleanup of any other JS files
     indexHtml = indexHtml.replace(
       /<script src="js\/.*?\.js"><\/script>/g,
       ''
@@ -184,10 +221,44 @@ async function processHTML(minifiedJS, minifiedCSS) {
       await fs.writeFile(path.join(FIRMWARE_DIR, '404.h'), notFoundHeader);
     }
     
+    // Crear un archivo de información
+    await createBuildInfo(minifiedHtml.length, minifiedJS.length, minifiedCSS.length);
+    
     console.log(chalk.green('✅ HTML files processed successfully'));
   } catch (error) {
     console.error(chalk.red('❌ Error processing HTML:'), error);
     process.exit(1);
+  }
+}
+
+/**
+ * Create build information file
+ */
+async function createBuildInfo(htmlSize, jsSize, cssSize) {
+  const totalSize = htmlSize + jsSize + cssSize;
+  const buildInfo = {
+    version: require('../../package.json').version,
+    buildDate: new Date().toISOString(),
+    sizes: {
+      htmlSize: formatBytes(htmlSize),
+      jsSize: formatBytes(jsSize),
+      cssSize: formatBytes(cssSize),
+      totalSize: formatBytes(totalSize)
+    },
+    esp8266Info: {
+      recommendedMinMemory: '4MB Flash / 80KB SPIFFS',
+      sizeWarning: totalSize > 80 * 1024 ? 'WARNING: Build exceeds recommended SPIFFS size' : 'OK'
+    }
+  };
+  
+  const buildInfoPath = path.join(FIRMWARE_DIR, 'build-info.json');
+  await fs.writeFile(buildInfoPath, JSON.stringify(buildInfo, null, 2));
+  
+  console.log(chalk.green(`✅ Build information saved to ${buildInfoPath}`));
+  console.log(chalk.cyan(`📊 Total size: ${formatBytes(totalSize)}`));
+  
+  if (totalSize > 80 * 1024) {
+    console.warn(chalk.yellow(`⚠️ WARNING: Build size (${formatBytes(totalSize)}) exceeds recommended ESP8266 SPIFFS size (80KB)`));
   }
 }
 
@@ -222,6 +293,7 @@ async function build() {
     console.log(chalk.yellow('📌 Files created:'));
     console.log(chalk.yellow('   - index.h'));
     console.log(chalk.yellow('   - 404.h'));
+    console.log(chalk.yellow('   - build-info.json'));
   } catch (error) {
     console.error(chalk.bold.red('💥 Build failed:'), error);
     process.exit(1);
