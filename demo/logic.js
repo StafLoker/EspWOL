@@ -173,9 +173,9 @@ function validateMAC(mac) {
 
 
 function validateIP(ip) {
-  return /^(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])){3}$/.test(
-    ip
-  );
+  if (!ip || typeof ip !== 'string') return false;
+  ip = ip.trim();
+  return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){2}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ip);
 }
 
 function validatePassword(password) {
@@ -398,7 +398,7 @@ async function pingHost(index) {
       disabledLoaderButton(button, '<i class="fas fa-table-tennis"></i>');
 
       if (success) {
-        statusCircle.classList.remove('red', 'blinking', 'lumen-red');
+        statusCircle.classList.remove('red', 'lumen-red');
         
         statusCircle.classList.add('green', 'lumen');
 
@@ -408,7 +408,7 @@ async function pingHost(index) {
           statusCircle.classList.remove('lumen', 'green');
         }, 10000);
       } else {
-        statusCircle.classList.remove('green', 'blinking', 'lumen');
+        statusCircle.classList.remove('green', 'lumen');
         
         statusCircle.classList.add('red', 'lumen-red');
         
@@ -606,6 +606,8 @@ async function updateNetworkSettings() {
 }
 
 async function updateAuthentication() {
+  const button = document.getElementById('updateAuthenticationButton');
+  enableLoaderButton(button);
   const enable = document.getElementById('switchEnableAuthentication').checked;
   const username = document.getElementById('fieldUsername').value;
   const password = document.getElementById('fieldPassword').value;

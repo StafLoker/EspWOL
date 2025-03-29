@@ -203,17 +203,9 @@
    * @returns {Array}
    */
   function findRelatedDropdownButtons(action) {
-    const dropdownButtons = [];
-    
-
-    document.querySelectorAll('.dropdown-item').forEach(item => {
-      const onclickAttr = item.getAttribute('onclick');
-      if (onclickAttr && onclickAttr.includes(action)) {
-        dropdownButtons.push(item);
-      }
-    });
-    
-    return dropdownButtons;
+    return Array.from(
+      document.querySelectorAll(`.dropdown-item[onclick*="${action}"]`)
+    );
   }
 
   /**
