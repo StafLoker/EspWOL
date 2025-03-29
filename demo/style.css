@@ -171,6 +171,44 @@ html[data-bs-theme="dark"] .requirement-invalid {
   color: var(--bs-primary);
 }
 
+.password-toggle-btn {
+  position: absolute !important;
+  right: 10px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  z-index: 100 !important;
+  height: 38px !important;
+  padding: 0 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: inherit !important;
+  opacity: 0.7 !important;
+  transition: opacity 0.2s !important;
+}
+
+.password-toggle-btn:hover {
+  opacity: 1 !important;
+  color: var(--bs-primary) !important;
+}
+
+.password-toggle-btn:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.form-control[type="password"] {
+  padding-right: 40px !important;
+}
+
+.modal .form-group,
+.modal .mb-3 {
+  position: relative !important;
+}
+
 /* Lumen Effect for Status Circles */
 
 /* New lumen (glow) effect */

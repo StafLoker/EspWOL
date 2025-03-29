@@ -86,6 +86,43 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
   });
 
+  document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('hidden.bs.modal', function() {
+      const requirementsContainers = this.querySelectorAll('.password-requirements-container');
+      requirementsContainers.forEach(container => {
+        if (container && container.parentNode) {
+          container.parentNode.removeChild(container);
+        }
+      });
+      
+      const toggleButtons = this.querySelectorAll('.password-toggle-btn');
+      toggleButtons.forEach(button => {
+        if (button && button.parentNode) {
+          button.parentNode.removeChild(button);
+        }
+      });
+      
+      const passwordFields = this.querySelectorAll('input[type="password"], input[name="password"]');
+      passwordFields.forEach(field => {
+        field.classList.remove('is-valid', 'is-invalid');
+        field.setCustomValidity('');
+        field.value = '';
+      });
+      
+      const allInputFields = this.querySelectorAll('input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"])');
+      allInputFields.forEach(field => {
+        field.classList.remove('is-valid', 'is-invalid');
+        field.setCustomValidity('');
+      });
+      
+      const forms = this.querySelectorAll('form');
+      forms.forEach(form => {
+        form.classList.remove('was-validated');
+        form.reset();
+      });
+    });
+  });
+
   // Load all hosts
   enableLoaderWithBlur();
   updateLoaderColor(currentTheme);
@@ -161,6 +198,9 @@ function testInputAndSetClass(
   errorMessage = 'Invalid field.'
 ) {
   if (input.name === 'password') {
+    if (input.value.length > 0) {
+      createPasswordToggle(input);
+    }
     const result = validationFn(input.value);
 
     let requirementsContainer = input.nextElementSibling;
@@ -290,15 +330,16 @@ function createPasswordToggle(inputField) {
   if (parent.querySelector('.password-toggle-btn')) {
     return;
   }
-
+  
   if (window.getComputedStyle(parent).position === 'static') {
     parent.style.position = 'relative';
   }
-
+  
   const toggleBtn = document.createElement('button');
   toggleBtn.type = 'button';
   toggleBtn.className = 'password-toggle-btn';
   toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
+  
   toggleBtn.style.position = 'absolute';
   toggleBtn.style.right = '10px';
   toggleBtn.style.top = '50%';
@@ -307,9 +348,12 @@ function createPasswordToggle(inputField) {
   toggleBtn.style.background = 'transparent';
   toggleBtn.style.cursor = 'pointer';
   toggleBtn.style.zIndex = '100';
+  toggleBtn.style.height = '38px';
+  toggleBtn.style.padding = '0 10px';
   toggleBtn.title = 'Show/Hide Password';
-
-  toggleBtn.addEventListener('click', function () {
+  
+  toggleBtn.addEventListener('click', function(e) {
+    e.preventDefault();
     if (inputField.type === 'password') {
       inputField.type = 'text';
       toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
@@ -319,7 +363,7 @@ function createPasswordToggle(inputField) {
     }
     inputField.focus();
   });
-
+  
   parent.appendChild(toggleBtn);
 }
 
