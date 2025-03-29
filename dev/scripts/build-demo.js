@@ -33,11 +33,11 @@ fs.ensureDirSync(DEMO_DIR);
  */
 async function combineJavaScript() {
   console.log(chalk.blue('📦 Combining JavaScript files...'));
-  
+
   try {
     // Get all JS files
     const jsFiles = await glob('**/*.js', { cwd: JS_DIR });
-    
+
     // Read all JS files
     let combinedJs = '';
     for (const file of jsFiles) {
@@ -86,10 +86,178 @@ const simulatedData = {
     password: 'password123'
   }
 };
+
+// Override fetch for demo mode
+const originalFetch = window.fetch;
+window.fetch = async function(url, options = {}) {
+  console.log('Demo mode: intercepting fetch to', url);
+  
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 500));
+  
+  // Handle different endpoints
+  if (url === '/hosts' && options.method === 'GET') {
+    return new Response(JSON.stringify(hosts), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  if (url === '/hosts' && options.method === 'POST') {
+    const body = JSON.parse(options.body);
+    hosts.push({...body, lastPing: -1});
+    return new Response(JSON.stringify({ success: true, message: 'Host added successfully' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  if (url.startsWith('/hosts?id=') && options.method === 'GET') {
+    const id = parseInt(url.split('=')[1]);
+    return new Response(JSON.stringify(hosts[id]), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  if (url.startsWith('/hosts?id=') && options.method === 'PUT') {
+    const id = parseInt(url.split('=')[1]);
+    const body = JSON.parse(options.body);
+    hosts[id] = {...body, lastPing: hosts[id].lastPing};
+    return new Response(JSON.stringify({ success: true, message: 'Host updated successfully' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  if (url.startsWith('/hosts?id=') && options.method === 'DELETE') {
+    const id = parseInt(url.split('=')[1]);
+    hosts.splice(id, 1);
+    return new Response(JSON.stringify({ success: true, message: 'Host deleted successfully' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  if (url.startsWith('/ping')) {
+    const id = parseInt(url.split('=')[1]);
+    const success = Math.random() > 0.3;
+    if (success) {
+      hosts[id].lastPing = Date.now();
+    }
+    return new Response(JSON.stringify({ 
+      success, 
+      message: success ? 'Ping successful' : 'Ping failed' 
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  if (url.startsWith('/wake')) {
+    const success = Math.random() > 0.2;
+    return new Response(JSON.stringify({ 
+      success, 
+      message: success ? 'WOL packet sent successfully' : 'Failed to send WOL packet' 
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  if (url === '/about') {
+    return new Response(JSON.stringify(simulatedData.about), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  if (url === '/updateVersion' && options.method === 'GET') {
+    return new Response(JSON.stringify({
+      version: simulatedData.about.version,
+      lastVersion: simulatedData.about.lastVersion,
+      notesLastVersion: simulatedData.about.notesLastVersion
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  if (url === '/updateVersion' && options.method === 'POST') {
+    const hasUpdate = simulatedData.about.version !== simulatedData.about.lastVersion;
+    return new Response(JSON.stringify({
+      success: hasUpdate,
+      message: hasUpdate ? 'Update process will start in 1 second. Please wait for the update to complete.' : 'Nothing to upgrade. You are up to date!'
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  if (url === '/networkSettings' && options.method === 'GET') {
+    return new Response(JSON.stringify(simulatedData.networkSettings), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  if (url === '/networkSettings' && options.method === 'PUT') {
+    const body = JSON.parse(options.body);
+    simulatedData.networkSettings = {...body};
+    return new Response(JSON.stringify({ success: true, message: 'Network settings updated successfully' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  if (url === '/authenticationSettings' && options.method === 'GET') {
+    return new Response(JSON.stringify({
+      enable: simulatedData.authenticationSettings.enable,
+      username: simulatedData.authenticationSettings.username
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  if (url === '/authenticationSettings' && options.method === 'PUT') {
+    const body = JSON.parse(options.body);
+    simulatedData.authenticationSettings = {...body};
+    return new Response(JSON.stringify({ success: true, message: 'Authentication settings updated successfully' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  if (url === '/resetWifi') {
+    return new Response(JSON.stringify({ success: true, message: 'WiFi settings have been reset successfully.' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  if (url === '/import') {
+    const newHosts = JSON.parse(options.body);
+    hosts.push(...newHosts);
+    return new Response(JSON.stringify({ 
+      success: true, 
+      message: \`Imported \${newHosts.length} hosts successfully.\` 
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  // Fallback to original fetch for any unhandled requests
+  return originalFetch(url, options);
+};
 `;
-    
+
     // Write combined JS to output
-    await fs.writeFile(path.join(DEMO_DIR, 'logic.js'), dataSimulationCode + combinedJs);
+    await fs.writeFile(
+      path.join(DEMO_DIR, 'logic.js'),
+      dataSimulationCode + combinedJs
+    );
     console.log(chalk.green('✅ JavaScript files combined successfully'));
   } catch (error) {
     console.error(chalk.red('❌ Error combining JavaScript files:'), error);
@@ -102,17 +270,17 @@ const simulatedData = {
  */
 async function processCSS() {
   console.log(chalk.blue('🎨 Processing CSS...'));
-  
+
   try {
     const cssDir = path.join(SRC_DIR, 'css');
     const cssFiles = await glob('**/*.css', { cwd: cssDir });
-    
+
     let combinedCss = '';
     for (const file of cssFiles) {
       const content = await fs.readFile(path.join(cssDir, file), 'utf8');
       combinedCss += `/* ${file} */\n${content}\n\n`;
     }
-    
+
     await fs.writeFile(path.join(DEMO_DIR, 'style.css'), combinedCss);
     console.log(chalk.green('✅ CSS files processed successfully'));
   } catch (error) {
@@ -126,31 +294,34 @@ async function processCSS() {
  */
 async function processHTML() {
   console.log(chalk.blue('🔍 Processing HTML files...'));
-  
+
   try {
     // Process index.html
     let indexHtml = await fs.readFile(path.join(SRC_DIR, 'index.html'), 'utf8');
-    
+
     // Replace external JS/CSS references with inline ones
     indexHtml = indexHtml.replace(
       /<link rel="stylesheet" href="css\/style.css">/,
       '<link rel="stylesheet" href="style.css">'
     );
-    
+
     indexHtml = indexHtml.replace(
       /<script src="js\/.*?\.js"><\/script>/g,
       '<script src="logic.js"></script>'
     );
-    
+
     // Write processed HTML
     await fs.writeFile(path.join(DEMO_DIR, 'index.html'), indexHtml);
-    
+
     // Process 404.html
     if (await fs.pathExists(path.join(SRC_DIR, '404.html'))) {
-      const notFoundHtml = await fs.readFile(path.join(SRC_DIR, '404.html'), 'utf8');
+      const notFoundHtml = await fs.readFile(
+        path.join(SRC_DIR, '404.html'),
+        'utf8'
+      );
       await fs.writeFile(path.join(DEMO_DIR, '404.html'), notFoundHtml);
     }
-    
+
     console.log(chalk.green('✅ HTML files processed successfully'));
   } catch (error) {
     console.error(chalk.red('❌ Error processing HTML:'), error);
@@ -163,7 +334,7 @@ async function processHTML() {
  */
 async function generateTopLoadingScript() {
   console.log(chalk.blue('🚀 Generating top-loading.js...'));
-  
+
   try {
     const topLoadingJs = `/**
  * TopLoading - Minimal top bar loading animation
@@ -588,7 +759,7 @@ async function generateTopLoadingScript() {
     config: config
   };
 })();`;
-  
+
     await fs.writeFile(path.join(DEMO_DIR, 'top-loading.js'), topLoadingJs);
     console.log(chalk.green('✅ top-loading.js generated successfully'));
   } catch (error) {
@@ -602,11 +773,11 @@ async function generateTopLoadingScript() {
  */
 async function build() {
   console.log(chalk.bold.cyan('🔨 Building Demo Version'));
-  
+
   try {
     // Clean demo directory
     await fs.emptyDir(DEMO_DIR);
-    
+
     // Process all file types in parallel
     await Promise.all([
       combineJavaScript(),
@@ -614,7 +785,7 @@ async function build() {
       processHTML(),
       generateTopLoadingScript()
     ]);
-    
+
     console.log(chalk.bold.green('✨ Demo build completed successfully!'));
   } catch (error) {
     console.error(chalk.bold.red('💥 Build failed:'), error);
