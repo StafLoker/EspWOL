@@ -140,7 +140,18 @@
     saveButtonState(button);
     button.classList.add('top-loading-disabled');
     button.setAttribute('disabled', '');
-    button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+    
+    if (button.classList.contains('dropdown-item')) {
+      const icon = button.querySelector('i');
+      if (icon) {
+        const iconHtml = icon.outerHTML;
+        button.innerHTML = `${iconHtml} <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+      } else {
+        button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+      }
+    } else {
+      button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+    }
   }
 
   /**
@@ -187,6 +198,25 @@
   }
 
   /**
+   * @private
+   * @param {string} action
+   * @returns {Array}
+   */
+  function findRelatedDropdownButtons(action) {
+    const dropdownButtons = [];
+    
+
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+      const onclickAttr = item.getAttribute('onclick');
+      if (onclickAttr && onclickAttr.includes(action)) {
+        dropdownButtons.push(item);
+      }
+    });
+    
+    return dropdownButtons;
+  }
+
+  /**
    * Shows the loading bar and sets buttons to loading state
    * @param {Array} buttonSelectors - Selectors or elements of buttons to disable
    * @returns {Object} Loading context
@@ -203,6 +233,17 @@
       if (button) {
         setButtonLoading(button);
         buttons.push(button);
+        
+        const dropdownMenu = button.closest('.dropdown-menu');
+        if (dropdownMenu) {
+          const dropdownToggle = document.querySelector('[data-bs-toggle="dropdown"][aria-expanded="true"]');
+          if (dropdownToggle) {
+            const dropdownInstance = bootstrap.Dropdown.getInstance(dropdownToggle);
+            if (dropdownInstance) {
+              dropdownInstance.hide();
+            }
+          }
+        }
       }
     });
     
@@ -263,8 +304,13 @@
    */
   function wrapWithLoading(fn, buttonSelector, delay = 0) {
     return function() {
-      const button = getButton(buttonSelector(arguments));
-      const loadingContext = showLoading([button]);
+      const mainButton = getButton(buttonSelector(arguments));
+      
+      const dropdownButtons = findRelatedDropdownButtons(fn.name);
+      
+      const allButtons = [mainButton, ...dropdownButtons].filter(Boolean);
+      
+      const loadingContext = showLoading(allButtons);
       
       try {
         const result = fn.apply(this, arguments);
