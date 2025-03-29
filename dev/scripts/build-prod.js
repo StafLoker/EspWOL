@@ -13,8 +13,7 @@ const chalk = require('chalk');
 
 // Paths
 const SRC_DIR = path.join(__dirname, '../src');
-const FIRMWARE_DIR = path.join(__dirname, '../../firmware/EspWOL');
-const JS_DIR = path.join(SRC_DIR, 'js');
+const FIRMWARE_DIR = path.join(__dirname, '../../firmware/EspWOL'); // Ruta corregida
 
 // Options
 const htmlMinifyOptions = {
@@ -49,13 +48,13 @@ async function processJavaScript() {
   
   try {
     // Get all JS files
-    const jsFiles = await glob('**/*.js', { cwd: JS_DIR });
+    const jsFiles = await glob('**/*.js', { cwd: path.join(SRC_DIR, 'js') });
     
     // Read and combine all JS files
     let combinedJs = '';
     for (const file of jsFiles) {
       console.log(chalk.dim(`  Processing ${file}...`));
-      const content = await fs.readFile(path.join(JS_DIR, file), 'utf8');
+      const content = await fs.readFile(path.join(SRC_DIR, 'js', file), 'utf8');
       combinedJs += `// ${file}\n${content}\n\n`;
     }
     
