@@ -1,4 +1,6 @@
-// Data simulation
+// ================================
+// DATA INITIALIZATION
+// ================================
 let hosts = [
   {
     name: 'Server',
@@ -16,7 +18,33 @@ let hosts = [
   }
 ];
 
+const simulatedData = {
+  about: {
+    version: '2.0.0',
+    lastVersion: '2.1.0',
+    notesLastVersion:
+      'Add DNS field to network configuration and fix update functionality to the latest version. Enhance UI user experience.',
+    hostname: 'demo-host'
+  },
+  networkSettings: {
+    enable: true,
+    ip: '192.168.1.100',
+    networkMask: '255.255.255.0',
+    gateway: '192.168.1.1',
+    dns: '8.8.8.8'
+  },
+  authenticationSettings: {
+    enable: true,
+    username: 'admin',
+    password: 'password123'
+  }
+};
+
+// ================================
+// INITIALIZATION
+// ================================
 document.addEventListener('DOMContentLoaded', async function () {
+  // Theme setup
   const htmlElement = document.documentElement;
   const darkModeToggle = document.getElementById('darkModeToggle');
   const darkModeIcon = document.getElementById('darkModeIcon');
@@ -49,10 +77,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     updateThemeIcon(newTheme);
   });
 
+  // Setup form validation
   document.querySelectorAll('.needs-validation').forEach((form) => {
     form.addEventListener('submit', handleFormSubmit);
   });
 
+  // Setup input validations
   document.querySelectorAll('input').forEach((input) => {
     input.addEventListener('input', () => {
       switch (input.name) {
@@ -92,6 +122,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
   });
 
+  // Modal cleanup on hide
   document.querySelectorAll('.modal').forEach((modal) => {
     modal.addEventListener('hidden.bs.modal', function () {
       const requirementsContainers = this.querySelectorAll(
@@ -142,6 +173,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
   });
 
+  // Initial load
   enableLoaderWithBlur();
   updateLoaderColor(currentTheme);
   const loader = document.getElementById('loader');
@@ -149,34 +181,58 @@ document.addEventListener('DOMContentLoaded', async function () {
   disabledLoaderWithBlur(loader);
 });
 
-async function getAllHostWithLoader() {
-  enableLoaderWithBlur();
-  const loader = document.getElementById('loader');
-  await getAllHost();
-  disabledLoaderWithBlur(loader);
+// ================================
+// VALIDATION FUNCTIONS
+// ================================
+function validateMAC(mac) {
+  if (!mac || typeof mac !== 'string') return false;
+  mac = mac.trim();
+  return /^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$/.test(mac);
 }
 
-function enableLoaderWithBlur() {
-  const loaderHTML = `
-    <l-bouncy
-      id="loader"
-      size="54"
-      speed="1.9"
-      color="white"
-    ></l-bouncy>
-  `;
-  const layoutDiv = document.querySelector('.layout');
-  layoutDiv.insertAdjacentHTML('afterbegin', loaderHTML);
-  document.body.classList.add('blurred');
+function validateIP(ip) {
+  if (!ip || typeof ip !== 'string') return false;
+  ip = ip.trim();
+  return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){2}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
+    ip
+  );
 }
 
-function disabledLoaderWithBlur(loader) {
-  setTimeout(() => {
-    document.body.classList.remove('blurred');
-    loader.remove();
-  }, 2500);
+function validatePassword(password) {
+  const pass = String(password || '');
+
+  const requirements = {
+    length: pass.length >= 8,
+    uppercase: /[A-Z]/.test(pass),
+    lowercase: /[a-z]/.test(pass),
+    number: /\d/.test(pass),
+    special: /[!@#$%^&*(),.?":{}|<>]/.test(pass)
+  };
+
+  const isValid = Object.values(requirements).every(Boolean);
+
+  return {
+    isValid,
+    requirements
+  };
 }
 
+function validateUsername(username) {
+  return username.length >= 3;
+}
+
+function getPasswordStrength(requirements) {
+  const satisfiedRequirements =
+    Object.values(requirements).filter(Boolean).length;
+  if (satisfiedRequirements <= 2) return 'weak';
+  if (satisfiedRequirements === 3) return 'medium';
+  if (satisfiedRequirements === 4) return 'good';
+  return 'strong';
+}
+
+// ================================
+// FORM HANDLING & VALIDATION UI
+// ================================
 function handleFormSubmit(event) {
   event.preventDefault();
   event.stopPropagation();
@@ -343,48 +399,6 @@ function removeErrorMessage(input) {
   }
 }
 
-function validateMAC(mac) {
-  if (!mac || typeof mac !== 'string') return false;
-  mac = mac.trim();
-  return /^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$/.test(mac);
-}
-
-function validateIP(ip) {
-  if (!ip || typeof ip !== 'string') return false;
-  ip = ip.trim();
-  return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){2}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
-    ip
-  );
-}
-
-function validatePassword(password) {
-  const pass = String(password || '');
-
-  const requirements = {
-    length: pass.length >= 8,
-    uppercase: /[A-Z]/.test(pass),
-    lowercase: /[a-z]/.test(pass),
-    number: /\d/.test(pass),
-    special: /[!@#$%^&*(),.?":{}|<>]/.test(pass)
-  };
-
-  const isValid = Object.values(requirements).every(Boolean);
-
-  return {
-    isValid,
-    requirements
-  };
-}
-
-function getPasswordStrength(requirements) {
-  const satisfiedRequirements =
-    Object.values(requirements).filter(Boolean).length;
-  if (satisfiedRequirements <= 2) return 'weak';
-  if (satisfiedRequirements === 3) return 'medium';
-  if (satisfiedRequirements === 4) return 'good';
-  return 'strong';
-}
-
 function createPasswordToggle(inputField) {
   const parent = inputField.parentElement;
   if (parent.querySelector('.password-toggle-btn')) {
@@ -427,10 +441,51 @@ function createPasswordToggle(inputField) {
   parent.appendChild(toggleBtn);
 }
 
-function validateUsername(username) {
-  return username.length >= 3;
+// ================================
+// LOADER FUNCTIONS
+// ================================
+function enableLoaderWithBlur() {
+  const loaderHTML = `
+    <l-bouncy
+      id="loader"
+      size="54"
+      speed="1.9"
+      color="white"
+    ></l-bouncy>
+  `;
+  const layoutDiv = document.querySelector('.layout');
+  layoutDiv.insertAdjacentHTML('afterbegin', loaderHTML);
+  document.body.classList.add('blurred');
 }
 
+function disabledLoaderWithBlur(loader) {
+  setTimeout(() => {
+    document.body.classList.remove('blurred');
+    loader.remove();
+  }, 2500);
+}
+
+async function getAllHostWithLoader() {
+  enableLoaderWithBlur();
+  const loader = document.getElementById('loader');
+  await getAllHost();
+  disabledLoaderWithBlur(loader);
+}
+
+function enableLoaderButton(button) {
+  button.setAttribute('disabled', '');
+  button.innerHTML =
+    '<span class="spinner-border spinner-border-sm" role="status"></span>';
+}
+
+function disabledLoaderButton(button, html) {
+  button.innerHTML = html;
+  button.removeAttribute('disabled');
+}
+
+// ================================
+// HOST MANAGEMENT
+// ================================
 async function getAllHost() {
   try {
     const hostsList = document.getElementById('host-list');
@@ -483,17 +538,6 @@ async function getAllHost() {
   } catch (error) {
     console.error('Error fetching host list:', error);
   }
-}
-
-function enableLoaderButton(button) {
-  button.setAttribute('disabled', '');
-  button.innerHTML =
-    '<span class="spinner-border spinner-border-sm" role="status"></span>';
-}
-
-function disabledLoaderButton(button, html) {
-  button.innerHTML = html;
-  button.removeAttribute('disabled');
 }
 
 async function addHost() {
@@ -626,6 +670,9 @@ async function confirmDelete() {
   }
 }
 
+// ================================
+// HOST ACTIONS
+// ================================
 async function pingHost(index) {
   const button = document.getElementById(`ping-button-${index}`);
   enableLoaderButton(button);
@@ -685,27 +732,28 @@ async function wakeHost(index) {
   }
 }
 
-const simulatedData = {
-  about: {
-    version: '2.0.0',
-    lastVersion: '2.1.0',
-    notesLastVersion:
-      'Add DNS field to network configuration and fix update functionality to the latest version. Enhance UI user experience.',
-    hostname: 'demo-host'
-  },
-  networkSettings: {
-    enable: true,
-    ip: '192.168.1.100',
-    networkMask: '255.255.255.0',
-    gateway: '192.168.1.1',
-    dns: '8.8.8.8'
-  },
-  authenticationSettings: {
-    enable: true,
-    username: 'admin',
-    password: 'password123'
-  }
-};
+// ================================
+// SETTINGS MANAGEMENT
+// ================================
+async function getSettings() {
+  const button = document.getElementById(`settings-button`);
+  enableLoaderButton(button);
+  setTimeout(async () => {
+    try {
+      await Promise.all([
+        getAbout(),
+        getNetworkSettings(),
+        getAuthentication()
+      ]);
+      const modal = new bootstrap.Modal('#settings-modal');
+      modal.show();
+    } catch (error) {
+      console.error('Error loading settings:', error);
+      showNotification('Failed to load settings', 'danger', 'Error');
+    }
+    disabledLoaderButton(button, '<i class="fas fa-cog"></i>');
+  }, 1000);
+}
 
 async function getAbout() {
   try {
@@ -778,26 +826,6 @@ async function getAuthentication() {
   }
 }
 
-async function getSettings() {
-  const button = document.getElementById(`settings-button`);
-  enableLoaderButton(button);
-  setTimeout(async () => {
-    try {
-      await Promise.all([
-        getAbout(),
-        getNetworkSettings(),
-        getAuthentication()
-      ]);
-      const modal = new bootstrap.Modal('#settings-modal');
-      modal.show();
-    } catch (error) {
-      console.error('Error loading settings:', error);
-      showNotification('Failed to load settings', 'danger', 'Error');
-    }
-    disabledLoaderButton(button, '<i class="fas fa-cog"></i>');
-  }, 1000);
-}
-
 async function updateNetworkSettings() {
   const button = document.getElementById(`updateNetworkSettingsButton`);
   enableLoaderButton(button);
@@ -856,7 +884,6 @@ async function updateAuthentication() {
 
   try {
     simulatedData.authenticationSettings = { enable, username, password };
-
     setTimeout(() => {
       modal.hide();
       disabledLoaderButton(button, `Update`);
@@ -884,6 +911,34 @@ async function updateAuthentication() {
   }
 }
 
+async function resetWiFiSettings() {
+  const button = document.getElementById(`reset-wifi-button`);
+  enableLoaderButton(button);
+  try {
+    showNotification(
+      'WiFi settings reset successfully',
+      'success',
+      'Notification'
+    );
+    setTimeout(() => {
+      disabledLoaderButton(button, `Reset`);
+    }, 500);
+
+    setTimeout(() => {
+      location.reload();
+    }, 1000);
+  } catch (error) {
+    setTimeout(() => {
+      disabledLoaderButton(button, `Reset`);
+    }, 1000);
+    showNotification('Error resetting WiFi settings', 'danger', 'Error');
+    console.error('Error resetting WiFi settings:', error);
+  }
+}
+
+// ================================
+// IMPORT/EXPORT FUNCTIONS
+// ================================
 async function exportDatabase2CSV() {
   const button = document.getElementById(`exportButton`);
   enableLoaderButton(button);
@@ -981,31 +1036,9 @@ async function importDatabaseFromCSV() {
   reader.readAsText(selectedFile);
 }
 
-async function resetWiFiSettings() {
-  const button = document.getElementById(`reset-wifi-button`);
-  enableLoaderButton(button);
-  try {
-    showNotification(
-      'WiFi settings reset successfully',
-      'success',
-      'Notification'
-    );
-    setTimeout(() => {
-      disabledLoaderButton(button, `Reset`);
-    }, 500);
-
-    setTimeout(() => {
-      location.reload();
-    }, 1000);
-  } catch (error) {
-    setTimeout(() => {
-      disabledLoaderButton(button, `Reset`);
-    }, 1000);
-    showNotification('Error resetting WiFi settings', 'danger', 'Error');
-    console.error('Error resetting WiFi settings:', error);
-  }
-}
-
+// ================================
+// UPDATE VERSION MANAGEMENT
+// ================================
 async function getUpdateVersion() {
   const modal = new bootstrap.Modal('#update-version-modal');
   try {
@@ -1103,6 +1136,9 @@ async function updateToLastVersion() {
   }
 }
 
+// ================================
+// UTILITY FUNCTIONS
+// ================================
 function showNotification(message, type, title = 'Notification') {
   const notificationList = document.getElementById('notification-list');
   const notificationCount = notificationList.children.length;
