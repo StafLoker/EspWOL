@@ -17,7 +17,6 @@ let hosts = [
 ];
 
 document.addEventListener('DOMContentLoaded', async function () {
-  // Light-Dark mode toggle
   const htmlElement = document.documentElement;
   const darkModeToggle = document.getElementById('darkModeToggle');
   const darkModeIcon = document.getElementById('darkModeIcon');
@@ -50,7 +49,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     updateThemeIcon(newTheme);
   });
 
-  // Forms validation
   document.querySelectorAll('.needs-validation').forEach((form) => {
     form.addEventListener('submit', handleFormSubmit);
   });
@@ -59,10 +57,18 @@ document.addEventListener('DOMContentLoaded', async function () {
     input.addEventListener('input', () => {
       switch (input.name) {
         case 'mac':
-          testInputAndSetClass(input, validateMAC);
+          testInputAndSetClass(
+            input,
+            validateMAC,
+            'Please enter a valid MAC address (format: XX:XX:XX:XX:XX:XX)'
+          );
           break;
         case 'ip':
-          testInputAndSetClass(input, validateIP);
+          testInputAndSetClass(
+            input,
+            validateIP,
+            'Please enter a valid IP address (format: 192.168.1.1)'
+          );
           break;
         case 'password':
           testInputAndSetClass(
@@ -86,44 +92,56 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
   });
 
-  document.querySelectorAll('.modal').forEach(modal => {
-    modal.addEventListener('hidden.bs.modal', function() {
-      const requirementsContainers = this.querySelectorAll('.password-requirements-container');
-      requirementsContainers.forEach(container => {
+  document.querySelectorAll('.modal').forEach((modal) => {
+    modal.addEventListener('hidden.bs.modal', function () {
+      const requirementsContainers = this.querySelectorAll(
+        '.password-requirements-container'
+      );
+      requirementsContainers.forEach((container) => {
         if (container && container.parentNode) {
           container.parentNode.removeChild(container);
         }
       });
-      
+
+      const errorMessages = this.querySelectorAll('.validation-error-message');
+      errorMessages.forEach((msg) => {
+        if (msg && msg.parentNode) {
+          msg.parentNode.removeChild(msg);
+        }
+      });
+
       const toggleButtons = this.querySelectorAll('.password-toggle-btn');
-      toggleButtons.forEach(button => {
+      toggleButtons.forEach((button) => {
         if (button && button.parentNode) {
           button.parentNode.removeChild(button);
         }
       });
-      
-      const passwordFields = this.querySelectorAll('input[type="password"], input[name="password"]');
-      passwordFields.forEach(field => {
+
+      const passwordFields = this.querySelectorAll(
+        'input[type="password"], input[name="password"]'
+      );
+      passwordFields.forEach((field) => {
         field.classList.remove('is-valid', 'is-invalid');
         field.setCustomValidity('');
         field.value = '';
       });
-      
-      const allInputFields = this.querySelectorAll('input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"])');
-      allInputFields.forEach(field => {
+
+      const allInputFields = this.querySelectorAll(
+        'input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"])'
+      );
+      allInputFields.forEach((field) => {
         field.classList.remove('is-valid', 'is-invalid');
         field.setCustomValidity('');
       });
-      
+
       const forms = this.querySelectorAll('form');
-      forms.forEach(form => {
+      forms.forEach((form) => {
         form.classList.remove('was-validated');
         form.reset();
       });
     });
   });
 
-  // Load all hosts
   enableLoaderWithBlur();
   updateLoaderColor(currentTheme);
   const loader = document.getElementById('loader');
@@ -159,11 +177,27 @@ function disabledLoaderWithBlur(loader) {
   }, 2500);
 }
 
-async function handleFormSubmit(event) {
+function handleFormSubmit(event) {
   event.preventDefault();
   event.stopPropagation();
 
   const form = event.target;
+
+  form
+    .querySelectorAll('.validation-error-message')
+    .forEach((msg) => msg.remove());
+
+  const inputs = form.querySelectorAll(
+    'input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"])'
+  );
+  inputs.forEach((input) => {
+    if (input.value.trim() === '' && input.hasAttribute('required')) {
+      input.classList.add('is-invalid');
+      addErrorMessage(input, 'This field is required.');
+    } else {
+      input.dispatchEvent(new Event('input'));
+    }
+  });
 
   if (!form.checkValidity()) {
     form.classList.add('was-validated');
@@ -173,19 +207,19 @@ async function handleFormSubmit(event) {
   try {
     switch (form.id) {
       case 'addHostForm':
-        await addHost();
+        addHost();
         break;
       case 'editHostForm':
-        await saveEditHost();
+        saveEditHost();
         break;
       case 'editNetworkSettingsForm':
-        await updateNetworkSettings();
+        updateNetworkSettings();
         break;
       case 'editAuthenticationSettingsForm':
-        await updateAuthentication();
+        updateAuthentication();
         break;
       case 'importForm':
-        await importDatabaseFromCSV();
+        importDatabaseFromCSV();
     }
   } catch (error) {
     console.error('Error during processing form', error);
@@ -197,6 +231,8 @@ function testInputAndSetClass(
   validationFn,
   errorMessage = 'Invalid field.'
 ) {
+  removeErrorMessage(input);
+
   if (input.name === 'password') {
     if (input.value.length > 0) {
       createPasswordToggle(input);
@@ -267,6 +303,9 @@ function testInputAndSetClass(
       input.classList.remove('is-valid');
       input.classList.add('is-invalid');
       input.setCustomValidity(errorMessage);
+      if (!requirementsContainer.querySelector('.validation-error-message')) {
+        addErrorMessage(input, 'Please fulfill all password requirements.');
+      }
     }
 
     return;
@@ -280,6 +319,27 @@ function testInputAndSetClass(
     input.classList.remove('is-valid');
     input.classList.add('is-invalid');
     input.setCustomValidity(errorMessage);
+    addErrorMessage(input, errorMessage);
+  }
+}
+
+function addErrorMessage(input, message) {
+  removeErrorMessage(input);
+
+  const errorDiv = document.createElement('div');
+  errorDiv.className = 'validation-error-message text-danger small mt-1';
+  errorDiv.textContent = message;
+
+  const container = input.closest('.mb-3') || input.parentNode;
+  container.appendChild(errorDiv);
+}
+
+function removeErrorMessage(input) {
+  const container = input.closest('.mb-3') || input.parentNode;
+  const existingError = container.querySelector('.validation-error-message');
+
+  if (existingError) {
+    existingError.remove();
   }
 }
 
@@ -330,16 +390,16 @@ function createPasswordToggle(inputField) {
   if (parent.querySelector('.password-toggle-btn')) {
     return;
   }
-  
+
   if (window.getComputedStyle(parent).position === 'static') {
     parent.style.position = 'relative';
   }
-  
+
   const toggleBtn = document.createElement('button');
   toggleBtn.type = 'button';
   toggleBtn.className = 'password-toggle-btn';
   toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
-  
+
   toggleBtn.style.position = 'absolute';
   toggleBtn.style.right = '10px';
   toggleBtn.style.top = '50%';
@@ -351,8 +411,8 @@ function createPasswordToggle(inputField) {
   toggleBtn.style.height = '38px';
   toggleBtn.style.padding = '0 10px';
   toggleBtn.title = 'Show/Hide Password';
-  
-  toggleBtn.addEventListener('click', function(e) {
+
+  toggleBtn.addEventListener('click', function (e) {
     e.preventDefault();
     if (inputField.type === 'password') {
       inputField.type = 'text';
@@ -363,7 +423,7 @@ function createPasswordToggle(inputField) {
     }
     inputField.focus();
   });
-  
+
   parent.appendChild(toggleBtn);
 }
 
