@@ -1,7 +1,11 @@
+/* Base Styles
+-------------------------------------------------- */
 html {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Layout Structure
+-------------------------------------------------- */
 .layout {
   display: flex;
   flex-direction: column;
@@ -13,6 +17,8 @@ main {
   flex-grow: 1;
 }
 
+/* Footer Styles
+-------------------------------------------------- */
 footer {
   display: flex;
   justify-content: space-between;
@@ -37,6 +43,8 @@ footer span {
   font-size: 22px;
 }
 
+/* Status Indicators
+-------------------------------------------------- */
 .status-circle {
   width: 15px;
   height: 15px;
@@ -54,6 +62,69 @@ footer span {
   background-color: red;
 }
 
+/* Lumen Effect for Status Circles
+-------------------------------------------------- */
+.lumen {
+  box-shadow: 0 0 10px 3px rgba(0, 255, 0, 0.6);
+  animation: lumen-pulse 2s infinite ease-in-out;
+  background-color: #00ff00 !important; /* Bright green */
+  position: relative;
+}
+
+.lumen-red {
+  box-shadow: 0 0 10px 3px rgba(255, 0, 0, 0.6);
+  animation: lumen-pulse-red 2s infinite ease-in-out;
+  background-color: #ff0000 !important; /* Bright red */
+  position: relative;
+}
+
+@keyframes lumen-pulse {
+  0% {
+    box-shadow: 0 0 10px 3px rgba(0, 255, 0, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 15px 5px rgba(0, 255, 0, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 10px 3px rgba(0, 255, 0, 0.6);
+  }
+}
+
+@keyframes lumen-pulse-red {
+  0% {
+    box-shadow: 0 0 10px 3px rgba(255, 0, 0, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 15px 5px rgba(255, 0, 0, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 10px 3px rgba(255, 0, 0, 0.6);
+  }
+}
+
+.lumen::after,
+.lumen-red::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  z-index: -1;
+  opacity: 0.5;
+}
+
+.lumen::after {
+  background: radial-gradient(circle, rgba(0, 255, 0, 0.8) 0%, rgba(0, 255, 0, 0) 70%);
+}
+
+.lumen-red::after {
+  background: radial-gradient(circle, rgba(255, 0, 0, 0.8) 0%, rgba(255, 0, 0, 0) 70%);
+}
+
+/* Loading & Blur Effects
+-------------------------------------------------- */
 l-bouncy {
   position: fixed;
   top: 50%;
@@ -71,6 +142,8 @@ body.blurred button {
   opacity: 0.5;
 }
 
+/* Update Container
+-------------------------------------------------- */
 #update-container {
   display: flex;
   flex-direction: column;
@@ -82,12 +155,12 @@ body.blurred button {
   transform: translate(-50%, -50%);
   text-align: center;
   width: 35%;
-  z-index: 9999; /* Ensure it's above other content */
+  z-index: 9999;
 }
 
 #update-container h3 {
   margin-bottom: 20px;
-  color: white; /* Optional: if you want the text to be white */
+  color: white;
 }
 
 #update-container .progress {
@@ -95,6 +168,8 @@ body.blurred button {
   max-width: 400px;
 }
 
+/* Password Requirements & Validation
+-------------------------------------------------- */
 .password-requirements-container {
   margin-top: 0.5rem;
   margin-bottom: 1rem;
@@ -127,6 +202,17 @@ body.blurred button {
   color: var(--bs-danger);
 }
 
+/* Dark theme adjustments */
+html[data-bs-theme="dark"] .requirement-valid {
+  color: #4ade80;
+}
+
+html[data-bs-theme="dark"] .requirement-invalid {
+  color: #f87171;
+}
+
+/* Password Strength Indicator
+-------------------------------------------------- */
 .password-strength {
   height: 5px;
   margin-top: 0.5rem;
@@ -154,23 +240,8 @@ body.blurred button {
   width: 100%;
 }
 
-html[data-bs-theme="dark"] .requirement-valid {
-  color: #4ade80;
-}
-
-html[data-bs-theme="dark"] .requirement-invalid {
-  color: #f87171;
-}
-
-.password-toggle-btn:focus {
-  outline: none;
-  box-shadow: none;
-}
-
-.password-toggle-btn:hover {
-  color: var(--bs-primary);
-}
-
+/* Password Toggle Button
+-------------------------------------------------- */
 .password-toggle-btn {
   position: absolute !important;
   right: 10px !important;
@@ -204,73 +275,9 @@ html[data-bs-theme="dark"] .requirement-invalid {
   padding-right: 40px !important;
 }
 
+/* Form Layout Adjustments
+-------------------------------------------------- */
 .modal .form-group,
 .modal .mb-3 {
   position: relative !important;
-}
-
-/* Lumen Effect for Status Circles */
-
-/* New lumen (glow) effect */
-.lumen {
-  box-shadow: 0 0 10px 3px rgba(0, 255, 0, 0.6);
-  animation: lumen-pulse 2s infinite ease-in-out;
-  background-color: #00ff00 !important; /* Bright green */
-  position: relative;
-}
-
-/* Red lumen effect */
-.lumen-red {
-  box-shadow: 0 0 10px 3px rgba(255, 0, 0, 0.6);
-  animation: lumen-pulse-red 2s infinite ease-in-out;
-  background-color: #ff0000 !important; /* Bright red */
-  position: relative;
-}
-
-/* Lumen pulse animation */
-@keyframes lumen-pulse {
-  0% {
-    box-shadow: 0 0 10px 3px rgba(0, 255, 0, 0.6);
-  }
-  50% {
-    box-shadow: 0 0 15px 5px rgba(0, 255, 0, 0.8);
-  }
-  100% {
-    box-shadow: 0 0 10px 3px rgba(0, 255, 0, 0.6);
-  }
-}
-
-/* Red lumen pulse animation */
-@keyframes lumen-pulse-red {
-  0% {
-    box-shadow: 0 0 10px 3px rgba(255, 0, 0, 0.6);
-  }
-  50% {
-    box-shadow: 0 0 15px 5px rgba(255, 0, 0, 0.8);
-  }
-  100% {
-    box-shadow: 0 0 10px 3px rgba(255, 0, 0, 0.6);
-  }
-}
-
-/* Add radial effect for extra luminosity */
-.lumen::after,
-.lumen-red::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  z-index: -1;
-  opacity: 0.5;
-}
-
-.lumen::after {
-  background: radial-gradient(circle, rgba(0, 255, 0, 0.8) 0%, rgba(0, 255, 0, 0) 70%);
-}
-
-.lumen-red::after {
-  background: radial-gradient(circle, rgba(255, 0, 0, 0.8) 0%, rgba(255, 0, 0, 0) 70%);
 }
