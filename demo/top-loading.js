@@ -371,6 +371,41 @@
         name: 'confirmDelete', 
         buttonFn: () => '#delete-button', 
         delay: 1000 
+      },
+      { 
+        name: 'updateNetworkSettings', 
+        buttonFn: () => '#updateNetworkSettingsButton', 
+        delay: 500 
+      },
+      { 
+        name: 'updateAuthentication', 
+        buttonFn: () => '#updateAuthenticationButton', 
+        delay: 500 
+      },
+      { 
+        name: 'resetWiFiSettings', 
+        buttonFn: () => '#reset-wifi-button', 
+        delay: 500 
+      },
+      { 
+        name: 'exportDatabase2CSV', 
+        buttonFn: () => '#exportButton', 
+        delay: 500 
+      },
+      { 
+        name: 'importDatabaseFromCSV', 
+        buttonFn: () => '#importButton', 
+        delay: 1000 
+      },
+      { 
+        name: 'updateToLastVersion', 
+        buttonFn: () => '#button-update-version', 
+        delay: 1000 
+      },
+      { 
+        name: 'getUpdateVersion', 
+        buttonFn: () => '#version', 
+        delay: 500 
       }
     ];
     
