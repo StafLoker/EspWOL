@@ -80,6 +80,10 @@ document.addEventListener('DOMContentLoaded', async function () {
           break;
       }
     });
+
+    if (input.name === 'password' && input.value) {
+      input.dispatchEvent(new Event('input'));
+    }
   });
 
   // Load all hosts
@@ -156,6 +160,78 @@ function testInputAndSetClass(
   validationFn,
   errorMessage = 'Invalid field.'
 ) {
+  if (input.name === 'password') {
+    const result = validationFn(input.value);
+
+    let requirementsContainer = input.nextElementSibling;
+    if (
+      !requirementsContainer ||
+      !requirementsContainer.classList.contains(
+        'password-requirements-container'
+      )
+    ) {
+      requirementsContainer = document.createElement('div');
+      requirementsContainer.className = 'password-requirements-container';
+
+      const strengthIndicator = document.createElement('div');
+      strengthIndicator.className = 'password-strength';
+
+      const requirementsList = document.createElement('ul');
+      requirementsList.className = 'password-requirements';
+
+      const requirements = [
+        { key: 'length', text: 'At least 8 characters' },
+        { key: 'uppercase', text: 'At least one uppercase letter' },
+        { key: 'lowercase', text: 'At least one lowercase letter' },
+        { key: 'number', text: 'At least one number' },
+        { key: 'special', text: 'At least one special character' }
+      ];
+
+      requirements.forEach((req) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<i class="fas fa-times requirement-invalid"></i> ${req.text}`;
+        li.dataset.requirement = req.key;
+        requirementsList.appendChild(li);
+      });
+
+      requirementsContainer.appendChild(strengthIndicator);
+      requirementsContainer.appendChild(requirementsList);
+
+      input.parentNode.insertBefore(requirementsContainer, input.nextSibling);
+    }
+
+    const strengthIndicator =
+      requirementsContainer.querySelector('.password-strength');
+    const requirementItems = requirementsContainer.querySelectorAll('li');
+
+    const strength = getPasswordStrength(result.requirements);
+    strengthIndicator.className = 'password-strength';
+    strengthIndicator.classList.add(`strength-${strength}`);
+
+    requirementItems.forEach((item) => {
+      const requirement = item.dataset.requirement;
+      const icon = item.querySelector('i');
+
+      if (result.requirements[requirement]) {
+        icon.className = 'fas fa-check requirement-valid';
+      } else {
+        icon.className = 'fas fa-times requirement-invalid';
+      }
+    });
+
+    if (result.isValid) {
+      input.classList.remove('is-invalid');
+      input.classList.add('is-valid');
+      input.setCustomValidity('');
+    } else {
+      input.classList.remove('is-valid');
+      input.classList.add('is-invalid');
+      input.setCustomValidity(errorMessage);
+    }
+
+    return;
+  }
+
   if (validationFn(input.value)) {
     input.classList.remove('is-invalid');
     input.classList.add('is-valid');
@@ -168,24 +244,83 @@ function testInputAndSetClass(
 }
 
 function validateMAC(mac) {
+  if (!mac || typeof mac !== 'string') return false;
+  mac = mac.trim();
   return /^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$/.test(mac);
 }
-
 
 function validateIP(ip) {
   if (!ip || typeof ip !== 'string') return false;
   ip = ip.trim();
-  return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){2}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ip);
+  return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){2}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
+    ip
+  );
 }
 
 function validatePassword(password) {
-  return (
-    password.length >= 8 &&
-    /[A-Z]/.test(password) &&
-    /[a-z]/.test(password) &&
-    /\d/.test(password) &&
-    /[!@#$%^&*(),.?":{}|<>]/.test(password)
-  );
+  const pass = String(password || '');
+
+  const requirements = {
+    length: pass.length >= 8,
+    uppercase: /[A-Z]/.test(pass),
+    lowercase: /[a-z]/.test(pass),
+    number: /\d/.test(pass),
+    special: /[!@#$%^&*(),.?":{}|<>]/.test(pass)
+  };
+
+  const isValid = Object.values(requirements).every(Boolean);
+
+  return {
+    isValid,
+    requirements
+  };
+}
+
+function getPasswordStrength(requirements) {
+  const satisfiedRequirements =
+    Object.values(requirements).filter(Boolean).length;
+  if (satisfiedRequirements <= 2) return 'weak';
+  if (satisfiedRequirements === 3) return 'medium';
+  if (satisfiedRequirements === 4) return 'good';
+  return 'strong';
+}
+
+function createPasswordToggle(inputField) {
+  const parent = inputField.parentElement;
+  if (parent.querySelector('.password-toggle-btn')) {
+    return;
+  }
+
+  if (window.getComputedStyle(parent).position === 'static') {
+    parent.style.position = 'relative';
+  }
+
+  const toggleBtn = document.createElement('button');
+  toggleBtn.type = 'button';
+  toggleBtn.className = 'password-toggle-btn';
+  toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
+  toggleBtn.style.position = 'absolute';
+  toggleBtn.style.right = '10px';
+  toggleBtn.style.top = '50%';
+  toggleBtn.style.transform = 'translateY(-50%)';
+  toggleBtn.style.border = 'none';
+  toggleBtn.style.background = 'transparent';
+  toggleBtn.style.cursor = 'pointer';
+  toggleBtn.style.zIndex = '100';
+  toggleBtn.title = 'Show/Hide Password';
+
+  toggleBtn.addEventListener('click', function () {
+    if (inputField.type === 'password') {
+      inputField.type = 'text';
+      toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+    } else {
+      inputField.type = 'password';
+      toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
+    }
+    inputField.focus();
+  });
+
+  parent.appendChild(toggleBtn);
 }
 
 function validateUsername(username) {
@@ -399,19 +534,19 @@ async function pingHost(index) {
 
       if (success) {
         statusCircle.classList.remove('red', 'lumen-red');
-        
+
         statusCircle.classList.add('green', 'lumen');
 
         showNotification('Ping successful', 'success');
-        
+
         setTimeout(() => {
           statusCircle.classList.remove('lumen', 'green');
         }, 10000);
       } else {
         statusCircle.classList.remove('green', 'lumen');
-        
+
         statusCircle.classList.add('red', 'lumen-red');
-        
+
         showNotification('Ping failed', 'danger', 'Error');
 
         setTimeout(() => {
