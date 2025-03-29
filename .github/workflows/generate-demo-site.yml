@@ -1,0 +1,51 @@
+name: Generate Demo Site
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'dev/**'
+  workflow_dispatch:
+
+jobs:
+  build-demo:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'dev/package.json'
+
+      - name: Install Dependencies
+        run: |
+          cd dev
+          npm install
+
+      - name: Build Demo
+        run: |
+          cd dev
+          npm run build:demo
+
+      - name: Commit Updated Demo Files
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          
+          # Check if there are changes to commit
+          if [[ -n $(git status --porcelain demo/) ]]; then
+            git add demo/
+            git commit -m "Update demo site files [skip ci]"
+            git push
+          else
+            echo "No changes to commit"
+          fi

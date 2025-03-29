@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wake on LAN</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/ldrs/dist/auto/bouncy.js"
+    ></script>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/core.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/validation.js"></script>
+    <script src="js/api.js"></script>
+  </head>
+  <body>
+    <div class="layout">
+      <header class="d-flex justify-content-end p-3">
+        <button id="darkModeToggle" class="btn btn-outline-secondary">
+          <i id="darkModeIcon" class="fas"></i>
+        </button>
+      </header>
+      <main class="container mt-5">
+        <h1 class="text-center">Wake on LAN</h1>
+
+        <!-- Control -->
+        <h2 class="mt-4 d-flex justify-content-between align-items-center">
+          <span>Hosts</span>
+          <div class="ml-auto">
+            <!-- Big screens -->
+            <div class="d-none d-sm-inline-block">
+              <button
+                class="btn btn-success"
+                title="Add"
+                data-bs-toggle="modal"
+                data-bs-target="#add-host-modal"
+              >
+                <i class="fas fa-plus"></i>
+              </button>
+              <button
+                id="settings-button"
+                class="btn btn-secondary btn-md"
+                title="Settings"
+                onclick="getSettings()"
+              >
+                <i class="fas fa-cog"></i>
+              </button>
+              <button
+                class="btn btn-warning btn-md"
+                title="Export"
+                data-bs-toggle="modal"
+                data-bs-target="#export-import-modal"
+              >
+                <i class="fas fa-file-export"></i>
+              </button>
+            </div>
+
+            <!-- Mobile screens -->
+            <div class="dropdown d-sm-none">
+              <button
+                class="btn btn-secondary dropdown-toggle"
+                type="button"
+                id="mobileControlMenu"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <i class="fas fa-bars"></i>
+              </button>
+              <ul
+                class="dropdown-menu dropdown-menu-end"
+                aria-labelledby="mobileControlMenu"
+              >
+                <li>
+                  <button
+                    class="dropdown-item"
+                    data-bs-toggle="modal"
+                    data-bs-target="#add-host-modal"
+                  >
+                    <i class="fas fa-plus text-success"></i> Add Host
+                  </button>
+                </li>
+                <li>
+                  <button class="dropdown-item" onclick="getSettings()">
+                    <i class="fas fa-cog text-secondary"></i> Settings
+                  </button>
+                </li>
+                <li>
+                  <button
+                    class="dropdown-item"
+                    data-bs-toggle="modal"
+                    data-bs-target="#export-import-modal"
+                  >
+                    <i class="fas fa-file-export text-warning"></i>
+                    Export/Import
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </h2>
+        <hr />
+        <!-- HOST List -->
+        <ul id="host-list" class="list-group mt-3"></ul>
+      </main>
+      <!-- Alert Zone (Toast Container) -->
+      <div aria-live="polite" aria-atomic="true" class="position-relative">
+        <div
+          class="toast-container bottom-0 end-0 p-3"
+          id="notification-list"
+        ></div>
+      </div>
+
+      <footer class="bg-body-secondary">
+        <span class="fw-medium font-monospace">EspWOL</span>
+        <span class="fw-medium">&copy; 2025 StafLoker</span>
+        <a
+          href="https://github.com/StafLoker/EspWOL"
+          id="github"
+          target="_blank"
+        >
+          <i class="fab fa-github"></i>
+        </a>
+      </footer>
+    </div>
+
+    <!-- Add host modal -->
+    <div
+      class="modal fade"
+      id="add-host-modal"
+      tabindex="-1"
+      aria-labelledby="addHostLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addHostLabel">Add host</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form class="needs-validation" novalidate id="addHostForm">
+              <div class="mb-3">
+                <label for="host-name" class="form-label">Name</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="hostname"
+                  id="host-name"
+                  placeholder="Enter hostname"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="host-mac" class="form-label">MAC Address</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="mac"
+                  id="host-mac"
+                  placeholder="AA:BB:CC:DD:EE:FF"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="host-ip" class="form-label">IP Address</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="ip"
+                  id="host-ip"
+                  placeholder="192.168.1.100"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="add-select-periodic-ping" class="form-label"
+                  >Periodic ping</label
+                >
+                <select
+                  class="form-select"
+                  id="add-select-periodic-ping"
+                  aria-label="Periodic ping"
+                >
+                  <option value="0" selected>Disabled</option>
+                  <option value="60">1 min</option>
+                  <option value="300">5 min</option>
+                  <option value="600">10 min</option>
+                  <option value="900">15 min</option>
+                  <option value="1800">30 min</option>
+                  <option value="2700">45 min</option>
+                  <option value="3600">1 hour</option>
+                  <option value="10800">3 hours</option>
+                  <option value="21600">6 hours</option>
+                  <option value="43200">12 hours</option>
+                  <option value="86400">24 hours</option>
+                </select>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              id="add-button"
+              type="submit"
+              class="btn btn-primary"
+              form="addHostForm"
+            >
+              Add
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit host modal -->
+    <div
+      class="modal fade"
+      id="edit-host-modal"
+      tabindex="-1"
+      aria-labelledby="editHostLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editHostLabel">Edit host</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form class="needs-validation" novalidate id="editHostForm">
+              <div class="mb-3">
+                <label for="edit-host-name" class="form-label">Name</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="edit-host-name"
+                  name="hostname"
+                  placeholder="Enter hostname"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="edit-host-mac" class="form-label"
+                  >MAC Address</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  name="mac"
+                  id="edit-host-mac"
+                  placeholder="AA:BB:CC:DD:EE:FF"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="edit-host-ip" class="form-label">IP Address</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="ip"
+                  id="edit-host-ip"
+                  placeholder="192.168.1.100"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="edit-select-periodic-ping" class="form-label"
+                  >Periodic ping</label
+                >
+                <select
+                  class="form-select"
+                  id="edit-select-periodic-ping"
+                  aria-label="Periodic ping"
+                >
+                  <option value="0" selected>Disabled</option>
+                  <option value="60">1 min</option>
+                  <option value="300">5 min</option>
+                  <option value="600">10 min</option>
+                  <option value="900">15 min</option>
+                  <option value="1800">30 min</option>
+                  <option value="2700">45 min</option>
+                  <option value="3600">1 hour</option>
+                  <option value="10800">3 hours</option>
+                  <option value="21600">6 hours</option>
+                  <option value="43200">12 hours</option>
+                  <option value="86400">24 hours</option>
+                </select>
+                <small
+                  class="text-muted d-flex justify-content-end"
+                  id="edit-last-ping"
+                >
+                  Last ping: _ min ago
+                </small>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              id="save-button"
+              type="submit"
+              class="btn btn-primary"
+              form="editHostForm"
+            >
+              Save changes
+            </button>
+            <button
+              id="delete-button"
+              type="button"
+              class="btn btn-danger"
+              onclick="confirmDelete()"
+            >
+              Delete
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings modal -->
+    <div
+      class="modal fade"
+      id="settings-modal"
+      tabindex="-1"
+      aria-labelledby="settingsLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="settingsLabel">Settings</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <!-- About card -->
+            <div class="card">
+              <div class="card-header">
+                <h5 class="modal-title">About</h5>
+              </div>
+              <div class="card-body">
+                <p class="card-text">
+                  Version:
+                  <span id="version-container" class="position-relative">
+                    <button
+                      id="version"
+                      style="border: 0px"
+                      class="badge rounded-pill"
+                      data-bs-dismiss="modal"
+                      onclick="getUpdateVersion()"
+                    ></button>
+                  </span>
+                </p>
+                <p class="card-text">
+                  Hostname:
+                  <span id="hostname" class="badge text-bg-info"></span>
+                </p>
+              </div>
+            </div>
+            <hr />
+
+            <!-- Network card -->
+            <div class="card">
+              <div class="card-header">
+                <h5 class="modal-title">Network</h5>
+              </div>
+              <div class="card-body">
+                <form
+                  class="needs-validation"
+                  id="editNetworkSettingsForm"
+                  novalidate
+                >
+                  <div class="form-check form-check-inline mb-3">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      name="inlineRadioOptions"
+                      id="inlineRadioStaticIP"
+                      value="staticIP"
+                      onchange="toggleNetworkFields()"
+                    />
+                    <label class="form-check-label" for="inlineRadio1"
+                      >Static IP</label
+                    >
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      name="inlineRadioOptions"
+                      id="inlineRadioDHCP"
+                      value="dhcp"
+                      onchange="toggleNetworkFields()"
+                    />
+                    <label class="form-check-label" for="inlineRadio2"
+                      >DHCP</label
+                    >
+                  </div>
+                  <div class="mb-3">
+                    <label for="ip" class="form-label">IP:</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="ip"
+                      id="fieldIP"
+                      placeholder="192.168.2.9"
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label for="static-network-mask" class="form-label"
+                      >Network Mask:</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="ip"
+                      id="fieldNetworkMask"
+                      placeholder="255.255.255.0"
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label for="static-gateway" class="form-label"
+                      >Gateway:</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="ip"
+                      id="fieldGateway"
+                      placeholder="192.168.2.1"
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label for="static-dns" class="form-label"
+                      >DNS server:</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="ip"
+                      id="fieldDNS"
+                      placeholder="8.8.8.8"
+                    />
+                  </div>
+                </form>
+              </div>
+              <div class="card-footer">
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  form="editNetworkSettingsForm"
+                  id="updateNetworkSettingsButton"
+                >
+                  Update
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-danger"
+                  title="Reset WiFi"
+                  data-bs-toggle="modal"
+                  data-bs-target="#reset-wifi-modal"
+                  data-bs-dismiss="modal"
+                >
+                  Reset WiFi
+                </button>
+              </div>
+            </div>
+            <hr />
+
+            <!-- Authentication card -->
+            <div class="card">
+              <div class="card-header">
+                <h5 class="modal-title">Authentication</h5>
+              </div>
+              <div class="card-body">
+                <form
+                  class="needs-validation"
+                  id="editAuthenticationSettingsForm"
+                  novalidate
+                >
+                  <div class="form-check form-switch mb-3">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      role="switch"
+                      id="switchEnableAuthentication"
+                      aria-checked="mixed"
+                      onchange="toggleAuthenticationFields()"
+                    />
+                    <label
+                      class="form-check-label"
+                      for="switchEnableAuthentication"
+                      >Enable</label
+                    >
+                  </div>
+                  <div class="mb-3">
+                    <label for="username" class="form-label">Username:</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="username"
+                      id="fieldUsername"
+                      placeholder="Enter username"
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label for="password" class="form-label">Password:</label>
+                    <input
+                      type="password"
+                      class="form-control"
+                      name="password"
+                      id="fieldPassword"
+                      placeholder="*********"
+                    />
+                  </div>
+                </form>
+              </div>
+              <div class="card-footer">
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  id="updateAuthenticationButton"
+                  form="editAuthenticationSettingsForm"
+                >
+                  Update
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export/import modal -->
+    <div
+      class="modal fade"
+      id="export-import-modal"
+      tabindex="-1"
+      aria-labelledby="exportLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exportLabel">Export & Import</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <!-- Export card -->
+            <div class="card">
+              <div class="card-header">
+                <h5 class="modal-title">Export</h5>
+              </div>
+              <div class="card-body">
+                <p class="card-text">Export your database to CSV file.</p>
+              </div>
+              <div class="card-footer">
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  id="exportButton"
+                  onclick="exportDatabase2CSV()"
+                >
+                  Export
+                </button>
+              </div>
+            </div>
+            <hr />
+
+            <!-- Import card -->
+            <div class="card">
+              <div class="card-header">
+                <h5 class="modal-title">Import</h5>
+              </div>
+              <div class="card-body">
+                <form class="needs-validation" id="importForm" novalidate>
+                  <p class="card-text">Import your database from CSV file.</p>
+                  <div class="mb-3">
+                    <input
+                      class="form-control"
+                      type="file"
+                      id="importFormFile"
+                      accept=".csv"
+                      required
+                    />
+                  </div>
+                </form>
+              </div>
+              <div class="card-footer">
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  id="importButton"
+                  form="importForm"
+                >
+                  Import
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reset wifi modal -->
+    <div
+      class="modal fade"
+      id="reset-wifi-modal"
+      tabindex="-1"
+      aria-labelledby="resetWiFiLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="resetWiFiLabel">Reset WiFi Settings</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p>
+              Are you sure you want to reset WiFi settings? This will clear
+              saved credentials.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button
+              id="reset-wifi-button"
+              type="button"
+              class="btn btn-danger"
+              onclick="resetWiFiSettings()"
+            >
+              Reset
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+              data-bs-toggle="modal"
+              data-bs-target="#settings-modal"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Update version modal -->
+    <div
+      class="modal fade"
+      id="update-version-modal"
+      tabindex="-1"
+      aria-labelledby="updateVersionLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="updateVersionLabel">Update version</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p id="update-version-text-body"></p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              id="button-update-version"
+              class="btn btn-success"
+              onclick="updateToLastVersion()"
+            >
+              Update
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+              data-bs-toggle="modal"
+              data-bs-target="#settings-modal"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
