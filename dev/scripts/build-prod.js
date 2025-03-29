@@ -13,7 +13,7 @@ const chalk = require('chalk');
 
 // Paths
 const SRC_DIR = path.join(__dirname, '../src');
-const FIRMWARE_DIR = path.join(__dirname, '../../../firmware/EspWOL');
+const FIRMWARE_DIR = path.join(__dirname, '../../firmware/EspWOL');
 const JS_DIR = path.join(SRC_DIR, 'js');
 
 // Options
