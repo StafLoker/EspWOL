@@ -110,3 +110,69 @@ body.blurred button {
   width: 80%;
   max-width: 400px;
 }
+
+/* Lumen Effect for Status Circles */
+
+/* New lumen (glow) effect */
+.lumen {
+  box-shadow: 0 0 10px 3px rgba(0, 255, 0, 0.6);
+  animation: lumen-pulse 2s infinite ease-in-out;
+  background-color: #00ff00 !important; /* Bright green */
+  position: relative;
+}
+
+/* Red lumen effect */
+.lumen-red {
+  box-shadow: 0 0 10px 3px rgba(255, 0, 0, 0.6);
+  animation: lumen-pulse-red 2s infinite ease-in-out;
+  background-color: #ff0000 !important; /* Bright red */
+  position: relative;
+}
+
+/* Lumen pulse animation */
+@keyframes lumen-pulse {
+  0% {
+    box-shadow: 0 0 10px 3px rgba(0, 255, 0, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 15px 5px rgba(0, 255, 0, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 10px 3px rgba(0, 255, 0, 0.6);
+  }
+}
+
+/* Red lumen pulse animation */
+@keyframes lumen-pulse-red {
+  0% {
+    box-shadow: 0 0 10px 3px rgba(255, 0, 0, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 15px 5px rgba(255, 0, 0, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 10px 3px rgba(255, 0, 0, 0.6);
+  }
+}
+
+/* Add radial effect for extra luminosity */
+.lumen::after,
+.lumen-red::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  z-index: -1;
+  opacity: 0.5;
+}
+
+.lumen::after {
+  background: radial-gradient(circle, rgba(0, 255, 0, 0.8) 0%, rgba(0, 255, 0, 0) 70%);
+}
+
+.lumen-red::after {
+  background: radial-gradient(circle, rgba(255, 0, 0, 0.8) 0%, rgba(255, 0, 0, 0) 70%);
+}

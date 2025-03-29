@@ -398,22 +398,24 @@ async function pingHost(index) {
       disabledLoaderButton(button, '<i class="fas fa-table-tennis"></i>');
 
       if (success) {
-        statusCircle.classList.remove('red');
-        statusCircle.classList.add('green');
-        statusCircle.classList.add('blinking');
+        statusCircle.classList.remove('red', 'blinking', 'lumen-red');
+        
+        statusCircle.classList.add('green', 'lumen');
 
         showNotification('Ping successful', 'success');
+        
         setTimeout(() => {
-          statusCircle.classList.remove('blinking');
-          statusCircle.classList.remove('green');
+          statusCircle.classList.remove('lumen', 'green');
         }, 10000);
       } else {
-        statusCircle.classList.remove('green', 'blinking');
-        statusCircle.classList.add('red');
+        statusCircle.classList.remove('green', 'blinking', 'lumen');
+        
+        statusCircle.classList.add('red', 'lumen-red');
+        
         showNotification('Ping failed', 'danger', 'Error');
 
         setTimeout(() => {
-          statusCircle.classList.remove('red');
+          statusCircle.classList.remove('lumen-red', 'red');
         }, 10000);
       }
     }, 2000);
