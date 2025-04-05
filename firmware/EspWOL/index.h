@@ -183,7 +183,7 @@ const char indexHtmlPage[] PROGMEM = R"rawliteral(
       }
 
       function validateIP(ip) {
-        return /^(25[0-5]|2[0-4]\d|1\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d|[1-9]?\d)){3}$/.test(
+        return /^(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])){3}$/.test(
           ip
         );
       }
