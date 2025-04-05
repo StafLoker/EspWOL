@@ -1,14 +1,14 @@
 {
   "name": "EspWOL",
   "about": "ESP8266 Wake On Lan web server with modern ui",
-  "version": "2.3.1",
-  "notes": "Enhance UI/UX user experience with mobiles screens.",
+  "version": "2.3.2",
+  "notes": "Fixed ip field validation of form.",
   "builds": [
     {
       "chipFamily": "ESP8266",
       "parts": [
         {
-          "path": "https://raw.githubusercontent.com/StafLoker/EspWOL/main/bin/EspWOL-generic-v2-3-1.bin",
+          "path": "https://raw.githubusercontent.com/StafLoker/EspWOL/main/bin/EspWOL-generic-v2-3-2.bin",
           "offset": 0
         }
       ]
