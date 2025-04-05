@@ -64,15 +64,6 @@ jobs:
         with:
           name: esp8266-firmware
           path: bin/*.bin
-          
-      - name: Commit and Push Binaries to Repository
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          git add bin/*.bin
-          git commit -m "Update binaries for release ${GITHUB_REF#refs/tags/}" || echo "No changes to commit"
-          git push origin HEAD:${GITHUB_REF_NAME} || echo "Could not push to same branch, will push to main"
-          git push origin HEAD:main || echo "No changes pushed"
 
   release:
     needs: build

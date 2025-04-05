@@ -1,14 +1,14 @@
 {
   "name": "EspWOL",
   "about": "ESP8266 Wake On Lan web server with modern ui",
-  "version": "2.3.2",
-  "notes": "Fixed ip field validation of form.",
+  "version": "2.3.3",
+  "notes": "Change firmware release path.",
   "builds": [
     {
       "chipFamily": "ESP8266",
       "parts": [
         {
-          "path": "https://raw.githubusercontent.com/StafLoker/EspWOL/main/bin/EspWOL-generic-v2-3-2.bin",
+          "path": "https://github.com/StafLoker/EspWOL/releases/latest/download/EspWOL-generic-v2-3-3.bin",
           "offset": 0
         }
       ]
