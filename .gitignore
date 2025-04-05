@@ -3,6 +3,7 @@
 ###########
 
 build/
+dev/node_modules
 
 #########
 # MacOS #
