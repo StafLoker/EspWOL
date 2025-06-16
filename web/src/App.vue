@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen bg-stone-200 dark:bg-zinc-900 relative overflow-hidden p-2 flex flex-col">
+  <div class="h-screen bg-stone-200 dark:bg-zinc-900 relative overflow-hidden px-3 py-4 flex flex-col">
     <div class="absolute inset-0 opacity-25">
       <svg class="w-full h-full" viewBox="0 0 1400 800" xmlns="http://www.w3.org/2000/svg">
         <g
@@ -112,7 +112,7 @@
       </RouterLink>
     </header>
 
-    <main class="flex-1 relative z-10">
+    <main class="flex-1 relative z-10 pt-10 px-5">
       <RouterView />
     </main>
   </div>

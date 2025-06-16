@@ -20,6 +20,10 @@ export const i18n = createI18n({
           placeholderPassword: "Please enter password",
           signin: "Sign in",
           invalidCredentials: "Invalid credentials"
+        },
+        home: {
+          hosts: "Hosts",
+          addHost: "Add"
         }
       }
     }

@@ -47,7 +47,7 @@
         <!-- Submit Button -->
         <button
           type="submit"
-          class="button"
+          class="form-button"
         >
           {{ $t('pages.login.signin') }}
         </button>
