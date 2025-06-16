@@ -4,11 +4,18 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "vite --mode development",
+    "demo": "vite --mode demo",
+    "build": "vite build --mode production",
+    "build:demo": "vite build --mode demo",
+    "build:esp8266": "vite build --mode production && npm run optimize:esp8266",
+    "optimize:esp8266": "node scripts/optimize-for-esp8266.js",
     "preview": "vite preview",
+    "preview:demo": "vite preview --mode demo",
     "lint": "eslint . --fix",
-    "format": "prettier --write src/"
+    "format": "prettier --write src/",
+    "analyze": "npx vite-bundle-analyzer dist",
+    "serve:esp8266": "cd dist && python3 -m http.server 8080"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.10",
@@ -30,5 +37,15 @@
     "prettier": "3.5.3",
     "vite": "^6.2.4",
     "vite-plugin-vue-devtools": "^7.7.2"
-  }
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ]
 }
