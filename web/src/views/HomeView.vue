@@ -144,7 +144,6 @@ import {
   AlertDialogAction
 } from 'reka-ui'
 import { ref, onMounted, onUnmounted } from 'vue'
-import { hosts, networkOps, environment, handleApiError } from '@/services'
 
 // State
 const hostsList = ref([])
@@ -158,16 +157,7 @@ const hostToDeleteIndex = ref(null)
 const hostToDelete = ref(null)
 const hostToEdit = ref(null)
 
-// Computed
-const hostsWithStatus = computed(() => {
-  return hostsList.value.map(host => ({
-    ...host,
-    isOnline: host.isOnline || false
-  }))
-})
-
-// Use the computed hosts
-const hosts = hostsWithStatus
+const hosts = ref([])
 
 // Methods
 async function loadHosts() {
@@ -336,7 +326,4 @@ onMounted(async () => {
 onUnmounted(() => {
   stopAutoRefresh()
 })
-
-// Fix computed import
-import { computed } from 'vue'
 </script>

@@ -1,8 +1,3 @@
-/**
- * API Service for EspWOL
- * Handles all API communications with proper error handling
- */
-
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://wol.local'
 
 class ApiError extends Error {
@@ -110,19 +105,7 @@ export const systemApi = {
   // Get system information
   async getAbout() {
     return await apiRequest('/about')
-  },
-
-  // Get version information
-  async getVersionInfo() {
-    return await apiRequest('/updateVersion')
-  },
-
-  // Update to latest version
-  async updateVersion() {
-    return await apiRequest('/updateVersion', {
-      method: 'POST',
-    })
-  },
+  }
 }
 
 // Settings API

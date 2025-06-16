@@ -1,60 +1,44 @@
-/**
- * Mock Service for Development/Demo
- * Simulates API responses with realistic delays
- */
-
 // Mock data
 let mockHosts = [
   {
-    name: 'Server Principal',
+    name: 'Main Server',
     mac: 'e8:e0:5e:97:3d:af',
     ip: '192.168.2.7',
-    periodicPing: 60,
     autoWake: true,
     isOnline: true,
-    lastPing: 120
   },
   {
-    name: 'Estación de Trabajo',
+    name: 'Work Server',
     mac: '12:34:56:78:90:ab',
     ip: '192.168.2.8',
-    periodicPing: 300,
     autoWake: false,
     isOnline: false,
-    lastPing: 3600
   },
   {
     name: 'PC Gaming',
     mac: 'aa:bb:cc:dd:ee:ff',
     ip: '192.168.2.9',
-    periodicPing: 60,
     autoWake: true,
     isOnline: true,
-    lastPing: 45
   },
   {
-    name: 'Servidor de Medios',
+    name: 'Media Server',
     mac: '11:22:33:44:55:66',
     ip: '192.168.2.10',
-    periodicPing: 900,
     autoWake: false,
     isOnline: false,
-    lastPing: null
   },
   {
     name: 'Backup Server',
     mac: 'ff:ee:dd:cc:bb:aa',
     ip: '192.168.2.11',
-    periodicPing: 3600,
     autoWake: true,
     isOnline: true,
-    lastPing: 600
   }
 ]
 
 let mockSystemInfo = {
   version: '1.2.3',
-  lastVersion: false,
   hostname: 'espwol-device'
 }
 
@@ -67,9 +51,8 @@ let mockNetworkSettings = {
 }
 
 let mockAuthSettings = {
-  enable: true,
   username: 'admin',
-  password: '' // Never return password
+  password: ''
 }
 
 let mockPingSettings = {
@@ -90,12 +73,7 @@ const mockResponse = (data, success = true, message = 'Operation completed succe
 export const mockHostsApi = {
   async getAll() {
     await delay(300)
-    return mockHosts.map(host => ({
-      name: host.name,
-      mac: host.mac,
-      ip: host.ip,
-      periodicPing: host.periodicPing
-    }))
+    return mockHosts
   },
 
   async getById(id) {
@@ -181,23 +159,6 @@ export const mockSystemApi = {
   async getAbout() {
     await delay(200)
     return mockSystemInfo
-  },
-
-  async getVersionInfo() {
-    await delay(400)
-    return {
-      version: mockSystemInfo.version,
-      lastVersion: '1.3.0',
-      notesLastVersion: mockSystemInfo.lastVersion ? undefined : 'Bug fixes and performance improvements. Added new ping management features.'
-    }
-  },
-
-  async updateVersion() {
-    await delay(2000)
-    // Simulate successful update
-    mockSystemInfo.version = '1.3.0'
-    mockSystemInfo.lastVersion = true
-    return mockResponse({}, true, 'Update initiated successfully')
   }
 }
 
