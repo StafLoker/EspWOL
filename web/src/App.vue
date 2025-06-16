@@ -1,6 +1,6 @@
 <template>
-  <div class="h-screen bg-stone-200 dark:bg-zinc-900 relative overflow-hidden px-3 py-4 flex flex-col">
-    <div class="absolute inset-0 opacity-25">
+  <div class="min-h-screen bg-stone-200 dark:bg-zinc-900 relative px-3 py-4 flex flex-col">
+    <div class="fixed inset-0 opacity-25 pointer-events-none">
       <svg class="w-full h-full" viewBox="0 0 1400 800" xmlns="http://www.w3.org/2000/svg">
         <g
           stroke="currentColor"
@@ -75,7 +75,7 @@
       </svg>
     </div>
 
-    <header v-if="$route.path !== '/login'" class="h-min-10 flex justify-between items-center z-10">
+    <header v-if="$route.path !== '/login'" class="h-min-10 flex justify-between items-center z-10 flex-shrink-0">
       <div class="flex items-center">
         <RouterLink
           to="/"
@@ -103,25 +103,93 @@
         </div>
       </div>
 
-      <RouterLink to="/account" class="avatar-link">
-        <AvatarRoot class="avatar-root" :class="{ 'avatar-active': $route.path === '/account' }">
-          <AvatarFallback class="avatar-fallback">
-            {{ shortUsername }}
-          </AvatarFallback>
-        </AvatarRoot>
-      </RouterLink>
+      <div class="flex items-center space-x-3">
+        <!-- Language Selector -->
+        <div class="relative">
+          <SelectRoot v-model="currentLocale" @update:model-value="changeLanguage">
+            <SelectTrigger class="nav-pill flex items-center min-w-[120px]">
+              <div class="flex items-center">
+                <i class="material-symbols-outlined text-lg mr-2">language</i>
+                <SelectValue :placeholder="getLanguageName(currentLocale)" />
+              </div>
+              <i class="material-symbols-outlined text-sm ml-1">expand_more</i>
+            </SelectTrigger>
+            <SelectPortal>
+              <SelectContent class="select-content bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-lg shadow-lg z-[200] min-w-[120px]">
+                <SelectViewport class="p-2">
+                  <SelectItem
+                    v-for="lang in availableLanguages"
+                    :key="lang.code"
+                    :value="lang.code"
+                    class="select-item px-3 py-2 rounded-md hover:bg-stone-200 dark:hover:bg-zinc-700 cursor-pointer text-warm-gray-800 dark:text-stone-200 transition-colors duration-150 focus:outline-none focus:bg-stone-200 dark:focus:bg-zinc-700"
+                    :class="{ 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100': currentLocale === lang.code }"
+                  >
+                    <SelectItemText class="flex items-center">
+                      <span class="mr-2">{{ lang.flag }}</span>
+                      {{ getLanguageName(lang.code) }}
+                    </SelectItemText>
+                  </SelectItem>
+                </SelectViewport>
+              </SelectContent>
+            </SelectPortal>
+          </SelectRoot>
+        </div>
+
+        <!-- Theme Toggle -->
+        <button
+          @click="toggleTheme"
+          class="nav-pill flex items-center"
+          :title="$t('theme.toggle')"
+        >
+          <i class="material-symbols-outlined text-lg mr-2">
+            {{ isDark ? 'light_mode' : 'dark_mode' }}
+          </i>
+          <span class="hidden sm:inline">
+            {{ isDark ? $t('theme.light') : $t('theme.dark') }}
+          </span>
+        </button>
+
+        <!-- User Avatar -->
+        <RouterLink to="/account" class="avatar-link">
+          <AvatarRoot class="avatar-root" :class="{ 'avatar-active': $route.path === '/account' }">
+            <AvatarFallback class="avatar-fallback">
+              {{ shortUsername }}
+            </AvatarFallback>
+          </AvatarRoot>
+        </RouterLink>
+      </div>
     </header>
 
-    <main class="flex-1 relative z-10 pt-10 px-5">
-      <RouterView />
+    <main class="flex-1 relative z-10 pt-10 px-5 overflow-y-auto">
+      <div class="pb-8">
+        <RouterView />
+      </div>
     </main>
   </div>
 </template>
 
 <script setup>
 import { RouterView, RouterLink } from 'vue-router'
-import { AvatarFallback, AvatarRoot } from 'reka-ui'
-import { ref } from 'vue'
+import { AvatarFallback, AvatarRoot, SelectRoot, SelectTrigger, SelectValue, SelectPortal, SelectContent, SelectViewport, SelectItem, SelectItemText } from 'reka-ui'
+import { ref, onMounted } from 'vue'
+import { useTheme } from '@/composables/useTheme'
+import { useLanguage } from '@/composables/useLanguage'
 
+// Composables
+const { isDark, toggleTheme } = useTheme()
+const {
+  currentLocale,
+  availableLanguages,
+  changeLanguage,
+  getLanguageName,
+  detectBrowserLanguage
+} = useLanguage()
+
+// Reactive data
 const shortUsername = ref('ST')
+
+// Initialize on mount
+onMounted(() => {
+  detectBrowserLanguage()
+})
 </script>
