@@ -4,6 +4,7 @@
 @import './base/header.css';
 @import './base/buttons.css';
 @import './components/host-card.css';
+@import './components/dialog-animations.css';
 
 @theme {
   --color-warm-gray-50: #fafaf9;
@@ -57,4 +58,25 @@
 
 .pill {
   @apply rounded-full px-6 py-2
+}
+
+.separator {
+  @apply bg-gradient-to-r from-transparent via-warm-gray-300 to-transparent dark:via-zinc-600;
+  @apply data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full;
+  @apply data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px;
+  @apply my-6;
+}
+
+.separator-subtle {
+  @apply bg-gradient-to-r from-transparent via-warm-gray-200 to-transparent dark:via-zinc-700;
+  @apply data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full;
+  @apply data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px;
+  @apply my-4;
+}
+
+.separator-bold {
+  @apply bg-gradient-to-r from-warm-gray-100 via-warm-gray-400 to-warm-gray-100 dark:from-zinc-800 dark:via-zinc-500 dark:to-zinc-800;
+  @apply data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full;
+  @apply data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px;
+  @apply my-8;
 }

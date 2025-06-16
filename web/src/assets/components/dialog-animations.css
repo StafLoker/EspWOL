@@ -1,0 +1,139 @@
+/* Dialog animations */
+@keyframes overlayShow {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes contentShow {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes contentHide {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+}
+
+@keyframes overlayHide {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Dialog base styles */
+.dialog-overlay {
+  @apply bg-black/50 dark:bg-black/70 fixed inset-0 z-30 transition-all duration-200;
+  animation: overlayShow 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dialog-overlay[data-state='closed'] {
+  animation: overlayHide 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dialog-content {
+  @apply z-[100] data-[state=open]:animate-none fixed top-[50%] left-[50%] max-h-[85vh] w-[90vw] max-w-[500px] translate-x-[-50%] translate-y-[-50%];
+  @apply rounded-2xl bg-stone-50 dark:bg-zinc-800 p-6 shadow-2xl border border-stone-200 dark:border-zinc-700;
+  @apply focus:outline-none transition-all duration-200;
+  animation: contentShow 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dialog-content[data-state='closed'] {
+  animation: contentHide 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dialog-title {
+  @apply text-warm-gray-800 dark:text-stone-100 m-0 text-xl font-semibold mb-4;
+}
+
+.dialog-description {
+  @apply text-warm-gray-600 dark:text-stone-300 text-sm leading-relaxed mb-6;
+}
+
+.dialog-close {
+  @apply absolute top-4 right-4 inline-flex h-8 w-8 items-center justify-center rounded-lg;
+  @apply text-warm-gray-500 dark:text-stone-400 hover:text-warm-gray-700 dark:hover:text-stone-200;
+  @apply hover:bg-stone-200 dark:hover:bg-zinc-700 transition-all duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600;
+}
+
+/* Form elements in dialogs */
+.dialog-form {
+  @apply space-y-4;
+}
+
+.dialog-form-field {
+  @apply space-y-2;
+}
+
+.dialog-form-label {
+  @apply block text-sm font-medium text-warm-gray-700 dark:text-stone-200;
+}
+
+.dialog-form-input {
+  @apply w-full rounded-lg border border-stone-300 dark:border-zinc-600 bg-stone-100 dark:bg-zinc-700 px-4 py-2.5;
+  @apply text-warm-gray-800 dark:text-stone-100 placeholder:text-warm-gray-400 dark:placeholder:text-zinc-400;
+  @apply shadow-sm focus:border-slate-500 dark:focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:focus:ring-slate-800;
+  @apply transition-all duration-200;
+}
+
+.dialog-form-input:invalid {
+  @apply border-red-300 dark:border-red-600 focus:border-red-500 dark:focus:border-red-400 focus:ring-red-200 dark:focus:ring-red-800;
+}
+
+.dialog-form-select {
+  @apply w-full rounded-lg border border-stone-300 dark:border-zinc-600 bg-stone-100 dark:bg-zinc-700 px-4 py-2.5;
+  @apply text-warm-gray-800 dark:text-stone-100 shadow-sm focus:border-slate-500 dark:focus:border-slate-400;
+  @apply focus:outline-none focus:ring-2 focus:ring-slate-200 dark:focus:ring-slate-800 transition-all duration-200;
+  @apply min-h-[42px] flex items-center justify-between cursor-pointer;
+}
+
+.dialog-form-select:hover {
+  @apply bg-stone-200 dark:bg-zinc-600;
+}
+
+.dialog-actions {
+  @apply flex justify-end gap-3 mt-6 pt-4 border-t border-stone-200 dark:border-zinc-700;
+}
+
+/* Select dropdown specific styles */
+.select-content {
+  @apply bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-lg shadow-lg z-[200];
+  @apply min-w-[var(--reka-select-trigger-width)] max-h-[300px] overflow-hidden;
+}
+
+.select-viewport {
+  @apply p-2;
+}
+
+.select-item {
+  @apply px-3 py-2 rounded-md hover:bg-stone-200 dark:hover:bg-zinc-700 cursor-pointer;
+  @apply text-warm-gray-800 dark:text-stone-200 transition-colors duration-150;
+  @apply focus:outline-none focus:bg-stone-200 dark:focus:bg-zinc-700;
+}
+
+.select-item[data-state="checked"] {
+  @apply bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100;
+}
+
+.select-item[data-disabled] {
+  @apply opacity-50 cursor-not-allowed;
+}
