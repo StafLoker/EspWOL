@@ -3,6 +3,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import tailwindcss from '@tailwindcss/vite'
+import svgLoader from 'vite-svg-loader'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -14,7 +15,8 @@ export default defineConfig(({ mode }) => {
       vue(),
       // Only include dev tools in development
       ...(isDevelopment ? [vueDevTools()] : []),
-      tailwindcss()
+      tailwindcss(),
+      svgLoader
     ],
     resolve: {
       alias: {
@@ -107,24 +109,7 @@ export default defineConfig(({ mode }) => {
     // Server settings for development
     server: {
       host: true,
-      port: 3000,
-      // Proxy API calls to ESP device during development
-      proxy: {
-        '/api': {
-          target: 'http://wol.local',
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, ''),
-          // Handle connection errors gracefully
-          configure: (proxy, options) => {
-            proxy.on('error', (err, req, res) => {
-              console.log('Proxy error:', err)
-            })
-            proxy.on('proxyReq', (proxyReq, req, res) => {
-              console.log('Proxying request:', req.method, req.url)
-            })
-          }
-        }
-      }
+      port: 3000
     },
     // Preview settings
     preview: {

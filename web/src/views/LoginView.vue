@@ -1,6 +1,6 @@
 <template>
   <div class="h-full flex flex-col items-center justify-center">
-    <img src="@/assets/brand/espwol.svg" alt="" class="size-24" />
+    <EspWol class="size-24" />
     <h1 class="mt-6 mb-8 text-center text-2xl font-bold text-warm-gray-800 dark:text-stone-100">
       {{ $t('pages.login.title') }}
     </h1>
@@ -59,6 +59,7 @@
 <script setup>
 import { Label } from 'reka-ui'
 import { ref } from 'vue';
+import EspWol from '@/assets/brand/espwol.svg'
 
 const invalidCredentials = ref(false)
 

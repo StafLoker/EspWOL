@@ -13,19 +13,16 @@ export function useLanguage() {
     {
       code: 'en',
       name: 'English',
-      flag: '🇺🇸',
       nativeName: 'English'
     },
     {
       code: 'es',
       name: 'Español',
-      flag: '🇪🇸',
       nativeName: 'Español'
     },
     {
       code: 'ru',
       name: 'Русский',
-      flag: '🇷🇺',
       nativeName: 'Русский'
     }
   ]
@@ -37,10 +34,6 @@ export function useLanguage() {
 
   const currentLanguageName = computed(() => {
     return currentLanguage.value?.nativeName || 'English'
-  })
-
-  const currentLanguageFlag = computed(() => {
-    return currentLanguage.value?.flag || '🇺🇸'
   })
 
   // Methods
@@ -79,7 +72,6 @@ export function useLanguage() {
     currentLocale,
     currentLanguage,
     currentLanguageName,
-    currentLanguageFlag,
     availableLanguages,
     changeLanguage,
     getLanguageName,

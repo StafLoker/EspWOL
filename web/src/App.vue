@@ -81,7 +81,7 @@
           to="/"
           class="flex items-center hover:opacity-80 transition-opacity duration-200"
         >
-          <img src="@/assets/brand/espwol.svg" alt="" class="size-10" />
+          <EspWol class="size-10" />
           <p
             class="text-xl font-semibold leading-[10px] ml-1 tracking-[3px] font-stretch-expanded text"
           >
@@ -125,7 +125,6 @@
                     :class="{ 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100': currentLocale === lang.code }"
                   >
                     <SelectItemText class="flex items-center">
-                      <span class="mr-2">{{ lang.flag }}</span>
                       {{ getLanguageName(lang.code) }}
                     </SelectItemText>
                   </SelectItem>
@@ -174,9 +173,10 @@ import { AvatarFallback, AvatarRoot, SelectRoot, SelectTrigger, SelectValue, Sel
 import { ref, onMounted } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import { useLanguage } from '@/composables/useLanguage'
+import EspWol from '@/assets/brand/espwol.svg'
 
 // Composables
-const { isDark, toggleTheme, initializeTheme } = useTheme()
+const { isDark, toggleTheme } = useTheme()
 const {
   currentLocale,
   availableLanguages,
@@ -188,10 +188,7 @@ const {
 // Reactive data
 const shortUsername = ref('ST')
 
-// Initialize on mount
 onMounted(() => {
-  // Initialize theme first to prevent flash
-  initializeTheme()
   detectBrowserLanguage()
 })
 </script>

@@ -28,7 +28,10 @@
     </div>
 
     <!-- Hosts Grid -->
-    <div v-else-if="hosts.length > 0" class="mt-7 grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+    <div
+      v-else-if="hosts.length > 0"
+      class="mt-7 grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4"
+    >
       <HostCard
         v-for="(host, index) in hosts"
         :key="`${host.name}-${index}`"
@@ -44,14 +47,17 @@
 
     <!-- Empty State -->
     <div v-else class="mt-16 text-center">
-      <div class="mx-auto w-24 h-24 bg-stone-200 dark:bg-zinc-700 rounded-full flex items-center justify-center mb-6">
+      <div
+        class="mx-auto w-24 h-24 bg-stone-200 dark:bg-zinc-700 rounded-full flex items-center justify-center mb-6"
+      >
         <i class="material-symbols-outlined text-4xl text-stone-400 dark:text-zinc-500">devices</i>
       </div>
       <h3 class="text-lg font-semibold text-warm-gray-800 dark:text-stone-100 mb-2">
         No hosts configured
       </h3>
       <p class="text-warm-gray-600 dark:text-stone-400 mb-6 max-w-md mx-auto">
-        Get started by adding your first device. You can wake up computers, servers, and other network devices.
+        Get started by adding your first device. You can wake up computers, servers, and other
+        network devices.
       </p>
       <button class="button-apply flex items-center mx-auto" @click="handleAddHost()">
         <i class="material-symbols-outlined mr-2">add</i>
@@ -60,7 +66,10 @@
     </div>
 
     <!-- Error State -->
-    <div v-if="error" class="mt-8 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+    <div
+      v-if="error"
+      class="mt-8 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+    >
       <div class="flex items-center">
         <i class="material-symbols-outlined text-red-600 dark:text-red-400 mr-3">error</i>
         <div>
@@ -90,10 +99,12 @@
             {{ $t('pages.home.deleteHost.title') }}
           </AlertDialogTitle>
           <AlertDialogDescription class="dialog-description">
-            {{ $t('pages.home.deleteHost.description', {
-              hostName: hostToDelete?.name,
-              hostIp: hostToDelete?.ip
-            }) }}
+            {{
+              $t('pages.home.deleteHost.description', {
+                hostName: hostToDelete?.name,
+                hostIp: hostToDelete?.ip,
+              })
+            }}
           </AlertDialogDescription>
           <div class="dialog-actions">
             <AlertDialogCancel class="pill-button-cancel">
@@ -105,9 +116,25 @@
               :disabled="deleteLoading"
             >
               <span v-if="deleteLoading" class="flex items-center">
-                <svg class="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  class="animate-spin -ml-1 mr-2 h-4 w-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
                 Deleting...
               </span>
@@ -121,11 +148,7 @@
     </AlertDialogRoot>
 
     <!-- Host Dialog -->
-    <HostDialog
-      v-model:open="hostDialogOpen"
-      :host="hostToEdit"
-      @save="handleSaveHost"
-    />
+    <HostDialog v-model:open="hostDialogOpen" :host="hostToEdit" @save="handleSaveHost" />
   </div>
 </template>
 
@@ -144,9 +167,9 @@ import {
   AlertDialogAction
 } from 'reka-ui'
 import { ref, onMounted, onUnmounted } from 'vue'
-
+import { hostsService, networkOpsService, handleApiError } from '@/services'
 // State
-const hostsList = ref([])
+const hosts = ref([])
 const loading = ref(true)
 const error = ref(null)
 
@@ -157,16 +180,14 @@ const hostToDeleteIndex = ref(null)
 const hostToDelete = ref(null)
 const hostToEdit = ref(null)
 
-const hosts = ref([])
-
 // Methods
 async function loadHosts() {
   try {
     loading.value = true
     error.value = null
 
-    const data = await hosts.getAll()
-    hostsList.value = data || []
+    const data = await hostsService.getAll()
+    hosts.value = data || []
 
     console.log('Hosts loaded:', data?.length || 0)
   } catch (err) {
@@ -183,27 +204,27 @@ function handleAddHost() {
 }
 
 async function handleTogglePower(index) {
-  const host = hostsList.value[index]
+  const host = hostsService.value[index]
   if (!host) return
 
   try {
     if (host.isOnline) {
       // For now, we'll just simulate turning off
       // In a real implementation, you might have a shutdown endpoint
-      hostsList.value[index].isOnline = false
+      hostsService.value[index].isOnline = false
       console.log(`Simulated power off for ${host.name}`)
     } else {
       // Send WOL packet
-      await networkOps.wake(index)
+      await networkOpsService.wake(index)
       console.log(`WOL packet sent to ${host.name}`)
 
       // Optimistically update UI
-      hostsList.value[index].isOnline = true
+      host.value[index].isOnline = true
 
       // Optionally verify with ping after a delay
       setTimeout(async () => {
         try {
-          await networkOps.ping(index)
+          await networkOpsService.ping(index)
         } catch (err) {
           console.warn('Ping verification failed:', err)
         }
@@ -219,7 +240,7 @@ async function handleTogglePower(index) {
 }
 
 function handleEditHost(index) {
-  const host = hostsList.value[index]
+  const host = hosts.value[index]
   if (!host) return
 
   hostToEdit.value = { ...host, index }
@@ -227,7 +248,7 @@ function handleEditHost(index) {
 }
 
 function handleDeleteHost(index) {
-  const host = hostsList.value[index]
+  const host = hosts.value[index]
   if (!host) return
 
   hostToDeleteIndex.value = index
@@ -241,10 +262,10 @@ async function confirmDeleteHost() {
   try {
     deleteLoading.value = true
 
-    await hosts.delete(hostToDeleteIndex.value)
+    await hostsService.delete(hostToDeleteIndex.value)
 
     // Remove from local state
-    hostsList.value.splice(hostToDeleteIndex.value, 1)
+    hosts.value.splice(hostToDeleteIndex.value, 1)
 
     console.log('Host deleted successfully')
   } catch (err) {
@@ -264,18 +285,18 @@ async function handleSaveHost(hostData) {
     if (hostToEdit.value && hostToEdit.value.index !== undefined) {
       // Edit mode
       const index = hostToEdit.value.index
-      await hosts.update(index, hostData)
+      await hostsService.update(index, hostData)
 
       // Update local state
-      hostsList.value[index] = {
-        ...hostsList.value[index],
+      hosts.value[index] = {
+        ...hosts.value[index],
         ...hostData
       }
 
       console.log('Host updated successfully')
     } else {
       // Add mode
-      await hosts.create(hostData)
+      await hostsService.create(hostData)
 
       // Reload hosts to get the updated list
       await loadHosts()
@@ -295,14 +316,13 @@ async function handleSaveHost(hostData) {
 let refreshInterval = null
 
 function startAutoRefresh() {
-  // Refresh every 30 seconds in development, 60 seconds in production
-  const interval = environment.isDevelopment ? 30000 : 60000
+  const interval = 60000
 
   refreshInterval = setInterval(async () => {
     if (!loading.value && !error.value) {
       try {
-        const data = await hosts.getAll()
-        hostsList.value = data || []
+        const data = await hostsService.getAll()
+        hosts.value = data || []
       } catch (err) {
         console.warn('Auto-refresh failed:', err)
       }
