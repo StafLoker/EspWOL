@@ -65,39 +65,26 @@
             />
           </div>
 
-          <!-- Periodic Ping -->
+          <!-- Auto Wake on Ping Failure -->
           <div class="dialog-form-field">
-            <label for="periodic-ping" class="dialog-form-label">
-              {{ $t('components.hostDialog.periodicPing') }}
-            </label>
-            <SelectRoot v-model="formData.periodicPing">
-              <SelectTrigger class="dialog-form-select">
-                <SelectValue :placeholder="$t('components.hostDialog.periodicPingPlaceholder')" />
-                <i class="material-symbols-outlined text-lg ml-2">expand_more</i>
-              </SelectTrigger>
-              <SelectPortal>
-                <SelectContent class="select-content">
-                  <SelectViewport class="select-viewport">
-                    <SelectItem
-                      v-for="option in periodicPingOptions"
-                      :key="option.value"
-                      :value="option.value"
-                      class="select-item"
-                    >
-                      <SelectItemText>{{ option.label }}</SelectItemText>
-                    </SelectItem>
-                  </SelectViewport>
-                </SelectContent>
-              </SelectPortal>
-            </SelectRoot>
-          </div>
-
-          <!-- Additional info for editing -->
-          <div v-if="isEdit && lastPing" class="dialog-form-field">
-            <p class="text-sm text-warm-gray-500 dark:text-stone-400 flex items-center">
-              <i class="material-symbols-outlined text-sm mr-1">schedule</i>
-              {{ $t('components.hostDialog.lastPing') }}: {{ formatLastPing(lastPing) }}
-            </p>
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <label class="dialog-form-label mb-1">
+                  {{ $t('components.hostDialog.autoWake') }}
+                </label>
+                <p class="text-xs text-warm-gray-500 dark:text-stone-400">
+                  {{ $t('components.hostDialog.autoWakeDescription') }}
+                </p>
+              </div>
+              <SwitchRoot
+                v-model="formData.autoWake"
+                class="w-[42px] h-[24px] shadow-sm flex data-[state=unchecked]:bg-stone-300 data-[state=checked]:bg-green-600 dark:data-[state=unchecked]:bg-zinc-600 dark:data-[state=checked]:bg-green-500 border border-stone-300 data-[state=checked]:border-green-600 dark:border-zinc-600 dark:data-[state=checked]:border-green-500 rounded-full relative transition-[background] focus-within:outline-none focus-within:shadow-[0_0_0_2px] focus-within:shadow-green-200 dark:focus-within:shadow-green-800"
+              >
+                <SwitchThumb
+                  class="w-5 h-5 my-auto bg-white text-xs flex items-center justify-center shadow-lg rounded-full transition-transform translate-x-0.5 will-change-transform data-[state=checked]:translate-x-[18px]"
+                />
+              </SwitchRoot>
+            </div>
           </div>
         </form>
 
@@ -163,14 +150,8 @@ import {
   DialogTitle,
   DialogDescription,
   DialogClose,
-  SelectRoot,
-  SelectTrigger,
-  SelectValue,
-  SelectPortal,
-  SelectContent,
-  SelectViewport,
-  SelectItem,
-  SelectItemText,
+  SwitchRoot,
+  SwitchThumb
 } from 'reka-ui'
 import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -184,10 +165,6 @@ const props = defineProps({
   },
   host: {
     type: Object,
-    default: null,
-  },
-  lastPing: {
-    type: Number,
     default: null,
   },
 })
@@ -206,26 +183,9 @@ const formData = ref({
   name: '',
   mac: '',
   ip: '',
-  periodicPing: 0,
+  autoWake: false,
 })
 
-// Opciones de ping periódico con traducciones
-const periodicPingOptions = computed(() => [
-  { value: 0, label: t('components.hostDialog.periodicOptions.disabled') },
-  { value: 60, label: t('components.hostDialog.periodicOptions.oneMinute') },
-  { value: 300, label: t('components.hostDialog.periodicOptions.fiveMinutes') },
-  { value: 600, label: t('components.hostDialog.periodicOptions.tenMinutes') },
-  { value: 900, label: t('components.hostDialog.periodicOptions.fifteenMinutes') },
-  { value: 1800, label: t('components.hostDialog.periodicOptions.thirtyMinutes') },
-  { value: 2700, label: t('components.hostDialog.periodicOptions.fortyFiveMinutes') },
-  { value: 3600, label: t('components.hostDialog.periodicOptions.oneHour') },
-  { value: 10800, label: t('components.hostDialog.periodicOptions.threeHours') },
-  { value: 21600, label: t('components.hostDialog.periodicOptions.sixHours') },
-  { value: 43200, label: t('components.hostDialog.periodicOptions.twelveHours') },
-  { value: 86400, label: t('components.hostDialog.periodicOptions.twentyFourHours') },
-])
-
-// Resetear formulario cuando se abre/cierra el diálogo
 watch(
   () => props.open,
   (newValue) => {
@@ -236,7 +196,7 @@ watch(
           name: props.host.name || '',
           mac: props.host.mac || '',
           ip: props.host.ip || '',
-          periodicPing: props.host.periodicPing || 0,
+          autoWake: props.host.autoWake || false,
         }
       } else {
         // Modo agregar - limpiar formulario
@@ -244,32 +204,12 @@ watch(
           name: '',
           mac: '',
           ip: '',
-          periodicPing: 0,
+          autoWake: false,
         }
       }
     }
   },
 )
-
-function formatLastPing(seconds) {
-  if (typeof seconds !== 'number' || isNaN(seconds) || seconds < 0) {
-    return t('components.hostDialog.notAvailable')
-  }
-
-  const minutes = Math.floor(seconds / 60)
-  if (minutes === 0) {
-    return t('components.hostDialog.timeFormats.lessThanMinute')
-  } else if (minutes === 1) {
-    return t('components.hostDialog.timeFormats.oneMinuteAgo')
-  } else if (minutes < 60) {
-    return t('components.hostDialog.timeFormats.minutesAgo', { minutes })
-  } else {
-    const hours = Math.floor(minutes / 60)
-    return hours === 1
-      ? t('components.hostDialog.timeFormats.oneHourAgo')
-      : t('components.hostDialog.timeFormats.hoursAgo', { hours })
-  }
-}
 
 async function handleSubmit() {
   if (isSubmitting.value) return
@@ -285,7 +225,7 @@ async function handleSubmit() {
     // Emitir evento con los datos del formulario
     emit('save', {
       ...formData.value,
-      periodicPing: Number(formData.value.periodicPing),
+      periodicPing: 0, // Remove periodicPing since it's now global
     })
 
     // Cerrar el diálogo después de un pequeño delay para mostrar el estado de carga

@@ -1,18 +1,38 @@
-import { useDark, useToggle, useStorage } from '@vueuse/core'
-import { computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 
 export function useTheme() {
-  // Use VueUse's dark mode composable with custom configuration
-  const isDark = useDark({
-    selector: 'html',
-    attribute: 'data-bs-theme',
-    valueDark: 'dark',
-    valueLight: 'light',
-    storageKey: 'espwol-theme',
-    storage: localStorage
-  })
+  // Create reactive reference for dark mode
+  const isDark = ref(false)
 
-  const toggle = useToggle(isDark)
+  // Initialize theme from localStorage or system preference
+  const initializeTheme = () => {
+    const stored = localStorage.getItem('espwol-theme')
+    if (stored) {
+      isDark.value = stored === 'dark'
+    } else {
+      // Check system preference
+      isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches
+    }
+    applyTheme()
+  }
+
+  // Apply theme to DOM
+  const applyTheme = () => {
+    const html = document.documentElement
+    if (isDark.value) {
+      html.classList.add('dark')
+      html.setAttribute('data-bs-theme', 'dark')
+    } else {
+      html.classList.remove('dark')
+      html.setAttribute('data-bs-theme', 'light')
+    }
+  }
+
+  // Watch for changes and persist
+  watch(isDark, (newValue) => {
+    localStorage.setItem('espwol-theme', newValue ? 'dark' : 'light')
+    applyTheme()
+  })
 
   // Computed properties for theme state
   const currentTheme = computed(() => isDark.value ? 'dark' : 'light')
@@ -26,8 +46,13 @@ export function useTheme() {
 
   // Method to toggle theme
   const toggleTheme = () => {
-    toggle()
+    isDark.value = !isDark.value
   }
+
+  // Initialize on mount
+  onMounted(() => {
+    initializeTheme()
+  })
 
   return {
     isDark,
@@ -35,6 +60,7 @@ export function useTheme() {
     themeIcon,
     themeLabel,
     toggleTheme,
-    setTheme
+    setTheme,
+    initializeTheme
   }
 }

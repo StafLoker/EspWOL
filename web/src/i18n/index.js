@@ -54,6 +54,23 @@ export const i18n = createI18n({
             hostname: 'Hostname',
             update: 'Update'
           },
+          ping: {
+            title: 'Ping Settings',
+            globalInterval: 'Global Ping Interval',
+            selectInterval: 'Select ping interval...',
+            description: 'Set how often the system pings all devices to check their status.',
+            save: 'Save Ping Settings',
+            options: {
+              disabled: 'Disabled',
+              thirtySeconds: '30 seconds',
+              oneMinute: '1 minute',
+              fiveMinutes: '5 minutes',
+              tenMinutes: '10 minutes',
+              fifteenMinutes: '15 minutes',
+              thirtyMinutes: '30 minutes',
+              oneHour: '1 hour'
+            }
+          },
           network: {
             title: 'Network Settings',
             mode: 'Network Mode',
@@ -143,8 +160,8 @@ export const i18n = createI18n({
           macAddressPlaceholder: 'AA:BB:CC:DD:EE:FF',
           ipAddress: 'IP Address',
           ipAddressPlaceholder: '192.168.1.100',
-          periodicPing: 'Periodic Ping',
-          periodicPingPlaceholder: 'Select frequency...',
+          autoWake: 'Enable auto-wake if no ping response',
+          autoWakeDescription: 'Automatically send WOL packet if device doesn\'t respond to ping',
           lastPing: 'Last ping',
           cancel: 'Cancel',
           save: 'Save Changes',
@@ -152,20 +169,6 @@ export const i18n = createI18n({
           saving: 'Saving...',
           adding: 'Adding...',
           notAvailable: 'N/A',
-          periodicOptions: {
-            disabled: 'Disabled',
-            oneMinute: '1 minute',
-            fiveMinutes: '5 minutes',
-            tenMinutes: '10 minutes',
-            fifteenMinutes: '15 minutes',
-            thirtyMinutes: '30 minutes',
-            fortyFiveMinutes: '45 minutes',
-            oneHour: '1 hour',
-            threeHours: '3 hours',
-            sixHours: '6 hours',
-            twelveHours: '12 hours',
-            twentyFourHours: '24 hours',
-          },
           timeFormats: {
             lessThanMinute: 'less than a minute ago',
             oneMinuteAgo: '1 minute ago',
@@ -224,6 +227,23 @@ export const i18n = createI18n({
             version: 'Versión',
             hostname: 'Hostname',
             update: 'Actualizar'
+          },
+          ping: {
+            title: 'Configuración de Ping',
+            globalInterval: 'Intervalo Global de Ping',
+            selectInterval: 'Seleccionar intervalo de ping...',
+            description: 'Establece con qué frecuencia el sistema hace ping a todos los dispositivos para verificar su estado.',
+            save: 'Guardar Configuración de Ping',
+            options: {
+              disabled: 'Deshabilitado',
+              thirtySeconds: '30 segundos',
+              oneMinute: '1 minuto',
+              fiveMinutes: '5 minutos',
+              tenMinutes: '10 minutos',
+              fifteenMinutes: '15 minutos',
+              thirtyMinutes: '30 minutos',
+              oneHour: '1 hora'
+            }
           },
           network: {
             title: 'Configuración de Red',
@@ -314,8 +334,8 @@ export const i18n = createI18n({
           macAddressPlaceholder: 'AA:BB:CC:DD:EE:FF',
           ipAddress: 'Dirección IP',
           ipAddressPlaceholder: '192.168.1.100',
-          periodicPing: 'Ping Periódico',
-          periodicPingPlaceholder: 'Seleccionar frecuencia...',
+          autoWake: 'Habilitar auto-despertar si no hay respuesta de ping',
+          autoWakeDescription: 'Enviar automáticamente paquete WOL si el dispositivo no responde al ping',
           lastPing: 'Último ping',
           cancel: 'Cancelar',
           save: 'Guardar Cambios',
@@ -323,20 +343,6 @@ export const i18n = createI18n({
           saving: 'Guardando...',
           adding: 'Agregando...',
           notAvailable: 'N/A',
-          periodicOptions: {
-            disabled: 'Deshabilitado',
-            oneMinute: '1 minuto',
-            fiveMinutes: '5 minutos',
-            tenMinutes: '10 minutos',
-            fifteenMinutes: '15 minutos',
-            thirtyMinutes: '30 minutos',
-            fortyFiveMinutes: '45 minutos',
-            oneHour: '1 hora',
-            threeHours: '3 horas',
-            sixHours: '6 horas',
-            twelveHours: '12 horas',
-            twentyFourHours: '24 horas',
-          },
           timeFormats: {
             lessThanMinute: 'hace menos de un minuto',
             oneMinuteAgo: 'hace 1 minuto',
@@ -395,6 +401,23 @@ export const i18n = createI18n({
             version: 'Версия',
             hostname: 'Имя хоста',
             update: 'Обновить'
+          },
+          ping: {
+            title: 'Настройки Пинга',
+            globalInterval: 'Глобальный Интервал Пинга',
+            selectInterval: 'Выберите интервал пинга...',
+            description: 'Установите, как часто система пингует все устройства для проверки их состояния.',
+            save: 'Сохранить Настройки Пинга',
+            options: {
+              disabled: 'Отключено',
+              thirtySeconds: '30 секунд',
+              oneMinute: '1 минута',
+              fiveMinutes: '5 минут',
+              tenMinutes: '10 минут',
+              fifteenMinutes: '15 минут',
+              thirtyMinutes: '30 минут',
+              oneHour: '1 час'
+            }
           },
           network: {
             title: 'Настройки Сети',
@@ -485,8 +508,8 @@ export const i18n = createI18n({
           macAddressPlaceholder: 'AA:BB:CC:DD:EE:FF',
           ipAddress: 'IP-адрес',
           ipAddressPlaceholder: '192.168.1.100',
-          periodicPing: 'Периодический Пинг',
-          periodicPingPlaceholder: 'Выберите частоту...',
+          autoWake: 'Включить авто-пробуждение при отсутствии пинга',
+          autoWakeDescription: 'Автоматически отправлять WOL пакет, если устройство не отвечает на пинг',
           lastPing: 'Последний пинг',
           cancel: 'Отмена',
           save: 'Сохранить Изменения',
@@ -494,20 +517,6 @@ export const i18n = createI18n({
           saving: 'Сохранение...',
           adding: 'Добавление...',
           notAvailable: 'Н/Д',
-          periodicOptions: {
-            disabled: 'Отключено',
-            oneMinute: '1 минута',
-            fiveMinutes: '5 минут',
-            tenMinutes: '10 минут',
-            fifteenMinutes: '15 минут',
-            thirtyMinutes: '30 минут',
-            fortyFiveMinutes: '45 минут',
-            oneHour: '1 час',
-            threeHours: '3 часа',
-            sixHours: '6 часов',
-            twelveHours: '12 часов',
-            twentyFourHours: '24 часа',
-          },
           timeFormats: {
             lessThanMinute: 'менее минуты назад',
             oneMinuteAgo: '1 минуту назад',

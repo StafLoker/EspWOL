@@ -176,7 +176,7 @@ import { useTheme } from '@/composables/useTheme'
 import { useLanguage } from '@/composables/useLanguage'
 
 // Composables
-const { isDark, toggleTheme } = useTheme()
+const { isDark, toggleTheme, initializeTheme } = useTheme()
 const {
   currentLocale,
   availableLanguages,
@@ -190,6 +190,8 @@ const shortUsername = ref('ST')
 
 // Initialize on mount
 onMounted(() => {
+  // Initialize theme first to prevent flash
+  initializeTheme()
   detectBrowserLanguage()
 })
 </script>

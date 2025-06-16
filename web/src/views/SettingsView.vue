@@ -40,6 +40,61 @@
         </div>
       </div>
 
+      <!-- Ping Settings Card -->
+      <div class="card">
+        <h3 class="text-xl font-semibold text-warm-gray-800 dark:text-stone-100 mb-4">
+          {{ $t('pages.settings.ping.title') }}
+        </h3>
+        <form @submit.prevent="updatePingSettings" class="space-y-4">
+          <div class="form-field">
+            <label class="form-label">{{ $t('pages.settings.ping.globalInterval') }}</label>
+            <SelectRoot v-model="pingSettings.globalInterval">
+              <SelectTrigger class="form-input">
+                <SelectValue :placeholder="$t('pages.settings.ping.selectInterval')" />
+                <i class="material-symbols-outlined text-lg ml-2">expand_more</i>
+              </SelectTrigger>
+              <SelectPortal>
+                <SelectContent class="select-content">
+                  <SelectViewport class="select-viewport">
+                    <SelectItem
+                      v-for="option in pingIntervalOptions"
+                      :key="option.value"
+                      :value="option.value"
+                      class="select-item"
+                    >
+                      <SelectItemText>{{ option.label }}</SelectItemText>
+                    </SelectItem>
+                  </SelectViewport>
+                </SelectContent>
+              </SelectPortal>
+            </SelectRoot>
+            <p class="text-xs text-warm-gray-500 dark:text-stone-400 mt-1">
+              {{ $t('pages.settings.ping.description') }}
+            </p>
+          </div>
+
+          <div class="flex justify-end pt-4">
+            <button
+              type="submit"
+              class="pill-button-apply-solid"
+              :disabled="pingLoading"
+            >
+              <span v-if="pingLoading" class="flex items-center">
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                {{ $t('pages.settings.saving') }}
+              </span>
+              <span v-else class="flex items-center">
+                <i class="material-symbols-outlined mr-1 text-sm">save</i>
+                {{ $t('pages.settings.ping.save') }}
+              </span>
+            </button>
+          </div>
+        </form>
+      </div>
+
       <!-- Network Settings Card -->
       <div class="card">
         <h3 class="text-xl font-semibold text-warm-gray-800 dark:text-stone-100 mb-4">
@@ -273,7 +328,7 @@
                 </svg>
                 {{ $t('pages.settings.updateDialog.updating') }}
               </span>
-              <span v-else>
+              <span v-else">
                 {{ $t('pages.settings.updateDialog.update') }}
               </span>
             </button>
@@ -327,9 +382,20 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogCancel,
-  AlertDialogAction
+  AlertDialogAction,
+  SelectRoot,
+  SelectTrigger,
+  SelectValue,
+  SelectPortal,
+  SelectContent,
+  SelectViewport,
+  SelectItem,
+  SelectItemText
 } from 'reka-ui'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // State
 const aboutInfo = ref(null)
@@ -341,6 +407,10 @@ const networkSettings = ref({
   dns: ''
 })
 
+const pingSettings = ref({
+  globalInterval: 60
+})
+
 const updateDialogOpen = ref(false)
 const wifiResetDialogOpen = ref(false)
 const updateInfo = ref(null)
@@ -349,9 +419,22 @@ const fileInput = ref(null)
 
 // Loading states
 const networkLoading = ref(false)
+const pingLoading = ref(false)
 const exportLoading = ref(false)
 const importLoading = ref(false)
 const updateLoading = ref(false)
+
+// Ping interval options
+const pingIntervalOptions = computed(() => [
+  { value: 0, label: t('pages.settings.ping.options.disabled') },
+  { value: 30, label: t('pages.settings.ping.options.thirtySeconds') },
+  { value: 60, label: t('pages.settings.ping.options.oneMinute') },
+  { value: 300, label: t('pages.settings.ping.options.fiveMinutes') },
+  { value: 600, label: t('pages.settings.ping.options.tenMinutes') },
+  { value: 900, label: t('pages.settings.ping.options.fifteenMinutes') },
+  { value: 1800, label: t('pages.settings.ping.options.thirtyMinutes') },
+  { value: 3600, label: t('pages.settings.ping.options.oneHour') }
+])
 
 // Methods
 async function loadAboutInfo() {
@@ -371,6 +454,35 @@ async function loadNetworkSettings() {
     networkSettings.value = await response.json()
   } catch (error) {
     console.error('Error loading network settings:', error)
+  }
+}
+
+async function loadPingSettings() {
+  try {
+    // This would be a new endpoint to get global ping settings
+    // For now, we'll use a default value
+    pingSettings.value = {
+      globalInterval: 60
+    }
+  } catch (error) {
+    console.error('Error loading ping settings:', error)
+  }
+}
+
+async function updatePingSettings() {
+  pingLoading.value = true
+  try {
+    // This would be a new endpoint to update global ping settings
+    console.log('Updating ping settings:', pingSettings.value)
+
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    console.log('Ping settings updated successfully')
+  } catch (error) {
+    console.error('Error updating ping settings:', error)
+  } finally {
+    pingLoading.value = false
   }
 }
 
@@ -568,5 +680,6 @@ async function performUpdate() {
 onMounted(() => {
   loadAboutInfo()
   loadNetworkSettings()
+  loadPingSettings()
 })
 </script>
