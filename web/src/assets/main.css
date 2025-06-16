@@ -1,0 +1,29 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-green-tea-300: #b8be8e;
+  --color-green-tea-600: #63643c;
+  --color-nero-800: #252528;
+  --color-espresso-700: #504b42;
+  --color-sand-700: #b5905c;
+}
+
+.text {
+  @apply dark:text-white text-black
+}
+
+.form-field {
+  @apply flex flex-col space-y-2
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 dark:text-white
+}
+
+.form-input {
+  @apply w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-green-tea-300 dark:bg-nero-800 dark:text-white
+}
+
+.button {
+  @apply w-full rounded-lg bg-sand-700 px-4 py-2 text-white shadow hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-300 dark:hover:bg-amber-500
+}

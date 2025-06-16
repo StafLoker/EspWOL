@@ -4,7 +4,8 @@
    <p><i>~ Wake & play! ~</i></p>
    <p align="center">
       <a href="https://stafloker.github.io/EspWOL/">Demo</a> ·
-      <a href="https://github.com/StafLoker/EspWOL/releases">Releases</a>
+      <a href="https://github.com/StafLoker/EspWOL/releases">Releases</a> ·
+      <a href="https://stafloker-espwol.apidocumentation.com">Docs</a>
    </p>
 </div>
 
