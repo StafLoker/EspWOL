@@ -1,6 +1,8 @@
 /* 
   Project: EspWOL 
   Author: StafLoker
+  Version: 3.0.0
+  Refactored with functional approach instead of classes
 */
 
 /* Network */
@@ -30,20 +32,21 @@
 #define ArduinoOTA_PORT 8266
 #endif
 
-#include <AutoOTA.h>
-
 /* Time */
 #include <GTimer.h>
 
-/* Project */
+/* Project files */
+#include "routes.h"
+#include "auth_routes.h"
+#include "host_routes.h"
+#include "network_routes.h"
+#include "settings_routes.h"
+#include "web_routes.h"
+#include "repository.h"
+#include "validation.h"
 #include "index.h"
-#include "404.h"
-#include "memory.h"
-#include "api.h"
 
-#define VERSION "2.3.1"
-
-AutoOTA ota(VERSION, "StafLoker/EspWOL");
+#define VERSION "3.0.0"
 
 ESP8266WebServer server(80);
 WiFiUDP UDP;
@@ -51,8 +54,9 @@ WakeOnLan wol(UDP);
 WiFiManager wifiManager;
 
 const char* hostsFile = "/hosts.json";
-const char* networkConfigFile = "/networkConfig.json";
+const char* networkConfigFile = "/network.json";
 const char* authenticationFile = "/authentication.json";
+const char* settingsFile = "/settings.json";
 
 const char* hostname = "wol";
 const char* SSID = "WOL-ESP8266";
@@ -62,7 +66,7 @@ struct Host {
   String name;
   String mac;
   String ip;
-  unsigned long periodicPing = 0;
+  bool autoWake;
 };
 
 // Structure for Network settings
@@ -81,12 +85,16 @@ struct Authentication {
   String password;
 } authentication;
 
+struct Settings {
+  unsigned long pingPeriod;
+} settings;
+
 // Map for storing hosts
 std::map<int, Host> hosts;
-// Map for storing lastPings
-std::map<int, unsigned long> lastPings;
-// Map for storing Timers
-std::map<int, GTimer<millis>> timers;
+// Map for storing hosts status like is online or not
+std::map<int, boolean> hostsStatus;
+
+GTimer timer;
 
 #if ENABLE_STANDARD_OTA == 1
 // Function to setup OTA
@@ -107,24 +115,20 @@ void updateIPWifiSettings() {
   }
 }
 
-void setupPeriodicPingToHosts() {
-  for (auto& [id, host] : hosts) {
-    if (host.periodicPing) {
-      timers[id] = GTimer<millis>(host.periodicPing, true);
-    }
-  }
-}
-
-void checkTimers() {
-  for (auto& [id, timer] : timers) {
-    if (timer.tick()) {
-      const Host& host = hosts[id];
-      IPAddress ip;
-      ip.fromString(host.ip);
-      lastPings[id] = millis();
-      if (!Ping.ping(ip)) {
-        wol.sendMagicPacket(host.mac.c_str());
-      }
+// Function to ping all hosts periodically
+void pingAllHosts() {
+  for (const auto &pair : hosts) {
+    int index = pair.first;
+    const Host &host = pair.second;
+    
+    IPAddress ip;
+    ip.fromString(host.ip);
+    bool pingResult = Ping.ping(ip, 1);
+    hostsStatus[index] = pingResult;
+    
+    // If host is offline and autoWake is enabled, send WOL packet
+    if (!pingResult && host.autoWake) {
+      wol.sendMagicPacket(host.mac.c_str());
     }
   }
 }
@@ -132,6 +136,12 @@ void checkTimers() {
 // Server setup
 void setup() {
   WiFi.hostname(hostname);
+
+  // Initialize file system
+  if (!LittleFS.begin()) {
+    LittleFS.format();
+    LittleFS.begin();
+  }
 
 #if ENABLE_STANDARD_OTA == 1
   setupOTA();
@@ -141,6 +151,7 @@ void setup() {
   loadNetworkConfig();
   loadAuthentication();
   loadHostsData();
+  loadSettings();
 
   updateIPWifiSettings();
 
@@ -156,22 +167,14 @@ void setup() {
 #endif
 #endif
 
-  server.on("/", HTTP_GET, handleRoot);
-  server.on("/hosts", HTTP_ANY, handleHosts);
-  server.on("/ping", HTTP_POST, handlePingHost);
-  server.on("/wake", HTTP_POST, handleWakeHost);
-  server.on("/about", HTTP_GET, handleGetAbout);
-  server.on("/networkSettings", HTTP_ANY, handleNetworkSettings);
-  server.on("/authenticationSettings", HTTP_ANY, handleAuthenticationSettings);
-  server.on("/resetWifi", HTTP_POST, handleResetWiFiSettings);
-  server.on("/updateVersion", HTTP_ANY, handleUpdateVersion);
-  server.on("/import", HTTP_POST, handleImportDatabase);
-  server.onNotFound([]() {
-    server.send_P(200, "text/html", notFoundHtmlPage);
-  });
+  // Setup all routes using the new functional approach
+  setupRoutes();
+  
   server.begin();
 
-  setupPeriodicPingToHosts();
+  // Setup timer for periodic ping (every 30 seconds)
+  timer.setTime(30000, true);
+  timer.start();
 }
 
 void loop() {
@@ -186,7 +189,10 @@ void loop() {
 
   server.handleClient();
 
-  checkTimers();
+  // Check if it's time to ping all hosts
+  if (timer.isReady()) {
+    pingAllHosts();
+  }
 
   delay(1);  // Reduce power consumption by 60% with a delay https://hackaday.com/2022/10/28/esp8266-web-server-saves-60-power-with-a-1-ms-delay/
 }
