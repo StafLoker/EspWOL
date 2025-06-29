@@ -7,7 +7,7 @@
  * @param value The interval value in seconds.
  * @return true if the value is a valid interval, false otherwise.
  */
-bool isValidPeriodicPing(long value);
+bool isValidPeriodicPing(unsigned long value);
 
 /**
  * @brief Validates if the given string is a correctly formatted IPv4 address.
