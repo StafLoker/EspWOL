@@ -148,14 +148,52 @@
           </span>
         </button>
 
-        <!-- User Avatar -->
-        <RouterLink to="/account" class="avatar-link">
-          <AvatarRoot class="avatar-root" :class="{ 'avatar-active': $route.path === '/account' }">
-            <AvatarFallback class="avatar-fallback">
-              {{ shortUsername }}
-            </AvatarFallback>
-          </AvatarRoot>
-        </RouterLink>
+        <!-- User Avatar Dropdown -->
+        <DropdownMenuRoot v-model:open="dropdownOpen">
+          <DropdownMenuTrigger class="avatar-link">
+            <AvatarRoot class="avatar-root" :class="{ 'avatar-active': $route.path === '/account' || dropdownOpen }">
+              <AvatarFallback class="avatar-fallback">
+                {{ shortUsername }}
+              </AvatarFallback>
+            </AvatarRoot>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuPortal>
+            <DropdownMenuContent
+              class="min-w-[180px] outline-none bg-stone-50 dark:bg-zinc-800 rounded-xl p-2 shadow-xl border border-stone-200 dark:border-zinc-700 z-[200]"
+              :side-offset="8"
+              align="end"
+            >
+              <DropdownMenuItem
+                class="group text-sm leading-none text-warm-gray-800 dark:text-stone-200 rounded-lg flex items-center h-10 px-3 relative select-none outline-none data-[disabled]:text-warm-gray-400 data-[disabled]:pointer-events-none data-[highlighted]:bg-stone-200 dark:data-[highlighted]:bg-zinc-700 transition-colors duration-150 cursor-pointer"
+                @click="handleGoToAccount"
+              >
+                <i class="material-symbols-outlined text-lg mr-3">person</i>
+                {{ $t('header.account') }}
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator class="h-px bg-stone-200 dark:bg-zinc-700 my-2" />
+
+              <DropdownMenuItem
+                class="group text-sm leading-none text-warm-gray-800 dark:text-stone-200 rounded-lg flex items-center h-10 px-3 relative select-none outline-none data-[disabled]:text-warm-gray-400 data-[disabled]:pointer-events-none data-[highlighted]:bg-red-100 dark:data-[highlighted]:bg-red-900/30 transition-colors duration-150 cursor-pointer"
+                @click="handleLogout"
+                :disabled="logoutLoading"
+              >
+                <span v-if="logoutLoading" class="flex items-center">
+                  <svg class="animate-spin mr-3 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {{ $t('pages.account.session.loggingOut') }}
+                </span>
+                <span v-else class="flex items-center">
+                  <i class="material-symbols-outlined text-lg mr-3">logout</i>
+                  {{ $t('pages.account.session.logout') }}
+                </span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenuPortal>
+        </DropdownMenuRoot>
       </div>
     </header>
 
@@ -168,12 +206,32 @@
 </template>
 
 <script setup>
-import { RouterView, RouterLink } from 'vue-router'
-import { AvatarFallback, AvatarRoot, SelectRoot, SelectTrigger, SelectValue, SelectPortal, SelectContent, SelectViewport, SelectItem, SelectItemText } from 'reka-ui'
+import { RouterView, RouterLink, useRouter } from 'vue-router'
+import {
+  AvatarFallback,
+  AvatarRoot,
+  SelectRoot,
+  SelectTrigger,
+  SelectValue,
+  SelectPortal,
+  SelectContent,
+  SelectViewport,
+  SelectItem,
+  SelectItemText,
+  DropdownMenuRoot,
+  DropdownMenuTrigger,
+  DropdownMenuPortal,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator
+} from 'reka-ui'
 import { ref, onMounted } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import { useLanguage } from '@/composables/useLanguage'
 import EspWol from '@/assets/icons/espwol.svg'
+
+// Router
+const router = useRouter()
 
 // Composables
 const { isDark, toggleTheme } = useTheme()
@@ -187,6 +245,43 @@ const {
 
 // Reactive data
 const shortUsername = ref('ST')
+const dropdownOpen = ref(false)
+const logoutLoading = ref(false)
+
+// Methods
+function handleGoToAccount() {
+  dropdownOpen.value = false
+  router.push('/account')
+}
+
+async function handleLogout() {
+  logoutLoading.value = true
+
+  try {
+    // Clear any stored authentication data
+    localStorage.clear()
+    sessionStorage.clear()
+
+    // Small delay to show loading state
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    // Close dropdown
+    dropdownOpen.value = false
+
+    // Redirect to login page
+    router.push('/login')
+
+    // Optionally reload the page to clear any cached data
+    setTimeout(() => {
+      location.reload()
+    }, 100)
+
+  } catch (error) {
+    console.error('Error during logout:', error)
+  } finally {
+    logoutLoading.value = false
+  }
+}
 
 onMounted(() => {
   detectBrowserLanguage()

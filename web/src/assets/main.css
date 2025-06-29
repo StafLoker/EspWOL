@@ -3,8 +3,6 @@
 @import './base/form.css';
 @import './base/header.css';
 @import './base/buttons.css';
-@import './components/host-card.css';
-@import './components/dialog-animations.css';
 
 @theme {
   --color-warm-gray-50: #fafaf9;

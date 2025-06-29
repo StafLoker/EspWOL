@@ -1,7 +1,7 @@
 // =============================================================================
 // API SERVICES - Servicios para llamadas a la API del ESP8266
 // =============================================================================
-
+/*
 class ApiError extends Error {
   constructor(message, status, response) {
     super(message)
@@ -241,3 +241,4 @@ const apiClient = new ApiClient()
 if (localStorage.getItem('sessionId')) {
   apiClient.setSessionId(localStorage.getItem('sessionId'))
 }
+*/

@@ -1,7 +1,7 @@
 // =============================================================================
 // MIRAGE MOCK SERVER - Configuración para simular el backend ESP8266
 // =============================================================================
-
+/*
 // Importar MirageJS
 import { createServer, Model, Factory } from 'miragejs'
 
@@ -537,3 +537,4 @@ export function setupMirageServer() {
     },
   })
 }
+*/

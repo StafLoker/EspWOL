@@ -123,36 +123,6 @@
           </div>
         </form>
       </div>
-
-      <!-- Logout Card -->
-      <div class="card">
-        <h3 class="text-xl font-semibold text-warm-gray-800 dark:text-stone-100 mb-4">
-          {{ $t('pages.account.session.title') }}
-        </h3>
-        <p class="text-warm-gray-600 dark:text-stone-400 mb-6">
-          {{ $t('pages.account.session.description') }}
-        </p>
-        <div class="flex justify-end">
-          <button
-            type="button"
-            class="pill-button-deny-solid"
-            @click="handleLogout"
-            :disabled="logoutLoading"
-          >
-            <span v-if="logoutLoading" class="flex items-center">
-              <svg class="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              {{ $t('pages.account.session.loggingOut') }}
-            </span>
-            <span v-else class="flex items-center">
-              <i class="material-symbols-outlined mr-1 text-sm">logout</i>
-              {{ $t('pages.account.session.logout') }}
-            </span>
-          </button>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -160,10 +130,6 @@
 <script setup>
 import { Separator } from 'reka-ui'
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-
-// Router
-const router = useRouter()
 
 // State
 const authSettings = ref({
@@ -175,7 +141,6 @@ const authSettings = ref({
 const currentPassword = ref('')
 const confirmPassword = ref('')
 const authLoading = ref(false)
-const logoutLoading = ref(false)
 const isEditingExistingAuth = ref(false)
 
 // Validation state
@@ -300,32 +265,6 @@ async function updateAuthentication() {
     // Show error notification
   } finally {
     authLoading.value = false
-  }
-}
-
-async function handleLogout() {
-  logoutLoading.value = true
-
-  try {
-    // Clear any stored authentication data
-    localStorage.clear()
-    sessionStorage.clear()
-
-    // Small delay to show loading state
-    await new Promise(resolve => setTimeout(resolve, 500))
-
-    // Redirect to login page
-    router.push('/login')
-
-    // Optionally reload the page to clear any cached data
-    setTimeout(() => {
-      location.reload()
-    }, 100)
-
-  } catch (error) {
-    console.error('Error during logout:', error)
-  } finally {
-    logoutLoading.value = false
   }
 }
 

@@ -167,7 +167,7 @@ import {
   AlertDialogAction
 } from 'reka-ui'
 import { ref, onMounted, onUnmounted } from 'vue'
-import { hostsService, networkOpsService, handleApiError } from '@/services'
+
 // State
 const hosts = ref([])
 const loading = ref(true)
