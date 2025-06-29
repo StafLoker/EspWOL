@@ -59,7 +59,7 @@
 <script setup>
 import { Label } from 'reka-ui'
 import { ref } from 'vue';
-import EspWol from '@/assets/brand/espwol.svg'
+import EspWol from '@/assets/icons/espwol.svg'
 
 const invalidCredentials = ref(false)
 

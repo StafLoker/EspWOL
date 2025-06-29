@@ -4,75 +4,75 @@
 
 class ApiError extends Error {
   constructor(message, status, response) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-    this.response = response;
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+    this.response = response
   }
 }
 
 class ApiService {
   constructor(baseUrl = '') {
-    this.baseUrl = baseUrl;
-    this.sessionId = localStorage.getItem('sessionId') || null;
+    this.baseUrl = baseUrl
+    this.sessionId = localStorage.getItem('sessionId') || null
   }
 
   // Método base para realizar peticiones HTTP
   async request(endpoint, options = {}) {
-    const url = `${this.baseUrl}${endpoint}`;
+    const url = `${this.baseUrl}${endpoint}`
     const config = {
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers
+        ...options.headers,
       },
-      ...options
-    };
+      ...options,
+    }
 
     // Agregar session ID si existe
     if (this.sessionId) {
-      config.headers['X-Session-Id'] = this.sessionId;
+      config.headers['X-Session-Id'] = this.sessionId
     }
 
     try {
-      const response = await fetch(url, config);
-      const data = await response.json();
+      const response = await fetch(url, config)
+      const data = await response.json()
 
       if (!response.ok) {
-        throw new ApiError(data.message || 'Request failed', response.status, data);
+        throw new ApiError(data.message || 'Request failed', response.status, data)
       }
 
-      return data;
+      return data
     } catch (error) {
       if (error instanceof ApiError) {
-        throw error;
+        throw error
       }
-      throw new ApiError('Network error', 0, null);
+      throw new ApiError('Network error', 0, null)
     }
   }
 
   // Métodos GET, POST, PUT, DELETE
   async get(endpoint, params = {}) {
-    const queryString = new URLSearchParams(params).toString();
-    const url = queryString ? `${endpoint}?${queryString}` : endpoint;
-    return this.request(url, { method: 'GET' });
+    const queryString = new URLSearchParams(params).toString()
+    const url = queryString ? `${endpoint}?${queryString}` : endpoint
+    return this.request(url, { method: 'GET' })
   }
 
   async post(endpoint, data = {}) {
     return this.request(endpoint, {
       method: 'POST',
-      body: JSON.stringify(data)
-    });
+      body: JSON.stringify(data),
+    })
   }
 
   async put(endpoint, data = {}) {
     return this.request(endpoint, {
       method: 'PUT',
-      body: JSON.stringify(data)
-    });
+      body: JSON.stringify(data),
+    })
   }
 
   async delete(endpoint) {
-    return this.request(endpoint, { method: 'DELETE' });
+    return this.request(endpoint, { method: 'DELETE' })
   }
 }
 
@@ -82,47 +82,43 @@ class ApiService {
 
 class AuthService extends ApiService {
   async login(username, password) {
-    try {
-      const response = await this.post('/login', { username, password });
+    const response = await this.post('/login', { username, password })
 
-      if (response.success && response.sessionId) {
-        this.sessionId = response.sessionId;
-        localStorage.setItem('sessionId', response.sessionId);
-        localStorage.setItem('username', response.username);
-      }
-
-      return response;
-    } catch (error) {
-      throw error;
+    if (response.success && response.sessionId) {
+      this.sessionId = response.sessionId
+      localStorage.setItem('sessionId', response.sessionId)
+      localStorage.setItem('username', response.username)
     }
+
+    return response
   }
 
   async logout() {
     try {
       const response = await this.post('/logout', {
-        sessionId: this.sessionId
-      });
+        sessionId: this.sessionId,
+      })
 
-      this.sessionId = null;
-      localStorage.removeItem('sessionId');
-      localStorage.removeItem('username');
+      this.sessionId = null
+      localStorage.removeItem('sessionId')
+      localStorage.removeItem('username')
 
-      return response;
+      return response
     } catch (error) {
       // Limpiar datos locales aunque falle la petición
-      this.sessionId = null;
-      localStorage.removeItem('sessionId');
-      localStorage.removeItem('username');
-      throw error;
+      this.sessionId = null
+      localStorage.removeItem('sessionId')
+      localStorage.removeItem('username')
+      throw error
     }
   }
 
   isAuthenticated() {
-    return this.sessionId !== null;
+    return this.sessionId !== null
   }
 
   getUsername() {
-    return localStorage.getItem('username');
+    return localStorage.getItem('username')
   }
 }
 
@@ -132,31 +128,31 @@ class AuthService extends ApiService {
 
 class HostService extends ApiService {
   async getAllHosts() {
-    return this.get('/hosts');
+    return this.get('/hosts')
   }
 
   async getHost(id) {
-    return this.get('/hosts', { id });
+    return this.get('/hosts', { id })
   }
 
   async addHost(hostData) {
-    return this.post('/hosts', hostData);
+    return this.post('/hosts', hostData)
   }
 
   async updateHost(id, hostData) {
-    return this.put('/hosts', hostData, { id });
+    return this.put('/hosts', hostData, { id })
   }
 
   async deleteHost(id) {
-    return this.delete(`/hosts?id=${id}`);
+    return this.delete(`/hosts?id=${id}`)
   }
 
   async getHostsStatus() {
-    return this.get('/hosts/status');
+    return this.get('/hosts/status')
   }
 
   async importHosts(hostsArray) {
-    return this.post('/import', hostsArray);
+    return this.post('/import', hostsArray)
   }
 }
 
@@ -166,11 +162,11 @@ class HostService extends ApiService {
 
 class NetworkService extends ApiService {
   async wakeHost(id) {
-    return this.post('/wake', null, { id });
+    return this.post('/wake', null, { id })
   }
 
   async pingHost(id) {
-    return this.post('/ping', null, { id });
+    return this.post('/ping', null, { id })
   }
 }
 
@@ -181,30 +177,30 @@ class NetworkService extends ApiService {
 class SettingsService extends ApiService {
   // Network Settings
   async getNetworkSettings() {
-    return this.get('/networkSettings');
+    return this.get('/networkSettings')
   }
 
   async updateNetworkSettings(networkConfig) {
-    return this.put('/networkSettings', networkConfig);
+    return this.put('/networkSettings', networkConfig)
   }
 
   // Authentication Settings
   async getAuthenticationSettings() {
-    return this.get('/authenticationSettings');
+    return this.get('/authenticationSettings')
   }
 
   async updateAuthenticationSettings(authConfig) {
-    return this.put('/authenticationSettings', authConfig);
+    return this.put('/authenticationSettings', authConfig)
   }
 
   // About
   async getAbout() {
-    return this.get('/about');
+    return this.get('/about')
   }
 
   // WiFi Reset
   async resetWiFi() {
-    return this.post('/resetWifi');
+    return this.post('/resetWifi')
   }
 }
 
@@ -214,23 +210,23 @@ class SettingsService extends ApiService {
 
 class ApiClient {
   constructor(baseUrl = '') {
-    this.auth = new AuthService(baseUrl);
-    this.hosts = new HostService(baseUrl);
-    this.network = new NetworkService(baseUrl);
-    this.settings = new SettingsService(baseUrl);
+    this.auth = new AuthService(baseUrl)
+    this.hosts = new HostService(baseUrl)
+    this.network = new NetworkService(baseUrl)
+    this.settings = new SettingsService(baseUrl)
   }
 
   // Método para sincronizar sessionId entre servicios
   setSessionId(sessionId) {
-    this.auth.sessionId = sessionId;
-    this.hosts.sessionId = sessionId;
-    this.network.sessionId = sessionId;
-    this.settings.sessionId = sessionId;
+    this.auth.sessionId = sessionId
+    this.hosts.sessionId = sessionId
+    this.network.sessionId = sessionId
+    this.settings.sessionId = sessionId
   }
 
   // Método para limpiar sesión en todos los servicios
   clearSession() {
-    this.setSessionId(null);
+    this.setSessionId(null)
   }
 }
 
@@ -239,13 +235,9 @@ class ApiClient {
 // =============================================================================
 
 // Crear instancia global
-const apiClient = new ApiClient();
+const apiClient = new ApiClient()
 
 // Sincronizar sessionId al cargar
 if (localStorage.getItem('sessionId')) {
-  apiClient.setSessionId(localStorage.getItem('sessionId'));
+  apiClient.setSessionId(localStorage.getItem('sessionId'))
 }
-
-// Exportar para uso global
-window.apiClient = apiClient;
-window.ApiError = ApiError;

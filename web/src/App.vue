@@ -173,7 +173,7 @@ import { AvatarFallback, AvatarRoot, SelectRoot, SelectTrigger, SelectValue, Sel
 import { ref, onMounted } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import { useLanguage } from '@/composables/useLanguage'
-import EspWol from '@/assets/brand/espwol.svg'
+import EspWol from '@/assets/icons/espwol.svg'
 
 // Composables
 const { isDark, toggleTheme } = useTheme()
