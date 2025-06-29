@@ -97,7 +97,7 @@ void handleLogin() {
 
     JsonDocument responseDoc;
     responseDoc["username"] = username;
-    responseDoc["token"] = sessionId;
+    responseDoc["token"] = sessionToken;
 
     sendJsonResponse(200, true, "Login successful", responseDoc);
   } else {

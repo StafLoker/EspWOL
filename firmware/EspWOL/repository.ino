@@ -13,8 +13,8 @@ void loadHosts() {
           host.name = v["name"].as<String>();
           host.mac = v["mac"].as<String>();
           host.ip = v["ip"].as<String>();
-          host.periodicPing = v["periodicPing"].as<long>();
-          hosts[hosts.size()] = host;
+          host.autoWake = v["autoWake"].as<bool>();
+          hosts[v["id"].as<int>()] = host;
         }
       }
       file.close();
@@ -32,10 +32,11 @@ void saveHosts() {
       for (const auto& pair : hosts) {
         const Host& host = pair.second;
         JsonObject obj = array.createNestedObject();
+        obj["id"] = pair.first;
         obj["name"] = host.name;
         obj["mac"] = host.mac;
         obj["ip"] = host.ip;
-        obj["periodicPing"] = host.periodicPing;
+        obj["autoWake"] = host.autoWake;
       }
       serializeJson(doc, file);
       file.close();
@@ -49,11 +50,12 @@ void saveSettings() {
     File file = LittleFS.open(settingsFile, "w");
     if (file) {
       JsonDocument doc;
-      doc["enable"] = networkConfig.enable;
-      doc["ip"] = networkConfig.ip.toString();
-      doc["networkMask"] = networkConfig.networkMask.toString();
-      doc["gateway"] = networkConfig.gateway.toString();
-      doc["dns"] = networkConfig.dns.toString();
+      doc["pingPeriod"] = settings.pingPeriod;
+      doc["enable"] = settings.networkConfig.enable;
+      doc["ip"] = settings.networkConfig.ip.toString();
+      doc["networkMask"] = settings.networkConfig.networkMask.toString();
+      doc["gateway"] = settings.networkConfig.gateway.toString();
+      doc["dns"] = settings.networkConfig.dns.toString();
       serializeJson(doc, file);
       file.close();
     }
@@ -69,7 +71,8 @@ void loadSettings() {
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, file);
         if (!error) {
-          networkConfig.enable = doc["enable"];
+          settings.pingPeriod = doc["pingPeriod"].as<unsigned long>();
+          settings.networkConfig.enable = doc["enable"];
           IPAddress ip;
           IPAddress networkMask;
           IPAddress gateway;
@@ -78,15 +81,15 @@ void loadSettings() {
           networkMask.fromString(doc["networkMask"].as<String>());
           gateway.fromString(doc["gateway"].as<String>());
           dns.fromString(doc["dns"].as<String>());
-          networkConfig.ip = ip;
-          networkConfig.networkMask = networkMask;
-          networkConfig.gateway = gateway;
-          networkConfig.dns = dns;
+          settings.networkConfig.ip = ip;
+          settings.networkConfig.networkMask = networkMask;
+          settings.networkConfig.gateway = gateway;
+          settings.networkConfig.dns = dns;
         }
         file.close();
       }
     } else {
-      saveNetworkConfig();
+      saveSettings();
     }
     LittleFS.end();
   }
@@ -106,7 +109,7 @@ void saveUser(User& user) {
   LittleFS.end();
 }
 
-User& loadUser() {
+User loadUser() {
   if (LittleFS.begin()) {
     if (LittleFS.exists(userFile)) {
       File file = LittleFS.open(userFile, "r");

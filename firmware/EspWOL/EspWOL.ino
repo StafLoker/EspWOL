@@ -60,7 +60,7 @@ std::map<int, Host> hosts;
 // Map for storing hosts status like is online or not
 std::map<int, boolean> hostsStatus;
 
-std::map<String, long> activeSessions; // <session token, create at>
+std::map<String, unsigned long> activeSessions; // <session token, create at>
 
 GTimer<millis> pingTimer;
 

@@ -176,7 +176,7 @@ void deleteHost(int id) {
     hosts.erase(id);
     hostsStatus.erase(id);
     saveHosts();
-    sendJsonResponse(200, true, "Host deleted");
+    server.send(204);
   } else {
     sendJsonResponse(400, false, "Host not found");
   }

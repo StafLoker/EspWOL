@@ -90,7 +90,7 @@ void getNetworkSettings() {
     doc["gateway"] = WiFi.gatewayIP().toString();
     doc["dns"] = WiFi.dnsIP().toString();
   }
-  sendJsonResponse(200, doc);
+  sendJsonResponse(200, true, "Network settings", doc);
 }
 
 void updateUser() {
@@ -118,7 +118,7 @@ void updateUser() {
     return;
   }
 
-  User user = { username, password }
+  User user = { username, password };
 
   saveUser(user);
 
@@ -128,9 +128,8 @@ void updateUser() {
 void getUser() {
   extern Authentication authentication;
   JsonDocument doc;
-  doc["enable"] = authentication.enable;
   doc["username"] = authentication.username;
-  sendJsonResponse(200, doc);
+  sendJsonResponse(200, true, "User", doc);
 }
 
 // =============================================================================

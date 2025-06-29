@@ -23,6 +23,6 @@ const char* otaPassword = "ber#912NerYi";
 #define INIT_USER_USERNAME "glavniy"
 #define INIT_USER_PASSWORD "Lep#Chick43"
 
-#define SESSION_TIMEOUT = 900000;  // 30 min in ms
+#define SESSION_TIMEOUT 900000;  // 30 min in ms
 
 #endif
