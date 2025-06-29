@@ -21,15 +21,15 @@ void setupHostRoutes() {
 // =============================================================================
 
 bool validateHostData(const JsonDocument &doc, String &name, String &mac, String &ip, bool &autoWake) {
-  if (!doc.containsKey("name") || !doc.containsKey("mac") || !doc.containsKey("ip") || !doc.containsKey("autoWake")) {
+  if (!doc.containsKey(F("name")) || !doc.containsKey(F("mac")) || !doc.containsKey(F("ip")) || !doc.containsKey(F("autoWake"))) {
     sendJsonResponse(400, false, "Missing required fields");
     return false;
   }
 
-  name = doc["name"].as<String>();
-  mac = doc["mac"].as<String>();
-  ip = doc["ip"].as<String>();
-  autoWake = doc["autoWake"].as<bool>();
+  name = doc[F("name")].as<String>();
+  mac = doc[F("mac")].as<String>();
+  ip = doc[F("ip")].as<String>();
+  autoWake = doc[F("autoWake")].as<bool>();
 
   if (name.isEmpty() || !isValidMACAddress(mac) || !isValidIPAddress(ip)) {
     sendJsonResponse(400, false, "Invalid data format");
@@ -41,15 +41,15 @@ bool validateHostData(const JsonDocument &doc, String &name, String &mac, String
 
 JsonObject createHostJson(JsonDocument &doc, int id, const Host &host) {
   JsonObject obj = doc.to<JsonObject>();
-  obj["id"] = id;
-  obj["name"] = host.name;
-  obj["mac"] = host.mac;
-  obj["ip"] = host.ip;
-  obj["autoWake"] = host.autoWake;
+  obj[F("id")] = id;
+  obj[F("name")] = host.name;
+  obj[F("mac")] = host.mac;
+  obj[F("ip")] = host.ip;
+  obj[F("autoWake")] = host.autoWake;
   if (hostsStatus.find(id) != hostsStatus.end()) {
-    obj["status"] = hostsStatus[id];
+    obj[F("status")] = hostsStatus[id];
   } else {
-    obj["status"] = false;
+    obj[F("status")] = false;
   }
   return obj;
 }
@@ -73,15 +73,15 @@ void getHostList() {
     const Host &host = pair.second;
 
     JsonObject obj = array.createNestedObject();
-    obj["id"] = pair.first;
-    obj["name"] = host.name;
-    obj["mac"] = host.mac;
-    obj["ip"] = host.ip;
-    obj["autoWake"] = host.autoWake;
+    obj[F("id")] = pair.first;
+    obj[F("name")] = host.name;
+    obj[F("mac")] = host.mac;
+    obj[F("ip")] = host.ip;
+    obj[F("autoWake")] = host.autoWake;
     if (hostsStatus.find(pair.first) != hostsStatus.end()) {
-      obj["status"] = hostsStatus[pair.first];
+      obj[F("status")] = hostsStatus[pair.first];
     } else {
-      obj["status"] = false;
+      obj[F("status")] = false;
     }
   }
 
@@ -241,21 +241,21 @@ void handleImportDatabase() {
     extern std::map<int, Host> hosts;
 
     for (JsonVariant v : arr) {
-      if (!v.containsKey("name") || !v.containsKey("mac") || !v.containsKey("ip")) {
+      if (!v.containsKey(F("name")) || !v.containsKey(F("mac")) || !v.containsKey(F("ip"))) {
         ignoredCount++;
         continue;
       }
 
-      String name = v["name"].as<String>();
-      String mac = v["mac"].as<String>();
-      String ip = v["ip"].as<String>();
+      String name = v[F("name")].as<String>();
+      String mac = v[F("mac")].as<String>();
+      String ip = v[F("ip")].as<String>();
 
       if (name.isEmpty() || !isValidMACAddress(mac) || !isValidIPAddress(ip)) {
         ignoredCount++;
         continue;
       }
 
-      bool autoWake = v.containsKey("autoWake") ? v["autoWake"].as<bool>() : false;
+      bool autoWake = v.containsKey(F("autoWake")) ? v[F("autoWake")].as<bool>() : false;
 
       Host host = { name, mac, ip, autoWake };
       if (isHostDuplicate(host)) {

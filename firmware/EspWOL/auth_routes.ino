@@ -84,20 +84,20 @@ void handleLogin() {
     return;
   }
 
-  if (!doc.containsKey("username") || !doc.containsKey("password")) {
+  if (!doc.containsKey(F("username")) || !doc.containsKey(F("password"))) {
     sendJsonResponse(400, false, "Missing username or password");
     return;
   }
 
-  String username = doc["username"].as<String>();
-  String password = doc["password"].as<String>();
+  String username = doc[F("username")].as<String>();
+  String password = doc[F("password")].as<String>();
 
   if (validateCredentials(username, password)) {
     String sessionToken = createSession(username);
 
     JsonDocument responseDoc;
-    responseDoc["username"] = username;
-    responseDoc["token"] = sessionToken;
+    responseDoc[F("username")] = username;
+    responseDoc[F("token")] = sessionToken;
 
     sendJsonResponse(200, true, "Login successful", responseDoc);
   } else {
@@ -117,8 +117,8 @@ void handleLogout() {
     return;
   }
 
-  if (doc.containsKey("token")) {
-    String sessionToken = doc["token"].as<String>();
+  if (doc.containsKey(F("token"))) {
+    String sessionToken = doc[F("token")].as<String>();
     destroySession(sessionToken);
   }
 

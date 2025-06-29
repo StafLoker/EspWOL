@@ -2,8 +2,8 @@
 
 void sendJsonResponse(int statusCode, bool success, const String &message) {
   JsonDocument doc;
-  doc["success"] = success;
-  doc["message"] = message;
+  doc[F("success")] = success;
+  doc[F("message")] = message;
 
   String response;
   serializeJson(doc, response);
@@ -13,9 +13,9 @@ void sendJsonResponse(int statusCode, bool success, const String &message) {
 
 void sendJsonResponse(int statusCode, bool success, const String &message, const JsonDocument &dataDoc) {
   JsonDocument doc;
-  doc["success"] = success;
-  doc["message"] = message;
-  doc["data"] = dataDoc;
+  doc[F("success")] = success;
+  doc[F("message")] = message;
+  doc[F("data")] = dataDoc;
 
   String response;
   serializeJson(doc, response);

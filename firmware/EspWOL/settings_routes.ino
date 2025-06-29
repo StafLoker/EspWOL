@@ -21,26 +21,26 @@ void getSettings() {
   JsonDocument doc;
   
   // About information
-  JsonObject about = doc.createNestedObject("about");
-  about["version"] = VERSION;
-  about["hostname"] = wifiManager.getWiFiHostname();
+  JsonObject about = doc.createNestedObject(F("about"));
+  about[F("version")] = VERSION;
+  about[F("hostname")] = wifiManager.getWiFiHostname();
   
   // Ping period
-  doc["pingPeriod"] = settings.pingPeriod;
+  doc[F("pingPeriod")] = settings.pingPeriod;
   
   // Network settings
-  JsonObject network = doc.createNestedObject("network");
-  network["enable"] = settings.networkConfig.enable;
+  JsonObject network = doc.createNestedObject(F("network"));
+  network[F("enable")] = settings.networkConfig.enable;
   if (settings.networkConfig.enable) {
-    network["ip"] = settings.networkConfig.ip.toString();
-    network["networkMask"] = settings.networkConfig.networkMask.toString();
-    network["gateway"] = settings.networkConfig.gateway.toString();
-    network["dns"] = settings.networkConfig.dns.toString();
+    network[F("ip")] = settings.networkConfig.ip.toString();
+    network[F("networkMask")] = settings.networkConfig.networkMask.toString();
+    network[F("gateway")] = settings.networkConfig.gateway.toString();
+    network[F("dns")] = settings.networkConfig.dns.toString();
   } else {
-    network["ip"] = WiFi.localIP().toString();
-    network["networkMask"] = WiFi.subnetMask().toString();
-    network["gateway"] = WiFi.gatewayIP().toString();
-    network["dns"] = WiFi.dnsIP().toString();
+    network[F("ip")] = WiFi.localIP().toString();
+    network[F("networkMask")] = WiFi.subnetMask().toString();
+    network[F("gateway")] = WiFi.gatewayIP().toString();
+    network[F("dns")] = WiFi.dnsIP().toString();
   }
   
   sendJsonResponse(200, true, "Settings", doc);
@@ -48,7 +48,7 @@ void getSettings() {
 
 void getPingPeriod() {
   JsonDocument doc;
-  doc["pingPeriod"] = settings.pingPeriod;
+  doc[F("pingPeriod")] = settings.pingPeriod;
   sendJsonResponse(200, true, "Ping period", doc);
 }
 
@@ -64,12 +64,12 @@ void updatePingPeriod() {
     return;
   }
 
-  if (!doc.containsKey("pingPeriod")) {
+  if (!doc.containsKey(F("pingPeriod"))) {
     sendJsonResponse(400, false, "Missing pingPeriod field");
     return;
   }
 
-  long pingPeriod = doc["pingPeriod"].as<unsigned long>();
+  long pingPeriod = doc[F("pingPeriod")].as<unsigned long>();
   
   if (!isValidPeriodicPing(pingPeriod)) {
     sendJsonResponse(400, false, "Invalid ping period value");
@@ -83,7 +83,7 @@ void updatePingPeriod() {
   pingTimer.start();
 
   JsonDocument responseDoc;
-  responseDoc["pingPeriod"] = settings.pingPeriod;
+  responseDoc[F("pingPeriod")] = settings.pingPeriod;
   sendJsonResponse(200, true, "Ping period updated", responseDoc);
 }
 
@@ -99,22 +99,22 @@ void updateNetworkSettings() {
     return;
   }
 
-  if (!doc.containsKey("enable") || !doc.containsKey("ip") || !doc.containsKey("networkMask") || !doc.containsKey("gateway") || !doc.containsKey("dns")) {
+  if (!doc.containsKey(F("enable")) || !doc.containsKey(F("ip")) || !doc.containsKey(F("networkMask")) || !doc.containsKey(F("gateway")) || !doc.containsKey(F("dns"))) {
     sendJsonResponse(400, false, "Missing required fields");
     return;
   }
 
-  String ip_str = doc["ip"].as<String>();
-  String networkMask_str = doc["networkMask"].as<String>();
-  String gateway_str = doc["gateway"].as<String>();
-  String dns_str = doc["dns"].as<String>();
+  String ip_str = doc[F("ip")].as<String>();
+  String networkMask_str = doc[F("networkMask")].as<String>();
+  String gateway_str = doc[F("gateway")].as<String>();
+  String dns_str = doc[F("dns")].as<String>();
 
-  if (!doc["enable"].is<bool>()) {
+  if (!doc[F("enable")].is<bool>()) {
     sendJsonResponse(400, false, "Invalid data format");
     return;
   }
 
-  settings.networkConfig.enable = doc["enable"];
+  settings.networkConfig.enable = doc[F("enable")];
   if (settings.networkConfig.enable) {
     if (!isValidIPAddress(ip_str) || !isValidIPAddress(networkMask_str) || !isValidIPAddress(gateway_str) || !isValidIPAddress(dns_str)) {
       sendJsonResponse(400, false, "Invalid data format");
@@ -137,17 +137,17 @@ void updateNetworkSettings() {
   updateIPWifiSettings();
 
   JsonDocument responseDoc;
-  responseDoc["enable"] = settings.networkConfig.enable;
+  responseDoc[F("enable")] = settings.networkConfig.enable;
   if (settings.networkConfig.enable) {
-    responseDoc["ip"] = settings.networkConfig.ip.toString();
-    responseDoc["networkMask"] = settings.networkConfig.networkMask.toString();
-    responseDoc["gateway"] = settings.networkConfig.gateway.toString();
-    responseDoc["dns"] = settings.networkConfig.dns.toString();
+    responseDoc[F("ip")] = settings.networkConfig.ip.toString();
+    responseDoc[F("networkMask")] = settings.networkConfig.networkMask.toString();
+    responseDoc[F("gateway")] = settings.networkConfig.gateway.toString();
+    responseDoc[F("dns")] = settings.networkConfig.dns.toString();
   } else {
-    responseDoc["ip"] = WiFi.localIP().toString();
-    responseDoc["networkMask"] = WiFi.subnetMask().toString();
-    responseDoc["gateway"] = WiFi.gatewayIP().toString();
-    responseDoc["dns"] = WiFi.dnsIP().toString();
+    responseDoc[F("ip")] = WiFi.localIP().toString();
+    responseDoc[F("networkMask")] = WiFi.subnetMask().toString();
+    responseDoc[F("gateway")] = WiFi.gatewayIP().toString();
+    responseDoc[F("dns")] = WiFi.dnsIP().toString();
   }
   
   sendJsonResponse(200, true, "Network settings updated", responseDoc);
@@ -157,17 +157,17 @@ void updateNetworkSettings() {
 
 void getNetworkSettings() {
   JsonDocument doc;
-  doc["enable"] = settings.networkConfig.enable;
+  doc[F("enable")] = settings.networkConfig.enable;
   if (settings.networkConfig.enable) {
-    doc["ip"] = settings.networkConfig.ip.toString();
-    doc["networkMask"] = settings.networkConfig.networkMask.toString();
-    doc["gateway"] = settings.networkConfig.gateway.toString();
-    doc["dns"] = settings.networkConfig.dns.toString();
+    doc[F("ip")] = settings.networkConfig.ip.toString();
+    doc[F("networkMask")] = settings.networkConfig.networkMask.toString();
+    doc[F("gateway")] = settings.networkConfig.gateway.toString();
+    doc[F("dns")] = settings.networkConfig.dns.toString();
   } else {
-    doc["ip"] = WiFi.localIP().toString();
-    doc["networkMask"] = WiFi.subnetMask().toString();
-    doc["gateway"] = WiFi.gatewayIP().toString();
-    doc["dns"] = WiFi.dnsIP().toString();
+    doc[F("ip")] = WiFi.localIP().toString();
+    doc[F("networkMask")] = WiFi.subnetMask().toString();
+    doc[F("gateway")] = WiFi.gatewayIP().toString();
+    doc[F("dns")] = WiFi.dnsIP().toString();
   }
   sendJsonResponse(200, true, "Network settings", doc);
 }
@@ -184,13 +184,13 @@ void updateUser() {
     return;
   }
 
-  if (!doc.containsKey("username") || !doc.containsKey("password")) {
+  if (!doc.containsKey(F("username")) || !doc.containsKey(F("password"))) {
     sendJsonResponse(400, false, "Missing required fields");
     return;
   }
 
-  String username = doc["username"].as<String>();
-  String password = doc["password"].as<String>();
+  String username = doc[F("username")].as<String>();
+  String password = doc[F("password")].as<String>();
 
   if (username.length() < 3 || !isValidPassword(password)) {
     sendJsonResponse(400, false, "Invalid data format");
@@ -203,14 +203,14 @@ void updateUser() {
 
   // Devolver el nuevo username
   JsonDocument responseDoc;
-  responseDoc["username"] = username;
+  responseDoc[F("username")] = username;
   sendJsonResponse(200, true, "User updated", responseDoc);
 }
 
 void getUser() {
   User user = loadUser();
   JsonDocument doc;
-  doc["username"] = user.username;
+  doc[F("username")] = user.username;
   sendJsonResponse(200, true, "User", doc);
 }
 
@@ -251,8 +251,8 @@ void handleUser() {
 void handleGetAbout() {
   if (isAuthenticated()) {
     JsonDocument doc;
-    doc["version"] = VERSION;
-    doc["hostname"] = wifiManager.getWiFiHostname();
+    doc[F("version")] = VERSION;
+    doc[F("hostname")] = wifiManager.getWiFiHostname();
     sendJsonResponse(200, true, "App general information", doc);
   }
 }
