@@ -1,11 +1,11 @@
 #include "validation.h"
 #include <unordered_set>
 
-const std::unordered_set<long> VALID_PING_VALUES = {
+const std::unordered_set< unsigned long> VALID_PING_VALUES = {
   0, 60, 300, 600, 900, 1800, 2700, 3600, 10800, 21600, 43200, 86400
 };
 
-bool isValidPeriodicPing(long value) {
+bool isValidPeriodicPing(unsigned long value) {
   return VALID_PING_VALUES.find(value) != VALID_PING_VALUES.end();
 }
 

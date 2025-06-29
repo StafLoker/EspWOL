@@ -1,9 +1,4 @@
 #include "settings_routes.h"
-#include "routes.h"
-#include "repository.h"
-#include "validation.h"
-#include <ESP8266WiFi.h>
-#include <WiFiManager.h>
 
 extern WiFiManager wifiManager;
 extern void updateIPWifiSettings();
@@ -126,7 +121,7 @@ void updateUser() {
 }
 
 void getUser() {
-  User user = getUser();
+  User user = loadUser();
   JsonDocument doc;
   doc["username"] = user.username;
   sendJsonResponse(200, true, "User", doc);

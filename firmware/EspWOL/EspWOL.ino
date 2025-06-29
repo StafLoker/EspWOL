@@ -44,7 +44,7 @@
 #include "web_routes.h"
 #include "repository.h"
 #include "validation.h"
-// #include "index.h"
+#include "index.h"
 
 /* === LIB VARS === */
 
@@ -60,11 +60,14 @@ std::map<int, Host> hosts;
 // Map for storing hosts status like is online or not
 std::map<int, boolean> hostsStatus;
 
-std::map<String, unsigned long> activeSessions; // <session token, create at>
+std::map<String, unsigned long> activeSessions;  // <session token, create at>
 
 GTimer<millis> pingTimer;
 
-struct Settings settings;
+struct Settings settings = {
+  .pingPeriod = 60000,  // 1 min de
+  .networkConfig = {}
+};
 
 /* === FUNCTIONS === */
 
@@ -135,7 +138,7 @@ void setup() {
   MDNS.begin(hostname);
   MDNS.addService("http", "tcp", 80);
 #if ENABLE_STANDARD_OTA == 1
-  MDNS.enableArduino(ArduinoOTA_PORT, true);
+  MDNS.enableArduino(ENABLE_STANDARD_OTA, true);
 #endif
 #endif
 

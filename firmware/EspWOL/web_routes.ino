@@ -1,6 +1,4 @@
 #include "web_routes.h"
-#include "routes.h"
-#include "index.h"
 
 // =============================================================================
 // WEB ROUTE CONFIGURATION
@@ -22,5 +20,5 @@ void handleRoot() {
 }
 
 void handleNotFound() {
-  sendJsonResponse(404, "Not found", false);
+  sendJsonResponse(404, false, "Not found");
 }

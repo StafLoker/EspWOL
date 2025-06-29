@@ -1,7 +1,4 @@
 #include "host_routes.h"
-#include "routes.h"
-#include "repository.h"
-#include "validation.h"
 
 // =============================================================================
 // HOST ROUTE CONFIGURATION
@@ -92,7 +89,7 @@ void getHostList() {
 }
 
 void getHost(int id) {
-  if (id >= 0 && id < hosts.size()) {
+  if (hosts.find(id) != hosts.end()) {
     Host &host = hosts[id];
     JsonDocument doc;
     createHostJson(doc, id, host);
@@ -142,7 +139,7 @@ void editHost(int id) {
     return;
   }
 
-  if (id < 0 || id >= hosts.size()) {
+  if (hosts.find(id) == hosts.end()) {
     sendJsonResponse(400, false, "Host not found");
     return;
   }
@@ -177,7 +174,7 @@ void editHost(int id) {
 }
 
 void deleteHost(int id) {
-  if (id >= 0 && id < hosts.size()) {
+  if (hosts.find(id) != hosts.end()) {
     hosts.erase(id);
     hostsStatus.erase(id);
     saveHosts();

@@ -109,7 +109,7 @@ void saveUser(User& user) {
   LittleFS.end();
 }
 
-User getUser() {
+User loadUser() {
   User user = { INIT_USER_USERNAME, INIT_USER_PASSWORD };
   if (LittleFS.begin()) {
     if (LittleFS.exists(userFile)) {

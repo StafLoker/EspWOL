@@ -1,8 +1,4 @@
 #include "network_routes.h"
-#include "routes.h"
-#include "repository.h"
-#include <WakeOnLan.h>
-#include <ESP8266Ping.h>
 
 extern WakeOnLan wol;
 

@@ -37,7 +37,7 @@ void cleanExpiredSessions() {
 }
 
 bool validateCredentials(const String &username, const String &password) {
-  User user = getUser();
+  User user = loadUser();
 
   return (username == user.username && password == user.password);
 }
