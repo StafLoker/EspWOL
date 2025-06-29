@@ -25,7 +25,7 @@ void setupHostRoutes() {
 
 bool validateHostData(const JsonDocument &doc, String &name, String &mac, String &ip, bool &autoWake) {
   if (!doc.containsKey("name") || !doc.containsKey("mac") || !doc.containsKey("ip") || !doc.containsKey("autoWake")) {
-    sendJsonResponse(400, "Missing required fields", false);
+    sendJsonResponse(400, false, "Missing required fields");
     return false;
   }
 
@@ -121,7 +121,7 @@ void addHost() {
   Host host = { name, mac, ip, autoWake };
 
   if (isHostDuplicate(host)) {
-    sendJsonResponse(400, "Duplicate host", false);
+    sendJsonResponse(409, false, "Duplicate host");
     return;
   }
 
@@ -133,7 +133,7 @@ void addHost() {
   // Crear JSON con el host añadido
   JsonDocument responseDoc;
   createHostJson(responseDoc, id, host);
-  sendJsonResponse(200, "Host added", true, responseDoc);
+  sendJsonResponse(200, true, "Host added", responseDoc);
 }
 
 void editHost(int id) {
@@ -162,6 +162,11 @@ void editHost(int id) {
   host.mac = mac;
   host.ip = ip;
   host.autoWake = autoWake;
+
+  if (isHostDuplicate(host)) {
+    sendJsonResponse(409, false, "Duplicate host");
+    return;
+  }
 
   saveHosts();
 

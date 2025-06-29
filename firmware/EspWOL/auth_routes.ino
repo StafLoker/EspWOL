@@ -14,14 +14,14 @@ void setupAuthRoutes() {
 // =============================================================================
 
 String generateSessionToken() {
-  String sessionId = "";
+  String sessionToken = "";
   const char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
   for (int i = 0; i < 32; i++) {
-    sessionId += charset[random(0, sizeof(charset) - 1)];
+    sessionToken += charset[random(0, sizeof(charset) - 2)];
   }
 
-  return sessionId;
+  return sessionToken;
 }
 
 void cleanExpiredSessions() {
@@ -37,7 +37,7 @@ void cleanExpiredSessions() {
 }
 
 bool validateCredentials(const String &username, const String &password) {
-  User user = loadUser();
+  User user = getUser();
 
   return (username == user.username && password == user.password);
 }

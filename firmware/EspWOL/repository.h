@@ -11,6 +11,6 @@ void loadSettings();
 
 void saveUser();
 
-void loadUser();
+User getUser();
 
 #endif

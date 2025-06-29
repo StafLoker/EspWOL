@@ -45,7 +45,7 @@ bool isValidPassword(const String &password) {
       hasUpper = true;
     else if (isLowerCase(c))
       hasLower = true;
-    else if (isPunct(c) || isGraph(c))
+    else if (isPunct(c))
       hasSpecial = true;
 
     if (hasUpper && hasLower && hasSpecial)

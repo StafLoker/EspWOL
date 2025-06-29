@@ -109,7 +109,8 @@ void saveUser(User& user) {
   LittleFS.end();
 }
 
-User loadUser() {
+User getUser() {
+  User user = { INIT_USER_USERNAME, INIT_USER_PASSWORD };
   if (LittleFS.begin()) {
     if (LittleFS.exists(userFile)) {
       File file = LittleFS.open(userFile, "r");
@@ -117,16 +118,13 @@ User loadUser() {
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, file);
         if (!error) {
-          authentication.username = doc["username"].as<String>();
-          authentication.password = doc["password"].as<String>();
+          user.username = doc["username"].as<String>();
+          user.password = doc["password"].as<String>();
         }
         file.close();
       }
-    } else {
-      User user = { INIT_USER_USERNAME, INIT_USER_PASSWORD };
-      saveUser(
-        user);
     }
     LittleFS.end();
   }
+  return user;
 }

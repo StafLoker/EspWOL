@@ -126,9 +126,9 @@ void updateUser() {
 }
 
 void getUser() {
-  extern Authentication authentication;
+  User user = getUser();
   JsonDocument doc;
-  doc["username"] = authentication.username;
+  doc["username"] = user.username;
   sendJsonResponse(200, true, "User", doc);
 }
 
