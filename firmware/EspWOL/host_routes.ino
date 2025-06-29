@@ -4,7 +4,7 @@
 #include "validation.h"
 
 // =============================================================================
-// CONFIGURACIÓN DE RUTAS DE HOSTS
+// HOST ROUTE CONFIGURATION
 // =============================================================================
 
 void setupHostRoutes() {
@@ -15,12 +15,12 @@ void setupHostRoutes() {
       handleHosts();
     }
   });
-  
+
   server.on("/import", HTTP_POST, handleImportDatabase);
 }
 
 // =============================================================================
-// FUNCIONES AUXILIARES PARA HOSTS
+// AUXILIARY FUNCTIONS FOR HOSTS
 // =============================================================================
 
 bool validateHostData(const JsonDocument &doc, String &name, String &mac, String &ip, bool &autoWake) {
@@ -35,62 +35,82 @@ bool validateHostData(const JsonDocument &doc, String &name, String &mac, String
   autoWake = doc["autoWake"].as<bool>();
 
   if (name.isEmpty() || !isValidMACAddress(mac) || !isValidIPAddress(ip)) {
-    sendJsonResponse(400, "Invalid data format", false);
+    sendJsonResponse(400, false, "Invalid data format");
     return false;
   }
 
   return true;
 }
 
+JsonObject createHostJson(JsonDocument &doc, int id, const Host &host) {
+  JsonObject obj = doc.to<JsonObject>();
+  obj["id"] = id;
+  obj["name"] = host.name;
+  obj["mac"] = host.mac;
+  obj["ip"] = host.ip;
+  obj["autoWake"] = host.autoWake;
+  if (hostsStatus.find(id) != hostsStatus.end()) {
+    obj["status"] = hostsStatus[id];
+  } else {
+    obj["status"] = false;
+  }
+  return obj;
+}
+
+bool isHostDuplicate(const Host &newHost) {
+  for (const auto &pair : hosts) {
+    const Host &existingHost = pair.second;
+
+    if (existingHost.mac == newHost.mac || existingHost.ip == newHost.ip) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void getHostList() {
-  extern std::map<int, Host> hosts;
-  
   JsonDocument doc;
   JsonArray array = doc.to<JsonArray>();
+
   for (const auto &pair : hosts) {
     const Host &host = pair.second;
 
     JsonObject obj = array.createNestedObject();
+    obj["id"] = pair.first;
     obj["name"] = host.name;
     obj["mac"] = host.mac;
     obj["ip"] = host.ip;
     obj["autoWake"] = host.autoWake;
+    if (hostsStatus.find(pair.first) != hostsStatus.end()) {
+      obj["status"] = hostsStatus[pair.first];
+    } else {
+      obj["status"] = false;
+    }
   }
-  sendJsonResponse(200, doc);
+
+  sendJsonResponse(200, true, "Your hosts", doc);
 }
 
-void getHost(const String &id) {
-  extern std::map<int, Host> hosts;
-  extern std::map<int, boolean> hostsStatus;
-  
-  int index = id.toInt();
-  if (index >= 0 && index < hosts.size()) {
-    Host &host = hosts[index];
+void getHost(int id) {
+  if (id >= 0 && id < hosts.size()) {
+    Host &host = hosts[id];
     JsonDocument doc;
-    doc["name"] = host.name;
-    doc["mac"] = host.mac;
-    doc["ip"] = host.ip;
-    doc["autoWake"] = host.autoWake;
-    if (hostsStatus.find(index) != hostsStatus.end()) {
-      doc["status"] = hostsStatus[index];
-    } else {
-      doc["status"] = false;
-    }
-    sendJsonResponse(200, doc);
+    createHostJson(doc, id, host);
+    sendJsonResponse(200, true, "Your host", doc);
   } else {
-    sendJsonResponse(400, "Host not found", false);
+    sendJsonResponse(400, false, "Host not found");
   }
 }
 
 void addHost() {
   if (!server.hasArg("plain")) {
-    sendJsonResponse(400, "Missing body", false);
+    sendJsonResponse(400, false, "Missing body");
     return;
   }
 
   JsonDocument doc;
   if (deserializeJson(doc, server.arg("plain"))) {
-    sendJsonResponse(400, "Invalid JSON", false);
+    sendJsonResponse(400, false, "Invalid JSON");
     return;
   }
 
@@ -105,30 +125,31 @@ void addHost() {
     return;
   }
 
-  extern std::map<int, Host> hosts;
   int id = hosts.size();
   hosts[id] = host;
 
-  saveHostsData();
-  sendJsonResponse(200, "Host added", true);
+  saveHosts();
+
+  // Crear JSON con el host añadido
+  JsonDocument responseDoc;
+  createHostJson(responseDoc, id, host);
+  sendJsonResponse(200, "Host added", true, responseDoc);
 }
 
-void editHost(const String &id) {
+void editHost(int id) {
   if (!server.hasArg("plain")) {
-    sendJsonResponse(400, "Missing body", false);
+    sendJsonResponse(400, false, "Missing body");
     return;
   }
 
-  extern std::map<int, Host> hosts;
-  int index = id.toInt();
-  if (index < 0 || index >= hosts.size()) {
-    sendJsonResponse(400, "Host not found", false);
+  if (id < 0 || id >= hosts.size()) {
+    sendJsonResponse(400, false, "Host not found");
     return;
   }
 
   JsonDocument doc;
   if (deserializeJson(doc, server.arg("plain"))) {
-    sendJsonResponse(400, "Invalid JSON", false);
+    sendJsonResponse(400, false, "Invalid JSON");
     return;
   }
 
@@ -136,33 +157,33 @@ void editHost(const String &id) {
   bool autoWake;
   if (!validateHostData(doc, name, mac, ip, autoWake)) return;
 
-  Host &host = hosts[index];
+  Host &host = hosts[id];
   host.name = name;
   host.mac = mac;
   host.ip = ip;
   host.autoWake = autoWake;
 
-  saveHostsData();
-  sendJsonResponse(200, "Host updated", true);
+  saveHosts();
+
+  // Crear JSON con el host editado
+  JsonDocument responseDoc;
+  createHostJson(responseDoc, id, host);
+  sendJsonResponse(200, true, "Host updated", responseDoc);
 }
 
-void deleteHost(const String &id) {
-  extern std::map<int, Host> hosts;
-  extern std::map<int, boolean> hostsStatus;
-  
-  int index = id.toInt();
-  if (index >= 0 && index < hosts.size()) {
-    hosts.erase(index);
-    hostsStatus.erase(index);
-    saveHostsData();
-    sendJsonResponse(200, "Host deleted", true);
+void deleteHost(int id) {
+  if (id >= 0 && id < hosts.size()) {
+    hosts.erase(id);
+    hostsStatus.erase(id);
+    saveHosts();
+    sendJsonResponse(200, true, "Host deleted");
   } else {
-    sendJsonResponse(400, "Host not found", false);
+    sendJsonResponse(400, false, "Host not found");
   }
 }
 
 // =============================================================================
-// RUTAS DE HOSTS
+// HOSTS ROUTES
 // =============================================================================
 
 void handleHosts() {
@@ -172,21 +193,22 @@ void handleHosts() {
     } else if (server.method() == HTTP_POST) {
       addHost();
     } else {
-      sendJsonResponse(405, "HTTP Method Not Allowed", false);
+      sendJsonResponse(405, false, "HTTP Method Not Allowed");
     }
   }
 }
 
 void handleHostsById() {
   if (isAuthenticated()) {
+    int id = server.arg("id").toInt();
     if (server.method() == HTTP_GET) {
-      getHost(server.arg("id"));
+      getHost(id);
     } else if (server.method() == HTTP_PUT) {
-      editHost(server.arg("id"));
+      editHost(id);
     } else if (server.method() == HTTP_DELETE) {
-      deleteHost(server.arg("id"));
+      deleteHost(id);
     } else {
-      sendJsonResponse(405, "HTTP Method Not Allowed", false);
+      sendJsonResponse(405, false, "HTTP Method Not Allowed");
     }
   }
 }
@@ -194,18 +216,18 @@ void handleHostsById() {
 void handleImportDatabase() {
   if (isAuthenticated()) {
     if (!server.hasArg("plain")) {
-      sendJsonResponse(400, "Missing body", false);
+      sendJsonResponse(400, false, "Missing body");
       return;
     }
 
     JsonDocument doc;
     if (deserializeJson(doc, server.arg("plain"))) {
-      sendJsonResponse(400, "Invalid JSON", false);
+      sendJsonResponse(400, false, "Invalid JSON");
       return;
     }
 
     if (!doc.is<JsonArray>()) {
-      sendJsonResponse(400, "Expected JSON array", false);
+      sendJsonResponse(400, false, "Expected JSON array");
       return;
     }
 
@@ -244,8 +266,8 @@ void handleImportDatabase() {
       importedCount++;
     }
 
-    saveHostsData();
+    saveHosts();
 
-    sendJsonResponse(200, String("Imported ") + importedCount + " hosts from " + arr.size() + ". " + ignoredCount + " hosts ignored. Hosts in database after import: " + hosts.size() + ".", true);
+    sendJsonResponse(200, true, String("Imported ") + importedCount + " hosts from " + arr.size() + ". " + ignoredCount + " hosts ignored. Hosts in database after import: " + hosts.size() + ".");
   }
 }

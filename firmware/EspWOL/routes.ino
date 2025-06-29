@@ -1,60 +1,45 @@
 #include "routes.h"
-#include "auth_routes.h"
-#include "host_routes.h"
-#include "network_routes.h"
-#include "settings_routes.h"
-#include "web_routes.h"
-#include "repository.h"
 
-// =============================================================================
-// FUNCIONES UTILITARIAS COMPARTIDAS
-// =============================================================================
+void sendJsonResponse(int statusCode, bool success, const String &message) {
+  JsonDocument doc;
+  doc["success"] = success;
+  doc["message"] = message;
 
-void sendJsonResponse(int statusCode, const String &message, bool success) {
-  String jsonResponse;
-  jsonResponse = String("{\"success\":") + (success ? "true" : "false") + ",\"message\":\"" + message + "\"}";
-  server.send(statusCode, "application/json", jsonResponse);
+  String response;
+  serializeJson(doc, response);
+  server.send(statusCode, "application/json", response);
 }
 
-void sendJsonResponse(int statusCode, const JsonDocument &doc) {
-  String jsonResponse;
-  serializeJson(doc, jsonResponse);
-  server.send(statusCode, "application/json", jsonResponse);
+
+void sendJsonResponse(int statusCode, bool success, const String &message, const JsonDocument &dataDoc) {
+  JsonDocument doc;
+  doc["success"] = success;
+  doc["message"] = message;
+  doc["data"] = dataDoc;
+
+  String response;
+  serializeJson(doc, response);
+  server.send(statusCode, "application/json", response);
 }
+
 
 bool isAuthenticated() {
-  extern Authentication authentication;
-  if (authentication.enable && !server.authenticate(authentication.username.c_str(), authentication.password.c_str())) {
-    server.requestAuthentication();
-    return false;
-  }
-  return true;
-}
+  bool valid = false;
 
-bool isSessionAuthenticated() {
-  extern Authentication authentication;
-  
-  // Si la autenticación está deshabilitada, permitir acceso
-  if (!authentication.enable) {
-    return true;
-  }
-  
-  // Verificar si hay un header de sesión
-  if (server.hasHeader("X-Session-Id")) {
-    String sessionId = server.header("X-Session-Id");
-    return isSessionValid(sessionId);
-  }
-  
-  // Si no hay sesión, usar autenticación básica como fallback
-  return isAuthenticated();
-}
+  if (server.hasHeader("X-Session-Token")) {
+    String sessionToken = server.header("X-Session-Token");
 
-// =============================================================================
-// CONFIGURACIÓN PRINCIPAL DE RUTAS
-// =============================================================================
+    valid = isSessionValid(sessionToken);
+  }
+
+  if (!valid) {
+    sendJsonResponse(401, false, "Authentication required");
+  }
+
+  return valid;
+}
 
 void setupRoutes() {
-  // Configurar rutas de cada módulo
   setupAuthRoutes();
   setupHostRoutes();
   setupNetworkRoutes();

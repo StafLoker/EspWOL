@@ -2,8 +2,10 @@
   Project: EspWOL 
   Author: StafLoker
   Version: 3.0.0
-  Refactored with functional approach instead of classes
 */
+
+#include <Arduino.h>
+#include "consts.h"
 
 /* Network */
 #include <ESP8266WiFi.h>
@@ -13,8 +15,7 @@
 #include <WiFiManager.h>
 #include <ESP8266Ping.h>
 
-#define ENABLE_mDNS 1  // Values: 1 to enable, != 1 to disable
-
+/* mDNS */
 #if ENABLE_mDNS == 1
 #include <ESP8266mDNS.h>
 #endif
@@ -25,17 +26,16 @@
 #include <map>
 
 /* OTA */
-#define ENABLE_STANDARD_OTA 1  // Values: 1 to enable, != 1 to disable
-
 #if ENABLE_STANDARD_OTA == 1
 #include <ArduinoOTA.h>
-#define ArduinoOTA_PORT 8266
+#define ARDUINO_OTA_PORT 8266
 #endif
 
 /* Time */
 #include <GTimer.h>
 
 /* Project files */
+#include "structs.h"
 #include "routes.h"
 #include "auth_routes.h"
 #include "host_routes.h"
@@ -46,70 +46,42 @@
 #include "validation.h"
 #include "index.h"
 
-#define VERSION "3.0.0"
+/* === LIB VARS === */
 
 ESP8266WebServer server(80);
 WiFiUDP UDP;
 WakeOnLan wol(UDP);
 WiFiManager wifiManager;
 
-const char* hostsFile = "/hosts.json";
-const char* networkConfigFile = "/network.json";
-const char* authenticationFile = "/authentication.json";
-const char* settingsFile = "/settings.json";
-
-const char* hostname = "wol";
-const char* SSID = "WOL-ESP8266";
-
-// Structure for PC data
-struct Host {
-  String name;
-  String mac;
-  String ip;
-  bool autoWake;
-};
-
-// Structure for Network settings
-struct NetworkConfig {
-  bool enable = false;
-  IPAddress ip;
-  IPAddress networkMask;
-  IPAddress gateway;
-  IPAddress dns;
-} networkConfig;
-
-// Structure for Authentication settings
-struct Authentication {
-  bool enable = false;
-  String username;
-  String password;
-} authentication;
-
-struct Settings {
-  unsigned long pingPeriod;
-} settings;
+/* === APP VARS === */
 
 // Map for storing hosts
 std::map<int, Host> hosts;
 // Map for storing hosts status like is online or not
 std::map<int, boolean> hostsStatus;
 
-GTimer timer;
+std::map<String, long> activeSessions; // <session token, create at>
+
+GTimer<millis> pingTimer;
+
+struct Settings settings;
+
+/* === FUNCTIONS === */
 
 #if ENABLE_STANDARD_OTA == 1
 // Function to setup OTA
 void setupOTA() {
   ArduinoOTA.setHostname(hostname);
-  ArduinoOTA.setPassword((const char*)"ber#912NerYi");
-  ArduinoOTA.setPort(ArduinoOTA_PORT);
+  ArduinoOTA.setPassword(otaPassword);
+  ArduinoOTA.setPort(ARDUINO_OTA_PORT);
   ArduinoOTA.begin(false);
 }
 #endif
 
 // Function to update WiFi settings
 void updateIPWifiSettings() {
-  if (networkConfig.enable) {
-    wifiManager.setSTAStaticIPConfig(networkConfig.ip, networkConfig.gateway, networkConfig.networkMask, networkConfig.dns);
+  if (settings.networkConfig.enable) {
+    wifiManager.setSTAStaticIPConfig(settings.networkConfig.ip, settings.networkConfig.gateway, settings.networkConfig.networkMask, settings.networkConfig.dns);
   } else {
     wifi_station_dhcpc_start();
   }
@@ -117,21 +89,23 @@ void updateIPWifiSettings() {
 
 // Function to ping all hosts periodically
 void pingAllHosts() {
-  for (const auto &pair : hosts) {
+  for (const auto& pair : hosts) {
     int index = pair.first;
-    const Host &host = pair.second;
-    
+    const Host& host = pair.second;
+
     IPAddress ip;
     ip.fromString(host.ip);
     bool pingResult = Ping.ping(ip, 1);
     hostsStatus[index] = pingResult;
-    
+
     // If host is offline and autoWake is enabled, send WOL packet
     if (!pingResult && host.autoWake) {
       wol.sendMagicPacket(host.mac.c_str());
     }
   }
 }
+
+/* === MAIN === */
 
 // Server setup
 void setup() {
@@ -148,9 +122,7 @@ void setup() {
 #endif
 
   // Load data at startup
-  loadNetworkConfig();
-  loadAuthentication();
-  loadHostsData();
+  loadHosts();
   loadSettings();
 
   updateIPWifiSettings();
@@ -167,14 +139,12 @@ void setup() {
 #endif
 #endif
 
-  // Setup all routes using the new functional approach
   setupRoutes();
-  
+
   server.begin();
 
-  // Setup timer for periodic ping (every 30 seconds)
-  timer.setTime(30000, true);
-  timer.start();
+  pingTimer.setTime(settings.pingPeriod);
+  pingTimer.start();
 }
 
 void loop() {
@@ -189,8 +159,7 @@ void loop() {
 
   server.handleClient();
 
-  // Check if it's time to ping all hosts
-  if (timer.isReady()) {
+  if (pingTimer) {
     pingAllHosts();
   }
 

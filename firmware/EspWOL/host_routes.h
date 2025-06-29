@@ -1,23 +1,19 @@
 #ifndef HOST_ROUTES_H
 #define HOST_ROUTES_H
 
-#include <Arduino.h>
-#include <ArduinoJson.h>
-
-// Función para configurar rutas de hosts
 void setupHostRoutes();
 
-// Rutas de hosts
 void handleHosts();
 void handleHostsById();
 void handleImportDatabase();
 
-// Funciones auxiliares para hosts
 bool validateHostData(const JsonDocument &doc, String &name, String &mac, String &ip, bool &autoWake);
+JsonObject createHostJson(JsonDocument &doc, int id, const Host &host);
+bool isHostDuplicate(const Host &newHost);
 void getHostList();
-void getHost(const String &id);
+void getHost(int id);
 void addHost();
-void editHost(const String &id);
-void deleteHost(const String &id);
+void editHost(int id);
+void deleteHost(int id);
 
 #endif

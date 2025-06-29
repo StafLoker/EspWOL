@@ -13,10 +13,10 @@ extern void updateIPWifiSettings();
 // =============================================================================
 
 void setupSettingsRoutes() {
-  server.on("/networkSettings", HTTP_ANY, handleNetworkSettings);
-  server.on("/authenticationSettings", HTTP_ANY, handleAuthenticationSettings);
-  server.on("/about", HTTP_GET, handleGetAbout);
-  server.on("/resetWifi", HTTP_POST, handleResetWiFiSettings);
+  server.on("/settings/network", HTTP_ANY, handleNetworkSettings);
+  server.on("/settings/auth", HTTP_ANY, handleUser);
+  server.on("/settings/about", HTTP_GET, handleGetAbout);
+  server.on("/settings/reset_wifi", HTTP_POST, handleResetWiFiSettings);
 }
 
 // =============================================================================
@@ -25,67 +25,65 @@ void setupSettingsRoutes() {
 
 void updateNetworkSettings() {
   if (!server.hasArg("plain")) {
-    sendJsonResponse(400, "Missing body", false);
+    sendJsonResponse(400, false, "Missing body");
     return;
   }
 
   JsonDocument doc;
   if (deserializeJson(doc, server.arg("plain"))) {
-    sendJsonResponse(400, "Invalid JSON", false);
+    sendJsonResponse(400, false, "Invalid JSON");
     return;
   }
 
   if (!doc.containsKey("enable") || !doc.containsKey("ip") || !doc.containsKey("networkMask") || !doc.containsKey("gateway") || !doc.containsKey("dns")) {
-    sendJsonResponse(400, "Missing required fields", false);
+    sendJsonResponse(400, false, "Missing required fields");
     return;
   }
 
-  extern NetworkConfig networkConfig;
   String ip_str = doc["ip"].as<String>();
   String networkMask_str = doc["networkMask"].as<String>();
   String gateway_str = doc["gateway"].as<String>();
   String dns_str = doc["dns"].as<String>();
 
   if (!doc["enable"].is<bool>()) {
-    sendJsonResponse(400, "Invalid data format", false);
+    sendJsonResponse(400, false, "Invalid data format");
     return;
   }
-  
-  networkConfig.enable = doc["enable"];
-  if (networkConfig.enable) {
+
+  settings.networkConfig.enable = doc["enable"];
+  if (settings.networkConfig.enable) {
     if (!isValidIPAddress(ip_str) || !isValidIPAddress(networkMask_str) || !isValidIPAddress(gateway_str) || !isValidIPAddress(dns_str)) {
-      sendJsonResponse(400, "Invalid data format", false);
+      sendJsonResponse(400, false, "Invalid data format");
       return;
     }
-    
+
     IPAddress ip, networkMask, gateway, dns;
     ip.fromString(ip_str);
     networkMask.fromString(networkMask_str);
     gateway.fromString(gateway_str);
     dns.fromString(dns_str);
-    
-    networkConfig.ip = ip;
-    networkConfig.networkMask = networkMask;
-    networkConfig.gateway = gateway;
-    networkConfig.dns = dns;
+
+    settings.networkConfig.ip = ip;
+    settings.networkConfig.networkMask = networkMask;
+    settings.networkConfig.gateway = gateway;
+    settings.networkConfig.dns = dns;
   }
-  
-  saveNetworkConfig();
+
+  saveSettings();
   updateIPWifiSettings();
-  sendJsonResponse(200, "Network settings updated", true);
+  sendJsonResponse(200, true, "Network settings updated");
   delay(300);
   ESP.restart();
 }
 
 void getNetworkSettings() {
-  extern NetworkConfig networkConfig;
   JsonDocument doc;
-  doc["enable"] = networkConfig.enable;
-  if (networkConfig.enable) {
-    doc["ip"] = networkConfig.ip.toString();
-    doc["networkMask"] = networkConfig.networkMask.toString();
-    doc["gateway"] = networkConfig.gateway.toString();
-    doc["dns"] = networkConfig.dns.toString();
+  doc["enable"] = settings.networkConfig.enable;
+  if (settings.networkConfig.enable) {
+    doc["ip"] = settings.networkConfig.ip.toString();
+    doc["networkMask"] = settings.networkConfig.networkMask.toString();
+    doc["gateway"] = settings.networkConfig.gateway.toString();
+    doc["dns"] = settings.networkConfig.dns.toString();
   } else {
     doc["ip"] = WiFi.localIP().toString();
     doc["networkMask"] = WiFi.subnetMask().toString();
@@ -95,47 +93,39 @@ void getNetworkSettings() {
   sendJsonResponse(200, doc);
 }
 
-void updateAuthenticationSettings() {
+void updateUser() {
   if (!server.hasArg("plain")) {
-    sendJsonResponse(400, "Missing body", false);
+    sendJsonResponse(400, false, "Missing body");
     return;
   }
 
   JsonDocument doc;
   if (deserializeJson(doc, server.arg("plain"))) {
-    sendJsonResponse(400, "Invalid JSON", false);
+    sendJsonResponse(400, false, "Invalid JSON");
     return;
   }
 
-  if (!doc.containsKey("enable") || !doc.containsKey("username") || !doc.containsKey("password")) {
-    sendJsonResponse(400, "Missing required fields", false);
+  if (!doc.containsKey("username") || !doc.containsKey("password")) {
+    sendJsonResponse(400, false, "Missing required fields");
     return;
   }
 
-  extern Authentication authentication;
   String username = doc["username"].as<String>();
   String password = doc["password"].as<String>();
-  
-  if (!doc["enable"].is<bool>()) {
-    sendJsonResponse(400, "Invalid data format", false);
+
+  if (username.length() < 3 || !isValidPassword(password)) {
+    sendJsonResponse(400, false, "Invalid data format");
     return;
   }
-  
-  authentication.enable = doc["enable"];
-  if (authentication.enable) {
-    if (username.length() < 3 || !isValidPassword(password)) {
-      sendJsonResponse(400, "Invalid data format", false);
-      return;
-    }
-    authentication.username = username;
-    authentication.password = password;
-  }
-  
-  saveAuthentication();
-  sendJsonResponse(200, "Authentication updated", true);
+
+  User user = { username, password }
+
+  saveUser(user);
+
+  sendJsonResponse(200, true, "User updated");
 }
 
-void getAuthenticationSettings() {
+void getUser() {
   extern Authentication authentication;
   JsonDocument doc;
   doc["enable"] = authentication.enable;
@@ -154,19 +144,19 @@ void handleNetworkSettings() {
     } else if (server.method() == HTTP_PUT) {
       updateNetworkSettings();
     } else {
-      sendJsonResponse(405, "HTTP Method Not Allowed", false);
+      sendJsonResponse(405, false, "HTTP Method Not Allowed");
     }
   }
 }
 
-void handleAuthenticationSettings() {
+void handleUser() {
   if (isAuthenticated()) {
     if (server.method() == HTTP_GET) {
-      getAuthenticationSettings();
+      getUser();
     } else if (server.method() == HTTP_PUT) {
-      updateAuthenticationSettings();
+      updateUser();
     } else {
-      sendJsonResponse(405, "HTTP Method Not Allowed", false);
+      sendJsonResponse(405, false, "HTTP Method Not Allowed");
     }
   }
 }
@@ -176,13 +166,14 @@ void handleGetAbout() {
     JsonDocument doc;
     doc["version"] = VERSION;
     doc["hostname"] = wifiManager.getWiFiHostname();
-    sendJsonResponse(200, doc);
+    sendJsonResponse(200, true, "App general information", doc);
   }
 }
 
 void handleResetWiFiSettings() {
   if (isAuthenticated()) {
-    sendJsonResponse(200, "WiFi settings have been reset successfully.", true);
+    sendJsonResponse(200, true, "WiFi settings have been reset successfully.");
+    delay(300);
     wifiManager.resetSettings();
     ESP.restart();
   }

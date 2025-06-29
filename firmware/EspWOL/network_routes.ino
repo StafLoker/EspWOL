@@ -7,62 +7,56 @@
 extern WakeOnLan wol;
 
 // =============================================================================
-// CONFIGURACIÓN DE RUTAS DE RED
+// NETWORK ROUTING CONFIGURATION
 // =============================================================================
 
 void setupNetworkRoutes() {
   server.on("/wake", HTTP_POST, handleWakeHost);
   server.on("/ping", HTTP_POST, handlePingHost);
-  server.on("/hosts/status", HTTP_GET, handleHostsStatus);
 }
 
 // =============================================================================
-// FUNCIONES AUXILIARES DE RED
+// NETWORK AUXILIARY FUNCTIONS
 // =============================================================================
 
-void pingHost(const String &id) {
-  extern std::map<int, Host> hosts;
-  extern std::map<int, boolean> hostsStatus;
-  
-  int index = id.toInt();
-  if (index >= 0 && index < hosts.size()) {
-    Host &host = hosts[index];
+void pingHost(int id) {
+  if (id >= 0 && id < hosts.size()) {
+    Host &host = hosts[id];
     IPAddress ip;
     ip.fromString(host.ip);
     bool pingResult = Ping.ping(ip, 3);
-    hostsStatus[index] = pingResult;
-    
+    hostsStatus[id] = pingResult;
+
     if (pingResult) {
-      sendJsonResponse(200, "Host is online", true);
+      sendJsonResponse(200, true, "Host is online");
     } else {
-      sendJsonResponse(200, "Host is offline", false);
+      sendJsonResponse(200, false, "Host is offline");
     }
   } else {
-    sendJsonResponse(400, "Host not found", false);
+    sendJsonResponse(400, false, "Host not found");
   }
 }
 
 // =============================================================================
-// RUTAS DE RED (WOL Y PING)
+// NETWORK ROUTES
 // =============================================================================
 
 void handleWakeHost() {
   if (isAuthenticated()) {
     if (server.hasArg("id")) {
-      extern std::map<int, Host> hosts;
-      int index = server.arg("id").toInt();
-      if (index >= 0 && index < hosts.size()) {
-        Host &host = hosts[index];
+      int id = server.arg("id").toInt();
+      if (id >= 0 && id < hosts.size()) {
+        Host &host = hosts[id];
         if (wol.sendMagicPacket(host.mac.c_str())) {
-          sendJsonResponse(200, "WOL packet sent", true);
+          sendJsonResponse(200, true, "WOL packet sent");
         } else {
-          sendJsonResponse(200, "Failed to send WOL packet", false);
+          sendJsonResponse(200, false, "Failed to send WOL packet");
         }
       } else {
-        sendJsonResponse(400, "Host not found", false);
+        sendJsonResponse(400, false, "Host not found");
       }
     } else {
-      sendJsonResponse(405, "HTTP Method Not Allowed", false);
+      sendJsonResponse(405, false, "HTTP Method Not Allowed");
     }
   }
 }
@@ -70,33 +64,9 @@ void handleWakeHost() {
 void handlePingHost() {
   if (isAuthenticated()) {
     if (server.hasArg("id")) {
-      int index = server.arg("id").toInt();
-      pingHost(String(index));
+      pingHost(server.arg("id").toInt());
     } else {
-      sendJsonResponse(405, "HTTP Method Not Allowed", false);
+      sendJsonResponse(405, false, "HTTP Method Not Allowed");
     }
-  }
-}
-
-void handleHostsStatus() {
-  if (isAuthenticated()) {
-    extern std::map<int, Host> hosts;
-    extern std::map<int, boolean> hostsStatus;
-    
-    JsonDocument doc;
-    JsonArray array = doc.to<JsonArray>();
-    
-    for (const auto &pair : hosts) {
-      int index = pair.first;
-      const Host &host = pair.second;
-      
-      JsonObject obj = array.createNestedObject();
-      obj["id"] = index;
-      obj["name"] = host.name;
-      obj["ip"] = host.ip;
-      obj["status"] = hostsStatus.count(index) ? hostsStatus[index] : false;
-    }
-    
-    sendJsonResponse(200, doc);
   }
 }
