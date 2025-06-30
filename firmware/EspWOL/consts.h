@@ -28,6 +28,19 @@ const char INIT_USER_PASSWORD[] PROGMEM = "Lep#Chick43";
 
 #define SESSION_TIMEOUT 900000  // 30 min in ms
 
+/* Field Length Limits */
+#define MAX_HOST_NAME_LENGTH 32
+#define MAX_USERNAME_LENGTH 20
+#define MAX_PASSWORD_LENGTH 32
+
+/* Memory Management */
+#define HOST_FLASH_SIZE 120      // FLASH bytes aprox por host
+#define HOST_RAM_SIZE 140        // RAM bytes aprox por host
+#define MIN_FREE_HEAP 8192       // Min 8KB of RAM free
+#define MIN_FREE_FLASH 4096      // Min 4KB of flash free
+#define HARD_MAX_HOSTS 50
+#define SAFETY_MARGIN_PERCENT 10
+
 /* HTTP Content Types */
 const char CONTENT_TYPE_JSON[] PROGMEM = "application/json";
 const char CONTENT_TYPE_HTML[] PROGMEM = "text/html";
@@ -45,7 +58,7 @@ const char MSG_NOT_FOUND[] PROGMEM = "Not found";
 const char MSG_AUTH_REQUIRED[] PROGMEM = "Authentication required";
 const char MSG_HOST_NOT_FOUND[] PROGMEM = "Host not found";
 const char MSG_DUPLICATE_HOST[] PROGMEM = "Duplicate host";
-const char MSG_SUCCESS[] PROGMEM = "Success";
+const char MSG_MAX_HOSTS_REACHED[] PROGMEM = "Maximum number of hosts reached";
 
 /* Server Routes */
 const char ROUTE_LOGIN[] PROGMEM = "/login";

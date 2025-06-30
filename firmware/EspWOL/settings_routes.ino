@@ -192,7 +192,7 @@ void updateUser() {
   String username = doc[F("username")].as<String>();
   String password = doc[F("password")].as<String>();
 
-  if (username.length() < 3 || !isValidPassword(password)) {
+  if (username.length() < 3 || username.length() > MAX_USERNAME_LENGTH || !isValidPassword(password)) {
     sendJsonResponse(400, false, FPSTR(MSG_INVALID_FORMAT));
     return;
   }

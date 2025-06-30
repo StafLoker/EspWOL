@@ -32,8 +32,10 @@ bool isValidIPAddress(const String &ip) {
 }
 
 bool isValidPassword(const String &password) {
-  if (password.length() < 8)
+  if (password.length() < 8 || password.length() > MAX_PASSWORD_LENGTH) {
     return false;
+  }
+
   bool hasUpper = false, hasLower = false, hasSpecial = false;
   for (char c : password) {
     if (isUpperCase(c))
@@ -46,6 +48,7 @@ bool isValidPassword(const String &password) {
     if (hasUpper && hasLower && hasSpecial)
       return true;
   }
+  
   return false;
 }
 

@@ -42,7 +42,7 @@ bool validateHostData(const JsonDocument &doc, String &name, String &mac, String
   ip = doc[F("ip")].as<String>();
   autoWake = doc[F("autoWake")].as<bool>();
 
-  if (name.isEmpty() || !isValidMACAddress(mac) || !isValidIPAddress(ip)) {
+  if (name.isEmpty() || name.length() > MAX_HOST_NAME_LENGTH || !isValidMACAddress(mac) || !isValidIPAddress(ip)) {
     sendJsonResponse(400, false, FPSTR(MSG_INVALID_FORMAT));
     return false;
   }
@@ -65,7 +65,7 @@ JsonObject createHostJson(JsonDocument &doc, int id, const Host &host) {
   return obj;
 }
 
-bool isHostDuplicate(const Host &newHost, int excludeId = -1) {
+bool isHostDuplicate(const Host &newHost, int excludeId) {
   for (const auto &pair : hosts) {
     const Host &existingHost = pair.second;
     int currentId = pair.first;
@@ -101,7 +101,7 @@ void getHostList() {
     }
   }
 
-  sendJsonResponse(200, true, "Your hosts", doc);
+  sendJsonResponse(200, true, "Your hosts", doc, true);
 }
 
 void getHost(int id) {
@@ -118,6 +118,11 @@ void getHost(int id) {
 void addHost() {
   if (!server.hasArg(FPSTR(ARG_PLAIN))) {
     sendJsonResponse(400, false, FPSTR(MSG_MISSING_BODY));
+    return;
+  }
+
+  if (!hasEnoughMemoryForHost()) {
+    sendJsonResponse(507, false, FPSTR(MSG_MAX_HOSTS_REACHED));
     return;
   }
 
@@ -146,7 +151,7 @@ void addHost() {
 
   JsonDocument responseDoc;
   createHostJson(responseDoc, id, host);
-  sendJsonResponse(200, true, "Host added", responseDoc);
+  sendJsonResponse(200, true, "Host added", responseDoc, true);
 }
 
 void editHost(int id) {
@@ -172,7 +177,7 @@ void editHost(int id) {
 
   Host newHost = { name, mac, ip, autoWake };
 
-  if (isHostDuplicate(host, id)) {
+  if (isHostDuplicate(newHost, id)) {
     sendJsonResponse(409, false, FPSTR(MSG_DUPLICATE_HOST));
     return;
   }
@@ -182,8 +187,8 @@ void editHost(int id) {
   saveHosts();
 
   JsonDocument responseDoc;
-  createHostJson(responseDoc, id, host);
-  sendJsonResponse(200, true, "Host updated", responseDoc);
+  createHostJson(responseDoc, id, hosts[id]);
+  sendJsonResponse(200, true, "Host updated", responseDoc, true);
 }
 
 void deleteHost(int id) {
@@ -191,7 +196,7 @@ void deleteHost(int id) {
     hosts.erase(id);
     hostsStatus.erase(id);
     saveHosts();
-    sendJsonResponse(204, true, "Host deleted");
+    sendJsonResponse(204, true, "Host deleted", true);
   } else {
     sendJsonResponse(400, false, FPSTR(MSG_HOST_NOT_FOUND));
   }
@@ -230,7 +235,7 @@ void handleHostsById() {
 
 void handleImportDatabase() {
   if (isAuthenticated()) {
-    if(!server.hasArg(FPSTR(ARG_PLAIN))) {
+    if (!server.hasArg(FPSTR(ARG_PLAIN))) {
       sendJsonResponse(400, false, FPSTR(MSG_MISSING_BODY));
       return;
     }
@@ -273,12 +278,12 @@ void handleImportDatabase() {
         continue;
       }
 
-      hosts[id] = generateUniqueHostId();
+      hosts[generateUniqueHostId()] = host;
       importedCount++;
     }
 
     saveHosts();
 
-    sendJsonResponse(200, true, String("Imported ") + importedCount + " hosts from " + arr.size() + ". " + ignoredCount + " hosts ignored. Hosts in database after import: " + hosts.size() + ".");
+    sendJsonResponse(200, true, (String("Imported ") + importedCount + " hosts from " + arr.size() + ". " + ignoredCount + " hosts ignored. Hosts in database after import: " + hosts.size() + "."), true);
   }
 }

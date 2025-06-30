@@ -44,6 +44,7 @@
 #include "web_routes.h"
 #include "repository.h"
 #include "validation.h"
+#include "memory.h"
 #include "index.h"
 #include "404.h"
 
