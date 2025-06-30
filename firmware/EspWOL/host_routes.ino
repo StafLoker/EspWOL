@@ -122,7 +122,9 @@ void addHost() {
     return;
   }
 
+  // TODO Assing unique, because if we have two host and delete first and after create other, we replace host [BUG]
   int id = hosts.size();
+
   hosts[id] = host;
 
   saveHosts();

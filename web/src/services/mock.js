@@ -1,7 +1,7 @@
 // =============================================================================
-// MIRAGE MOCK SERVER - Configuración para simular el backend ESP8266
+// MIRAGE MOCK SERVER - Configuración para simular el backend ESP8266 v3.0.0
 // =============================================================================
-/*
+
 // Importar MirageJS
 import { createServer, Model, Factory } from 'miragejs'
 
@@ -44,15 +44,20 @@ const MOCK_NETWORK_CONFIG = {
   dns: '8.8.8.8',
 }
 
-const MOCK_AUTH_CONFIG = {
-  enable: true,
-  username: 'admin',
+const MOCK_USER = {
+  username: 'glavniy',
+  password: 'Lep#Chick43' // Ejemplo de la especificación
 }
 
 const MOCK_ABOUT = {
   version: '3.0.0',
-  hostname: 'wol-esp8266',
+  hostname: 'wol',
 }
+
+const MOCK_PING_PERIOD = 60000 // 60 segundos en milisegundos
+
+// Períodos válidos según especificación (en segundos)
+const VALID_PING_PERIODS = [0, 60, 300, 600, 900, 1800, 2700, 3600, 10800, 21600, 43200, 86400]
 
 // =============================================================================
 // CONFIGURACIÓN DEL SERVIDOR MIRAGE
@@ -102,27 +107,18 @@ export function setupMirageServer() {
       this.namespace = ''
 
       // Variables para simular estado del servidor
-      let isAuthenticated = false
-      let currentSessionId = null
+      let currentSessionToken = null
       let networkConfig = { ...MOCK_NETWORK_CONFIG }
-      let authConfig = { ...MOCK_AUTH_CONFIG }
+      let currentUser = { ...MOCK_USER }
+      let pingPeriod = MOCK_PING_PERIOD
 
       // =============================================================================
       // MIDDLEWARE DE AUTENTICACIÓN
       // =============================================================================
 
       function requireAuth(schema, request) {
-        const sessionId = request.requestHeaders['X-Session-Id']
-
-        if (!authConfig.enable) {
-          return true // Autenticación deshabilitada
-        }
-
-        if (sessionId && sessionId === currentSessionId) {
-          return true
-        }
-
-        return false
+        const sessionToken = request.requestHeaders['X-Session-Token']
+        return sessionToken && sessionToken === currentSessionToken
       }
 
       function sendAuthError() {
@@ -143,23 +139,16 @@ export function setupMirageServer() {
       this.post('/login', (schema, request) => {
         const { username, password } = JSON.parse(request.requestBody)
 
-        if (!authConfig.enable) {
-          return {
-            success: true,
-            message: 'Authentication disabled - access granted',
-          }
-        }
-
-        // Simular validación (admin/admin123)
-        if (username === authConfig.username && password === 'admin123') {
-          currentSessionId = 'session_' + Math.random().toString(36).substr(2, 9)
-          isAuthenticated = true
+        if (username === currentUser.username && password === currentUser.password) {
+          currentSessionToken = 'abc123def456ghij789klmno012pqrs' // Token de ejemplo
 
           return {
             success: true,
             message: 'Login successful',
-            sessionId: currentSessionId,
-            username: username,
+            data: {
+              username: username,
+              token: currentSessionToken
+            }
           }
         } else {
           return new Response(
@@ -174,8 +163,11 @@ export function setupMirageServer() {
       })
 
       this.post('/logout', (schema, request) => {
-        currentSessionId = null
-        isAuthenticated = false
+        if (!requireAuth(schema, request)) {
+          return sendAuthError()
+        }
+
+        currentSessionToken = null
 
         return {
           success: true,
@@ -192,11 +184,15 @@ export function setupMirageServer() {
           return sendAuthError()
         }
 
-        if (request.queryParams.id) {
+        if (request.queryParams.id !== undefined) {
           // Obtener host específico
           const host = schema.hosts.find(request.queryParams.id)
           if (host) {
-            return host.attrs
+            return {
+              success: true,
+              message: 'Host retrieved',
+              data: host.attrs
+            }
           } else {
             return new Response(
               400,
@@ -209,7 +205,11 @@ export function setupMirageServer() {
           }
         } else {
           // Obtener todos los hosts
-          return schema.hosts.all().models.map((host) => host.attrs)
+          return {
+            success: true,
+            message: 'Hosts retrieved',
+            data: schema.hosts.all().models.map((host) => host.attrs)
+          }
         }
       })
 
@@ -221,13 +221,13 @@ export function setupMirageServer() {
         const hostData = JSON.parse(request.requestBody)
 
         // Validar datos
-        if (!hostData.name || !hostData.mac || !hostData.ip) {
+        if (!hostData.name || !hostData.mac || !hostData.ip || typeof hostData.autoWake !== 'boolean') {
           return new Response(
             400,
             {},
             {
               success: false,
-              message: 'Missing required fields',
+              message: 'Missing or invalid required fields',
             },
           )
         }
@@ -239,11 +239,11 @@ export function setupMirageServer() {
 
         if (existingHost) {
           return new Response(
-            400,
+            409,
             {},
             {
               success: false,
-              message: 'Duplicate host',
+              message: 'Duplicate host (MAC or IP already exists)',
             },
           )
         }
@@ -257,7 +257,8 @@ export function setupMirageServer() {
 
         return {
           success: true,
-          message: 'Host added',
+          message: 'Host added successfully',
+          data: newHost.attrs
         }
       })
 
@@ -281,11 +282,28 @@ export function setupMirageServer() {
           )
         }
 
+        // Verificar duplicados excluyendo el host actual
+        const existingHost = schema.hosts
+          .all()
+          .models.find((h) => h.id != hostId && (h.mac === hostData.mac || h.ip === hostData.ip))
+
+        if (existingHost) {
+          return new Response(
+            409,
+            {},
+            {
+              success: false,
+              message: 'Duplicate host',
+            },
+          )
+        }
+
         host.update(hostData)
 
         return {
           success: true,
-          message: 'Host updated',
+          message: 'Host updated successfully',
+          data: host.attrs
         }
       })
 
@@ -310,23 +328,8 @@ export function setupMirageServer() {
 
         host.destroy()
 
-        return {
-          success: true,
-          message: 'Host deleted',
-        }
-      })
-
-      this.get('/hosts/status', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
-        }
-
-        return schema.hosts.all().models.map((host) => ({
-          id: host.id,
-          name: host.name,
-          ip: host.ip,
-          status: host.status,
-        }))
+        // Retornar 204 No Content según especificación
+        return new Response(204, {}, '')
       })
 
       this.post('/import', (schema, request) => {
@@ -351,7 +354,7 @@ export function setupMirageServer() {
         let ignoredCount = 0
 
         hostsArray.forEach((hostData) => {
-          if (!hostData.name || !hostData.mac || !hostData.ip) {
+          if (!hostData.name || !hostData.mac || !hostData.ip || typeof hostData.autoWake !== 'boolean') {
             ignoredCount++
             return
           }
@@ -404,10 +407,12 @@ export function setupMirageServer() {
           )
         }
 
-        // Simular envío exitoso de WOL
+        // Simular envío de WOL con posible fallo
+        const success = Math.random() > 0.1 // 90% éxito
+
         return {
-          success: true,
-          message: 'WOL packet sent',
+          success: success,
+          message: success ? 'WOL packet sent' : 'Failed to send WOL packet',
         }
       })
 
@@ -444,15 +449,37 @@ export function setupMirageServer() {
       // RUTAS DE CONFIGURACIÓN
       // =============================================================================
 
-      this.get('/networkSettings', (schema, request) => {
+      // Obtener todas las configuraciones
+      this.get('/settings', (schema, request) => {
         if (!requireAuth(schema, request)) {
           return sendAuthError()
         }
 
-        return networkConfig
+        return {
+          success: true,
+          message: 'Settings retrieved',
+          data: {
+            about: MOCK_ABOUT,
+            pingPeriod: pingPeriod,
+            network: networkConfig
+          }
+        }
       })
 
-      this.put('/networkSettings', (schema, request) => {
+      // Network Settings
+      this.get('/settings/network', (schema, request) => {
+        if (!requireAuth(schema, request)) {
+          return sendAuthError()
+        }
+
+        return {
+          success: true,
+          message: 'Network settings retrieved',
+          data: networkConfig
+        }
+      })
+
+      this.put('/settings/network', (schema, request) => {
         if (!requireAuth(schema, request)) {
           return sendAuthError()
         }
@@ -462,79 +489,168 @@ export function setupMirageServer() {
 
         return {
           success: true,
-          message: 'Network settings updated',
+          message: 'Network settings updated (device will restart)',
+          data: networkConfig
         }
       })
 
-      this.get('/authenticationSettings', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
-        }
-
-        return authConfig
-      })
-
-      this.put('/authenticationSettings', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
-        }
-
-        const newConfig = JSON.parse(request.requestBody)
-        authConfig = { ...authConfig, ...newConfig }
-
-        return {
-          success: true,
-          message: 'Authentication updated',
-        }
-      })
-
-      this.get('/about', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
-        }
-
-        return MOCK_ABOUT
-      })
-
-      this.post('/resetWifi', (schema, request) => {
+      // Auth Settings
+      this.get('/settings/auth', (schema, request) => {
         if (!requireAuth(schema, request)) {
           return sendAuthError()
         }
 
         return {
           success: true,
-          message: 'WiFi settings have been reset successfully.',
+          message: 'User information retrieved',
+          data: {
+            username: currentUser.username
+          }
         }
       })
 
-      // =============================================================================
-      // RUTAS WEB
-      // =============================================================================
-
-      this.get('/', (schema, request) => {
+      this.put('/settings/auth', (schema, request) => {
         if (!requireAuth(schema, request)) {
           return sendAuthError()
         }
 
-        // En un caso real, esto devolvería HTML
-        return {
-          success: true,
-          message: 'Web interface loaded',
-        }
-      })
+        const { username, password } = JSON.parse(request.requestBody)
 
-      // Manejar rutas no encontradas
-      this.get('/*', () => {
-        return new Response(
-          404,
-          {},
-          {
+        // Validar según especificación
+        if (!username || username.length < 3) {
+          return new Response(400, {}, {
             success: false,
-            message: 'Not found',
-          },
-        )
+            message: 'Username must be at least 3 characters long'
+          })
+        }
+
+        if (!password || password.length < 8) {
+          return new Response(400, {}, {
+            success: false,
+            message: 'Password must be at least 8 characters long'
+          })
+        }
+
+        // Verificar patrón de contraseña
+        const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).*$/
+        if (!passwordPattern.test(password)) {
+          return new Response(400, {}, {
+            success: false,
+            message: 'Password must contain at least one uppercase, one lowercase, and one special character'
+          })
+        }
+
+        currentUser = { username, password }
+        currentSessionToken = null // Invalidar sesión actual
+
+        return {
+          success: true,
+          message: 'User updated successfully',
+          data: {
+            username: username
+          }
+        }
+      })
+
+      // About
+      this.get('/settings/about', (schema, request) => {
+        if (!requireAuth(schema, request)) {
+          return sendAuthError()
+        }
+
+        return {
+          success: true,
+          message: 'System information retrieved',
+          data: MOCK_ABOUT
+        }
+      })
+
+      // Ping Period
+      this.get('/settings/ping_period', (schema, request) => {
+        if (!requireAuth(schema, request)) {
+          return sendAuthError()
+        }
+
+        return {
+          success: true,
+          message: 'Ping period retrieved',
+          data: {
+            pingPeriod: pingPeriod
+          }
+        }
+      })
+
+      this.put('/settings/ping_period', (schema, request) => {
+        if (!requireAuth(schema, request)) {
+          return sendAuthError()
+        }
+
+        const { pingPeriod: newPeriod } = JSON.parse(request.requestBody)
+
+        if (!VALID_PING_PERIODS.includes(newPeriod)) {
+          return new Response(400, {}, {
+            success: false,
+            message: 'Invalid ping period'
+          })
+        }
+
+        pingPeriod = newPeriod * 1000 // Convertir a milisegundos
+
+        return {
+          success: true,
+          message: 'Ping period updated',
+          data: {
+            pingPeriod: pingPeriod
+          }
+        }
+      })
+
+      // WiFi Reset
+      this.post('/settings/reset_wifi', (schema, request) => {
+        if (!requireAuth(schema, request)) {
+          return sendAuthError()
+        }
+
+        return {
+          success: true,
+          message: 'WiFi settings reset (device will restart)',
+        }
       })
     },
   })
 }
-*/
+
+// =============================================================================
+// UTILITY FUNCTIONS FOR MOCK SERVER
+// =============================================================================
+
+// Generar MAC address aleatoria
+export function generateRandomMAC() {
+  return Array.from({ length: 6 }, () =>
+    Math.floor(Math.random() * 256)
+      .toString(16)
+      .padStart(2, '0')
+      .toUpperCase(),
+  ).join(':')
+}
+
+// Generar IP aleatoria en rango 192.168.1.x
+export function generateRandomIP(baseRange = '192.168.1') {
+  const lastOctet = Math.floor(Math.random() * 200) + 50 // 50-249
+  return `${baseRange}.${lastOctet}`
+}
+
+// Simular latencia de red
+export function addNetworkDelay(minMs = 100, maxMs = 500) {
+  const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs
+  return new Promise(resolve => setTimeout(resolve, delay))
+}
+
+// Exportar constantes útiles
+export const MOCK_CONSTANTS = {
+  VALID_PING_PERIODS,
+  DEFAULT_USER: MOCK_USER,
+  DEFAULT_NETWORK_CONFIG: MOCK_NETWORK_CONFIG,
+  DEFAULT_ABOUT: MOCK_ABOUT,
+  DEFAULT_PING_PERIOD: MOCK_PING_PERIOD
+}

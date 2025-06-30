@@ -7,7 +7,7 @@ const char VERSION[] PROGMEM = "3.0.0";
 
 #define ENABLE_mDNS 1  // Values: 1 to enable, != 1 to disable
 
-// OTA has bugs, chip hace infinite reload.
+// TODO OTA has bugs, chip hace infinite reload.
 #define ENABLE_OTA 0  // Values: 1 to enable, != 1 to disable
 
 /* Repository */
