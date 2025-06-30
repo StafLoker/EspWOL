@@ -22,7 +22,7 @@ void getSettings() {
   
   // About information
   JsonObject about = doc.createNestedObject(F("about"));
-  about[F("version")] = VERSION;
+  about[F("version")] = FPSTR(VERSION);
   about[F("hostname")] = wifiManager.getWiFiHostname();
   
   // Ping period
@@ -249,7 +249,7 @@ void handleUser() {
 void handleGetAbout() {
   if (isAuthenticated()) {
     JsonDocument doc;
-    doc[F("version")] = VERSION;
+    doc[F("version")] = FPSTR(VERSION);
     doc[F("hostname")] = wifiManager.getWiFiHostname();
     sendJsonResponse(200, true, "App general information", doc);
   }
