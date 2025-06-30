@@ -19,15 +19,15 @@ void setupSettingsRoutes() {
 
 void getSettings() {
   JsonDocument doc;
-  
+
   // About information
   JsonObject about = doc.createNestedObject(F("about"));
   about[F("version")] = FPSTR(VERSION);
   about[F("hostname")] = wifiManager.getWiFiHostname();
-  
+
   // Ping period
   doc[F("pingPeriod")] = settings.pingPeriod;
-  
+
   // Network settings
   JsonObject network = doc.createNestedObject(F("network"));
   network[F("enable")] = settings.networkConfig.enable;
@@ -42,7 +42,7 @@ void getSettings() {
     network[F("gateway")] = WiFi.gatewayIP().toString();
     network[F("dns")] = WiFi.dnsIP().toString();
   }
-  
+
   sendJsonResponse(200, true, "Settings", doc);
 }
 
@@ -70,7 +70,7 @@ void updatePingPeriod() {
   }
 
   long pingPeriod = doc[F("pingPeriod")].as<unsigned long>();
-  
+
   if (!isValidPeriodicPing(pingPeriod)) {
     sendJsonResponse(400, false, "Invalid ping period value");
     return;
@@ -78,12 +78,12 @@ void updatePingPeriod() {
 
   settings.pingPeriod = pingPeriod * 1000;
   saveSettings();
-  
+
   pingTimer.setTime(settings.pingPeriod);
   pingTimer.start();
 
   JsonDocument responseDoc;
-  responseDoc[F("pingPeriod")] = settings.pingPeriod;
+  responseDoc[F("pingPeriod")] = settings.pingPeriod / 1000;
   sendJsonResponse(200, true, "Ping period updated", responseDoc);
 }
 
@@ -149,7 +149,7 @@ void updateNetworkSettings() {
     responseDoc[F("gateway")] = WiFi.gatewayIP().toString();
     responseDoc[F("dns")] = WiFi.dnsIP().toString();
   }
-  
+
   sendJsonResponse(200, true, "Network settings updated", responseDoc);
   delay(300);
   ESP.restart();
@@ -172,6 +172,7 @@ void getNetworkSettings() {
   sendJsonResponse(200, true, "Network settings", doc);
 }
 
+// TODO After update user, suspend all sessions
 void updateUser() {
   if (!server.hasArg(FPSTR(ARG_PLAIN))) {
     sendJsonResponse(400, false, FPSTR(MSG_MISSING_BODY));
