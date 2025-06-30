@@ -13,7 +13,9 @@ void setupHostRoutes() {
     }
   });
 
-  server.on(FPSTR(ROUTE_IMPORT), HTTP_POST, handleImportDatabase);
+  server.on(FPSTR(ROUTE_HOSTS_IMPORT), HTTP_POST, handleImportDatabase);
+  server.on(FPSTR(ROUTE_HOSTS_WAKE), HTTP_POST, handleWakeHost);
+  server.on(FPSTR(ROUTE_HOSTS_PING), HTTP_POST, handlePingHost);
 }
 
 // =============================================================================
@@ -29,7 +31,6 @@ int generateUniqueHostId() {
 
   return newId;
 }
-
 
 bool validateHostData(const JsonDocument &doc, String &name, String &mac, String &ip, bool &autoWake) {
   if (!doc.containsKey(F("name")) || !doc.containsKey(F("mac")) || !doc.containsKey(F("ip")) || !doc.containsKey(F("autoWake"))) {
@@ -134,7 +135,8 @@ void addHost() {
 
   String name, mac, ip;
   bool autoWake;
-  if (!validateHostData(doc, name, mac, ip, autoWake)) return;
+  if (!validateHostData(doc, name, mac, ip, autoWake))
+    return;
 
   Host host = { name, mac, ip, autoWake };
 
@@ -173,7 +175,8 @@ void editHost(int id) {
 
   String name, mac, ip;
   bool autoWake;
-  if (!validateHostData(doc, name, mac, ip, autoWake)) return;
+  if (!validateHostData(doc, name, mac, ip, autoWake))
+    return;
 
   Host newHost = { name, mac, ip, autoWake };
 
@@ -285,5 +288,51 @@ void handleImportDatabase() {
     saveHosts();
 
     sendJsonResponse(200, true, (String("Imported ") + importedCount + " hosts from " + arr.size() + ". " + ignoredCount + " hosts ignored. Hosts in database after import: " + hosts.size() + "."), true);
+  }
+}
+
+void handleWakeHost() {
+  if (isAuthenticated()) {
+    if (server.hasArg(FPSTR(ARG_ID))) {
+      int id = server.arg(FPSTR(ARG_ID)).toInt();
+      if (id >= 0 && id < hosts.size()) {
+        Host &host = hosts[id];
+        if (wol.sendMagicPacket(host.mac.c_str())) {
+          sendJsonResponse(200, true, "WOL packet sent");
+        } else {
+          sendJsonResponse(200, false, "Failed to send WOL packet");
+        }
+      } else {
+        sendJsonResponse(400, false, FPSTR(MSG_HOST_NOT_FOUND));
+      }
+    } else {
+      sendJsonResponse(405, false, FPSTR(MSG_METHOD_NOT_ALLOWED));
+    }
+  }
+}
+
+void handlePingHost() {
+  if (isAuthenticated()) {
+    if (server.hasArg("id")) {
+      int id = server.arg("id").toInt();
+
+      if (hosts.find(id) != hosts.end()) {
+        Host &host = hosts[id];
+        IPAddress ip;
+        ip.fromString(host.ip);
+        bool pingResult = Ping.ping(ip, 3);
+        hostsStatus[id] = pingResult;
+
+        if (pingResult) {
+          sendJsonResponse(200, true, "Host is online");
+        } else {
+          sendJsonResponse(200, false, "Host is offline");
+        }
+      } else {
+        sendJsonResponse(400, false, FPSTR(MSG_HOST_NOT_FOUND));
+      }
+    } else {
+      sendJsonResponse(405, false, FPSTR(MSG_METHOD_NOT_ALLOWED));
+    }
   }
 }

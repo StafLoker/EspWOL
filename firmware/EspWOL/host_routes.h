@@ -6,6 +6,8 @@ void setupHostRoutes();
 void handleHosts();
 void handleHostsById();
 void handleImportDatabase();
+void handleWakeHost();
+void handlePingHost();
 
 int generateUniqueHostId();
 bool validateHostData(const JsonDocument &doc, String &name, String &mac, String &ip, bool &autoWake);

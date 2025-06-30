@@ -53,7 +53,6 @@ void setupHeaders() {
 void setupRoutes() {
   setupAuthRoutes();
   setupHostRoutes();
-  setupNetworkRoutes();
   setupSettingsRoutes();
   setupWebRoutes();
 }
