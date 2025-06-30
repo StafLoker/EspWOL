@@ -58,11 +58,7 @@ JsonObject createHostJson(JsonDocument &doc, int id, const Host &host) {
   obj[F("mac")] = host.mac;
   obj[F("ip")] = host.ip;
   obj[F("autoWake")] = host.autoWake;
-  if (hostsStatus.find(id) != hostsStatus.end()) {
-    obj[F("status")] = hostsStatus[id];
-  } else {
-    obj[F("status")] = false;
-  }
+  obj[F("status")] = host.status;
   return obj;
 }
 
@@ -95,11 +91,7 @@ void getHostList() {
     obj[F("mac")] = host.mac;
     obj[F("ip")] = host.ip;
     obj[F("autoWake")] = host.autoWake;
-    if (hostsStatus.find(pair.first) != hostsStatus.end()) {
-      obj[F("status")] = hostsStatus[pair.first];
-    } else {
-      obj[F("status")] = false;
-    }
+    obj[F("status")] = host.status;
   }
 
   sendJsonResponse(200, true, "Your hosts", doc, true);
@@ -138,12 +130,16 @@ void addHost() {
   if (!validateHostData(doc, name, mac, ip, autoWake))
     return;
 
-  Host host = { name, mac, ip, autoWake };
+  Host host = { name, mac, ip, autoWake, false };
 
   if (isHostDuplicate(host)) {
     sendJsonResponse(409, false, FPSTR(MSG_DUPLICATE_HOST));
     return;
   }
+
+  IPAddress ipAddress;
+  ipAddress.fromString(host.ip);
+  host.status = Ping.ping(ipAddress, 1);
 
   int id = generateUniqueHostId();
 
@@ -178,12 +174,16 @@ void editHost(int id) {
   if (!validateHostData(doc, name, mac, ip, autoWake))
     return;
 
-  Host newHost = { name, mac, ip, autoWake };
+  Host newHost = { name, mac, ip, autoWake, false };
 
   if (isHostDuplicate(newHost, id)) {
     sendJsonResponse(409, false, FPSTR(MSG_DUPLICATE_HOST));
     return;
   }
+
+  IPAddress ipAddress;
+  ipAddress.fromString(newHost.ip);
+  newHost.status = Ping.ping(ipAddress, 1);
 
   hosts[id] = newHost;
 
@@ -197,7 +197,6 @@ void editHost(int id) {
 void deleteHost(int id) {
   if (hosts.find(id) != hosts.end()) {
     hosts.erase(id);
-    hostsStatus.erase(id);
     saveHosts();
     sendJsonResponse(204, true, "Host deleted", true);
   } else {
@@ -321,7 +320,7 @@ void handlePingHost() {
         IPAddress ip;
         ip.fromString(host.ip);
         bool pingResult = Ping.ping(ip, 3);
-        hostsStatus[id] = pingResult;
+        host.status = pingResult;
 
         if (pingResult) {
           sendJsonResponse(200, true, "Host is online");

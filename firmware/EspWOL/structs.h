@@ -5,7 +5,8 @@ struct Host {
   String name;
   String mac;
   String ip;
-  bool autoWake;
+  bool autoWake = false;
+  bool status = false;
 };
 
 struct User {

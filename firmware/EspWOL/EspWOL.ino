@@ -58,8 +58,6 @@ WiFiManager wifiManager;
 
 // Map for storing hosts
 std::map<int, Host> hosts;
-// Map for storing hosts status like is online or not
-std::map<int, boolean> hostsStatus;
 
 std::map<String, unsigned long> activeSessions;  // <session token, create at>
 
@@ -100,7 +98,7 @@ void pingAllHosts() {
     IPAddress ip;
     ip.fromString(host.ip);
     bool pingResult = Ping.ping(ip, 1);
-    hostsStatus[index] = pingResult;
+    hosts[index].status = pingResult;
 
     // If host is offline and autoWake is enabled, send WOL packet
     if (!pingResult && host.autoWake) {
@@ -128,6 +126,7 @@ void setup() {
   // Load data at startup
   loadHosts();
   loadSettings();
+  pingAllHosts();
 
   updateIPWifiSettings();
 
