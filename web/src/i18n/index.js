@@ -16,14 +16,14 @@ export const i18n = createI18n({
       languages: {
         en: 'English',
         es: 'Español',
-        ru: 'Русский'
+        ru: 'Русский',
       },
       theme: {
         light: 'Light',
         dark: 'Dark',
         toggle: 'Toggle theme',
         switchToLight: 'Switch to light theme',
-        switchToDark: 'Switch to dark theme'
+        switchToDark: 'Switch to dark theme',
       },
       pages: {
         login: {
@@ -34,7 +34,14 @@ export const i18n = createI18n({
           password: 'Password',
           placeholderPassword: 'Please enter password',
           signin: 'Sign in',
+          signingIn: 'Signing in...',
           invalidCredentials: 'Invalid credentials',
+          networkError: 'Network connection failed',
+          systemInfo: 'EspWOL Wake-on-LAN System',
+          validation: {
+            usernameRequired: 'Username is required',
+            passwordRequired: 'Password is required',
+          },
         },
         home: {
           hosts: 'Hosts',
@@ -42,7 +49,8 @@ export const i18n = createI18n({
           addFirstHost: 'Add Your First Host',
           searchPlaceholder: 'Search hosts...',
           noHosts: 'No hosts configured',
-          noHostsDescription: 'Get started by adding your first device. You can wake up computers, servers, and other network devices.',
+          noHostsDescription:
+            'Get started by adding your first device. You can wake up computers, servers, and other network devices.',
           noResults: 'No results found',
           noResultsDescription: 'No hosts found matching "{searchTerm}"',
           clearSearch: 'Clear search',
@@ -51,10 +59,11 @@ export const i18n = createI18n({
           hostLimitReached: 'Host limit reached ({max} maximum)',
           deleteHost: {
             title: 'Delete Host',
-            description: 'Are you sure you want to delete "{hostName}" ({hostIp})? This action cannot be undone.',
+            description:
+              'Are you sure you want to delete "{hostName}" ({hostIp})? This action cannot be undone.',
             cancel: 'Cancel',
             confirm: 'Delete',
-            deleting: 'Deleting...'
+            deleting: 'Deleting...',
           },
         },
         settings: {
@@ -67,7 +76,7 @@ export const i18n = createI18n({
             title: 'System Information',
             version: 'Version',
             hostname: 'Hostname',
-            update: 'Update'
+            update: 'Update',
           },
           ping: {
             title: 'Ping Settings',
@@ -83,8 +92,8 @@ export const i18n = createI18n({
               tenMinutes: '10 minutes',
               fifteenMinutes: '15 minutes',
               thirtyMinutes: '30 minutes',
-              oneHour: '1 hour'
-            }
+              oneHour: '1 hour',
+            },
           },
           network: {
             title: 'Network Settings',
@@ -104,17 +113,19 @@ export const i18n = createI18n({
             currentConfig: 'Current Configuration (DHCP)',
             restartWarning: 'Device will restart after saving network changes',
             resetWiFi: 'Reset WiFi',
-            save: 'Save Settings'
+            save: 'Save Settings',
           },
           wifi: {
             title: 'Reset WiFi',
-            description: 'Reset WiFi configuration to defaults. Device will enter access point mode for reconfiguration.',
+            description:
+              'Reset WiFi configuration to defaults. Device will enter access point mode for reconfiguration.',
             reset: 'Reset WiFi',
             resetting: 'Resetting...',
             confirmTitle: 'Confirm WiFi Reset',
-            confirmDescription: 'Are you sure you want to reset the WiFi configuration? The device will restart and you will need to reconfigure the connection.',
+            confirmDescription:
+              'Are you sure you want to reset the WiFi configuration? The device will restart and you will need to reconfigure the connection.',
             cancel: 'Cancel',
-            confirmReset: 'Reset'
+            confirmReset: 'Reset',
           },
           data: {
             title: 'Data Management',
@@ -122,14 +133,14 @@ export const i18n = createI18n({
               title: 'Export Database',
               description: 'Export your hosts database to a CSV file.',
               button: 'Export to CSV',
-              exporting: 'Exporting...'
+              exporting: 'Exporting...',
             },
             import: {
               title: 'Import Database',
               description: 'Import hosts from a CSV file.',
               button: 'Import from CSV',
-              importing: 'Importing...'
-            }
+              importing: 'Importing...',
+            },
           },
           updateDialog: {
             title: 'System Update',
@@ -140,14 +151,15 @@ export const i18n = createI18n({
             releaseNotes: 'Release Notes',
             close: 'Close',
             update: 'Update Now',
-            updating: 'Updating...'
+            updating: 'Updating...',
           },
           wifiResetDialog: {
             title: 'Reset WiFi Settings',
-            description: 'Are you sure you want to reset WiFi settings? This will clear all saved WiFi credentials and the device will restart in AP mode.',
+            description:
+              'Are you sure you want to reset WiFi settings? This will clear all saved WiFi credentials and the device will restart in AP mode.',
             cancel: 'Cancel',
-            confirm: 'Yes, reset WiFi'
-          }
+            confirm: 'Yes, reset WiFi',
+          },
         },
         account: {
           title: 'Account',
@@ -156,7 +168,7 @@ export const i18n = createI18n({
           userInfo: {
             title: 'User Information',
             administrator: 'Administrator',
-            loggedIn: 'Active session'
+            loggedIn: 'Active session',
           },
           authentication: {
             title: 'Authentication Settings',
@@ -175,10 +187,11 @@ export const i18n = createI18n({
               uppercase: 'At least one uppercase letter',
               lowercase: 'At least one lowercase letter',
               number: 'At least one number',
-              special: 'At least one special character'
+              special: 'At least one special character',
             },
             securityNote: 'Security Note',
-            securityDescription: 'Changing these credentials will close all active sessions and require re-login.',
+            securityDescription:
+              'Changing these credentials will close all active sessions and require re-login.',
             save: 'Save Changes',
             saving: 'Saving...',
             validation: {
@@ -187,8 +200,8 @@ export const i18n = createI18n({
               passwordRequired: 'Password is required',
               passwordMaxLength: 'Password cannot exceed 32 characters',
               passwordMismatch: 'Passwords do not match',
-              currentPasswordRequired: 'Current password is required'
-            }
+              currentPasswordRequired: 'Current password is required',
+            },
           },
           auth: {
             title: 'Authentication Settings',
@@ -202,7 +215,8 @@ export const i18n = createI18n({
             confirmPassword: 'Confirm Password',
             confirmPasswordPlaceholder: 'Confirm your password',
             securityNote: 'Security Note',
-            securityDescription: 'Changing these credentials will close all active sessions and require re-login.',
+            securityDescription:
+              'Changing these credentials will close all active sessions and require re-login.',
             save: 'Save Changes',
             saving: 'Saving...',
             validation: {
@@ -211,8 +225,8 @@ export const i18n = createI18n({
               passwordRequired: 'Password is required',
               passwordMaxLength: 'Password cannot exceed 32 characters',
               passwordMismatch: 'Passwords do not match',
-              currentPasswordRequired: 'Current password is required'
-            }
+              currentPasswordRequired: 'Current password is required',
+            },
           },
           session: {
             title: 'Session Management',
@@ -223,9 +237,9 @@ export const i18n = createI18n({
             timeoutInfo: 'Sessions automatically expire after 30 minutes of inactivity.',
             logout: 'Logout',
             loggingOut: 'Logging out...',
-            loggedIn: 'Logged in'
-          }
-        }
+            loggedIn: 'Logged in',
+          },
+        },
       },
       components: {
         hostDialog: {
@@ -271,8 +285,8 @@ export const i18n = createI18n({
             macInvalid: 'Invalid MAC format (XX:XX:XX:XX:XX:XX)',
             ipInvalid: 'Invalid IP format',
             hostLimitReached: 'Maximum host limit reached',
-            generalError: 'Error saving host'
-          }
+            generalError: 'Error saving host',
+          },
         },
         hostCard: {
           online: 'Online',
@@ -282,8 +296,8 @@ export const i18n = createI18n({
           edit: 'Edit',
           delete: 'Delete',
           waking: 'Waking...',
-          pinging: 'Pinging...'
-        }
+          pinging: 'Pinging...',
+        },
       },
     },
     es: {
@@ -297,14 +311,14 @@ export const i18n = createI18n({
       languages: {
         en: 'English',
         es: 'Español',
-        ru: 'Русский'
+        ru: 'Русский',
       },
       theme: {
         light: 'Claro',
         dark: 'Oscuro',
         toggle: 'Cambiar tema',
         switchToLight: 'Cambiar a tema claro',
-        switchToDark: 'Cambiar a tema oscuro'
+        switchToDark: 'Cambiar a tema oscuro',
       },
       pages: {
         login: {
@@ -315,7 +329,14 @@ export const i18n = createI18n({
           password: 'Contraseña',
           placeholderPassword: 'Ingresa tu contraseña',
           signin: 'Iniciar sesión',
+          signingIn: 'Iniciando sesión...',
           invalidCredentials: 'Credenciales inválidas',
+          networkError: 'Error de conexión de red',
+          systemInfo: 'Sistema EspWOL Wake-on-LAN',
+          validation: {
+            usernameRequired: 'El usuario es obligatorio',
+            passwordRequired: 'La contraseña es obligatoria',
+          },
         },
         home: {
           hosts: 'Hosts',
@@ -323,7 +344,8 @@ export const i18n = createI18n({
           addFirstHost: 'Añadir tu primer host',
           searchPlaceholder: 'Buscar hosts...',
           noHosts: 'No hay hosts configurados',
-          noHostsDescription: 'Comienza añadiendo tu primer dispositivo. Puedes despertar ordenadores, servidores y otros dispositivos de red.',
+          noHostsDescription:
+            'Comienza añadiendo tu primer dispositivo. Puedes despertar ordenadores, servidores y otros dispositivos de red.',
           noResults: 'No se encontraron resultados',
           noResultsDescription: 'No se encontraron hosts que coincidan con "{searchTerm}"',
           clearSearch: 'Limpiar búsqueda',
@@ -332,10 +354,11 @@ export const i18n = createI18n({
           hostLimitReached: 'Límite de hosts alcanzado ({max} máximo)',
           deleteHost: {
             title: 'Eliminar Host',
-            description: '¿Estás seguro de que quieres eliminar "{hostName}" ({hostIp})? Esta acción no se puede deshacer.',
+            description:
+              '¿Estás seguro de que quieres eliminar "{hostName}" ({hostIp})? Esta acción no se puede deshacer.',
             cancel: 'Cancelar',
             confirm: 'Eliminar',
-            deleting: 'Eliminando...'
+            deleting: 'Eliminando...',
           },
         },
         settings: {
@@ -348,7 +371,7 @@ export const i18n = createI18n({
             title: 'Información del Sistema',
             version: 'Versión',
             hostname: 'Hostname',
-            update: 'Actualizar'
+            update: 'Actualizar',
           },
           ping: {
             title: 'Configuración de Ping',
@@ -364,8 +387,8 @@ export const i18n = createI18n({
               tenMinutes: '10 minutos',
               fifteenMinutes: '15 minutos',
               thirtyMinutes: '30 minutos',
-              oneHour: '1 hora'
-            }
+              oneHour: '1 hora',
+            },
           },
           network: {
             title: 'Configuración de Red',
@@ -385,17 +408,19 @@ export const i18n = createI18n({
             currentConfig: 'Configuración Actual (DHCP)',
             restartWarning: 'El dispositivo se reiniciará después de guardar los cambios de red',
             resetWiFi: 'Restablecer WiFi',
-            save: 'Guardar Configuración'
+            save: 'Guardar Configuración',
           },
           wifi: {
             title: 'Restablecer WiFi',
-            description: 'Restablece la configuración WiFi a los valores predeterminados. El dispositivo entrará en modo punto de acceso para reconfigurarse.',
+            description:
+              'Restablece la configuración WiFi a los valores predeterminados. El dispositivo entrará en modo punto de acceso para reconfigurarse.',
             reset: 'Restablecer WiFi',
             resetting: 'Restableciendo...',
             confirmTitle: 'Confirmar Restablecimiento WiFi',
-            confirmDescription: '¿Estás seguro de que quieres restablecer la configuración WiFi? El dispositivo se reiniciará y tendrás que volver a configurar la conexión.',
+            confirmDescription:
+              '¿Estás seguro de que quieres restablecer la configuración WiFi? El dispositivo se reiniciará y tendrás que volver a configurar la conexión.',
             cancel: 'Cancelar',
-            confirmReset: 'Restablecer'
+            confirmReset: 'Restablecer',
           },
           data: {
             title: 'Gestión de Datos',
@@ -403,14 +428,14 @@ export const i18n = createI18n({
               title: 'Exportar Base de Datos',
               description: 'Exporta tu base de datos de hosts a un archivo CSV.',
               button: 'Exportar a CSV',
-              exporting: 'Exportando...'
+              exporting: 'Exportando...',
             },
             import: {
               title: 'Importar Base de Datos',
               description: 'Importa hosts desde un archivo CSV.',
               button: 'Importar desde CSV',
-              importing: 'Importando...'
-            }
+              importing: 'Importando...',
+            },
           },
           updateDialog: {
             title: 'Actualización del Sistema',
@@ -421,14 +446,15 @@ export const i18n = createI18n({
             releaseNotes: 'Notas de la Versión',
             close: 'Cerrar',
             update: 'Actualizar Ahora',
-            updating: 'Actualizando...'
+            updating: 'Actualizando...',
           },
           wifiResetDialog: {
             title: 'Resetear Configuración WiFi',
-            description: '¿Estás seguro de que quieres resetear la configuración WiFi? Esto eliminará todas las credenciales WiFi guardadas y el dispositivo se reiniciará en modo AP.',
+            description:
+              '¿Estás seguro de que quieres resetear la configuración WiFi? Esto eliminará todas las credenciales WiFi guardadas y el dispositivo se reiniciará en modo AP.',
             cancel: 'Cancelar',
-            confirm: 'Sí, resetear WiFi'
-          }
+            confirm: 'Sí, resetear WiFi',
+          },
         },
         account: {
           title: 'Cuenta',
@@ -437,7 +463,7 @@ export const i18n = createI18n({
           userInfo: {
             title: 'Información del Usuario',
             administrator: 'Administrador',
-            loggedIn: 'Sesión activa'
+            loggedIn: 'Sesión activa',
           },
           authentication: {
             title: 'Configuración de Autenticación',
@@ -456,10 +482,11 @@ export const i18n = createI18n({
               uppercase: 'Al menos una letra mayúscula',
               lowercase: 'Al menos una letra minúscula',
               number: 'Al menos un número',
-              special: 'Al menos un carácter especial'
+              special: 'Al menos un carácter especial',
             },
             securityNote: 'Nota de Seguridad',
-            securityDescription: 'Cambiar estas credenciales cerrará todas las sesiones activas y será necesario volver a iniciar sesión.',
+            securityDescription:
+              'Cambiar estas credenciales cerrará todas las sesiones activas y será necesario volver a iniciar sesión.',
             save: 'Guardar Cambios',
             saving: 'Guardando...',
             validation: {
@@ -468,8 +495,8 @@ export const i18n = createI18n({
               passwordRequired: 'La contraseña es obligatoria',
               passwordMaxLength: 'La contraseña no puede superar los 32 caracteres',
               passwordMismatch: 'Las contraseñas no coinciden',
-              currentPasswordRequired: 'La contraseña actual es obligatoria'
-            }
+              currentPasswordRequired: 'La contraseña actual es obligatoria',
+            },
           },
           auth: {
             title: 'Configuración de Autenticación',
@@ -483,7 +510,8 @@ export const i18n = createI18n({
             confirmPassword: 'Confirmar Contraseña',
             confirmPasswordPlaceholder: 'Confirma tu contraseña',
             securityNote: 'Nota de Seguridad',
-            securityDescription: 'Cambiar estas credenciales cerrará todas las sesiones activas y será necesario volver a iniciar sesión.',
+            securityDescription:
+              'Cambiar estas credenciales cerrará todas las sesiones activas y será necesario volver a iniciar sesión.',
             save: 'Guardar Cambios',
             saving: 'Guardando...',
             validation: {
@@ -492,8 +520,8 @@ export const i18n = createI18n({
               passwordRequired: 'La contraseña es obligatoria',
               passwordMaxLength: 'La contraseña no puede superar los 32 caracteres',
               passwordMismatch: 'Las contraseñas no coinciden',
-              currentPasswordRequired: 'La contraseña actual es obligatoria'
-            }
+              currentPasswordRequired: 'La contraseña actual es obligatoria',
+            },
           },
           session: {
             title: 'Gestión de Sesión',
@@ -501,12 +529,13 @@ export const i18n = createI18n({
             currentSession: 'Sesión Actual',
             sessionActive: 'Tu sesión está activa en este dispositivo',
             active: 'Activa',
-            timeoutInfo: 'Las sesiones expiran automáticamente después de 30 minutos de inactividad.',
+            timeoutInfo:
+              'Las sesiones expiran automáticamente después de 30 minutos de inactividad.',
             logout: 'Cerrar Sesión',
             loggingOut: 'Cerrando sesión...',
-            loggedIn: 'Sesión iniciada'
-          }
-        }
+            loggedIn: 'Sesión iniciada',
+          },
+        },
       },
       components: {
         hostDialog: {
@@ -552,8 +581,8 @@ export const i18n = createI18n({
             macInvalid: 'Formato de MAC inválido (XX:XX:XX:XX:XX:XX)',
             ipInvalid: 'Formato de IP inválido',
             hostLimitReached: 'Límite máximo de hosts alcanzado',
-            generalError: 'Error al guardar el host'
-          }
+            generalError: 'Error al guardar el host',
+          },
         },
         hostCard: {
           online: 'En línea',
@@ -563,8 +592,8 @@ export const i18n = createI18n({
           edit: 'Editar',
           delete: 'Eliminar',
           waking: 'Despertando...',
-          pinging: 'Verificando...'
-        }
+          pinging: 'Verificando...',
+        },
       },
     },
     ru: {
@@ -578,14 +607,14 @@ export const i18n = createI18n({
       languages: {
         en: 'English',
         es: 'Español',
-        ru: 'Русский'
+        ru: 'Русский',
       },
       theme: {
         light: 'Светлая',
         dark: 'Темная',
         toggle: 'Переключить тему',
         switchToLight: 'Переключить на светлую тему',
-        switchToDark: 'Переключить на темную тему'
+        switchToDark: 'Переключить на темную тему',
       },
       pages: {
         login: {
@@ -596,7 +625,14 @@ export const i18n = createI18n({
           password: 'Пароль',
           placeholderPassword: 'Введите пароль',
           signin: 'Войти',
+          signingIn: 'Вход...',
           invalidCredentials: 'Неверные учетные данные',
+          networkError: 'Ошибка сетевого подключения',
+          systemInfo: 'Система EspWOL Wake-on-LAN',
+          validation: {
+            usernameRequired: 'Имя пользователя обязательно',
+            passwordRequired: 'Пароль обязателен',
+          },
         },
         home: {
           hosts: 'Хосты',
@@ -604,7 +640,8 @@ export const i18n = createI18n({
           addFirstHost: 'Добавить ваш первый хост',
           searchPlaceholder: 'Поиск хостов...',
           noHosts: 'Хосты не настроены',
-          noHostsDescription: 'Начните с добавления вашего первого устройства. Вы можете будить компьютеры, серверы и другие сетевые устройства.',
+          noHostsDescription:
+            'Начните с добавления вашего первого устройства. Вы можете будить компьютеры, серверы и другие сетевые устройства.',
           noResults: 'Результаты не найдены',
           noResultsDescription: 'Хосты, соответствующие "{searchTerm}", не найдены',
           clearSearch: 'Очистить поиск',
@@ -613,10 +650,11 @@ export const i18n = createI18n({
           hostLimitReached: 'Достигнут лимит хостов ({max} максимум)',
           deleteHost: {
             title: 'Удалить Хост',
-            description: 'Вы уверены, что хотите удалить "{hostName}" ({hostIp})? Это действие нельзя отменить.',
+            description:
+              'Вы уверены, что хотите удалить "{hostName}" ({hostIp})? Это действие нельзя отменить.',
             cancel: 'Отмена',
             confirm: 'Удалить',
-            deleting: 'Удаление...'
+            deleting: 'Удаление...',
           },
         },
         settings: {
@@ -629,7 +667,7 @@ export const i18n = createI18n({
             title: 'Информация о Системе',
             version: 'Версия',
             hostname: 'Имя хоста',
-            update: 'Обновить'
+            update: 'Обновить',
           },
           ping: {
             title: 'Настройки Пинга',
@@ -645,8 +683,8 @@ export const i18n = createI18n({
               tenMinutes: '10 минут',
               fifteenMinutes: '15 минут',
               thirtyMinutes: '30 минут',
-              oneHour: '1 час'
-            }
+              oneHour: '1 час',
+            },
           },
           network: {
             title: 'Настройки Сети',
@@ -666,17 +704,19 @@ export const i18n = createI18n({
             currentConfig: 'Текущая Конфигурация (DHCP)',
             restartWarning: 'Устройство перезагрузится после сохранения сетевых изменений',
             resetWiFi: 'Сбросить WiFi',
-            save: 'Сохранить Настройки'
+            save: 'Сохранить Настройки',
           },
           wifi: {
             title: 'Сброс WiFi',
-            description: 'Сбросить конфигурацию WiFi к настройкам по умолчанию. Устройство войдет в режим точки доступа для перенастройки.',
+            description:
+              'Сбросить конфигурацию WiFi к настройкам по умолчанию. Устройство войдет в режим точки доступа для перенастройки.',
             reset: 'Сбросить WiFi',
             resetting: 'Сброс...',
             confirmTitle: 'Подтвердить Сброс WiFi',
-            confirmDescription: 'Вы уверены, что хотите сбросить конфигурацию WiFi? Устройство перезагрузится и вам нужно будет перенастроить соединение.',
+            confirmDescription:
+              'Вы уверены, что хотите сбросить конфигурацию WiFi? Устройство перезагрузится и вам нужно будет перенастроить соединение.',
             cancel: 'Отмена',
-            confirmReset: 'Сбросить'
+            confirmReset: 'Сбросить',
           },
           data: {
             title: 'Управление Данными',
@@ -684,14 +724,14 @@ export const i18n = createI18n({
               title: 'Экспорт Базы Данных',
               description: 'Экспортируйте вашу базу данных хостов в CSV файл.',
               button: 'Экспорт в CSV',
-              exporting: 'Экспорт...'
+              exporting: 'Экспорт...',
             },
             import: {
               title: 'Импорт Базы Данных',
               description: 'Импортируйте хосты из CSV файла.',
               button: 'Импорт из CSV',
-              importing: 'Импорт...'
-            }
+              importing: 'Импорт...',
+            },
           },
           updateDialog: {
             title: 'Обновление Системы',
@@ -702,14 +742,15 @@ export const i18n = createI18n({
             releaseNotes: 'Примечания к Выпуску',
             close: 'Закрыть',
             update: 'Обновить Сейчас',
-            updating: 'Обновление...'
+            updating: 'Обновление...',
           },
           wifiResetDialog: {
             title: 'Сброс Настроек WiFi',
-            description: 'Вы уверены, что хотите сбросить настройки WiFi? Это очистит все сохраненные учетные данные WiFi и устройство перезапустится в режиме AP.',
+            description:
+              'Вы уверены, что хотите сбросить настройки WiFi? Это очистит все сохраненные учетные данные WiFi и устройство перезапустится в режиме AP.',
             cancel: 'Отмена',
-            confirm: 'Да, сбросить WiFi'
-          }
+            confirm: 'Да, сбросить WiFi',
+          },
         },
         account: {
           title: 'Аккаунт',
@@ -718,7 +759,7 @@ export const i18n = createI18n({
           userInfo: {
             title: 'Информация Пользователя',
             administrator: 'Администратор',
-            loggedIn: 'Активная сессия'
+            loggedIn: 'Активная сессия',
           },
           authentication: {
             title: 'Настройки Аутентификации',
@@ -737,10 +778,11 @@ export const i18n = createI18n({
               uppercase: 'Не менее одной заглавной буквы',
               lowercase: 'Не менее одной строчной буквы',
               number: 'Не менее одной цифры',
-              special: 'Не менее одного специального символа'
+              special: 'Не менее одного специального символа',
             },
             securityNote: 'Примечание по Безопасности',
-            securityDescription: 'Изменение этих учетных данных закроет все активные сессии и потребует повторного входа.',
+            securityDescription:
+              'Изменение этих учетных данных закроет все активные сессии и потребует повторного входа.',
             save: 'Сохранить Изменения',
             saving: 'Сохранение...',
             validation: {
@@ -749,8 +791,8 @@ export const i18n = createI18n({
               passwordRequired: 'Пароль обязателен',
               passwordMaxLength: 'Пароль не может превышать 32 символа',
               passwordMismatch: 'Пароли не совпадают',
-              currentPasswordRequired: 'Текущий пароль обязателен'
-            }
+              currentPasswordRequired: 'Текущий пароль обязателен',
+            },
           },
           auth: {
             title: 'Настройки Аутентификации',
@@ -764,7 +806,8 @@ export const i18n = createI18n({
             confirmPassword: 'Подтвердить Пароль',
             confirmPasswordPlaceholder: 'Подтвердите ваш пароль',
             securityNote: 'Примечание по Безопасности',
-            securityDescription: 'Изменение этих учетных данных закроет все активные сессии и потребует повторного входа.',
+            securityDescription:
+              'Изменение этих учетных данных закроет все активные сессии и потребует повторного входа.',
             save: 'Сохранить Изменения',
             saving: 'Сохранение...',
             validation: {
@@ -773,8 +816,8 @@ export const i18n = createI18n({
               passwordRequired: 'Пароль обязателен',
               passwordMaxLength: 'Пароль не может превышать 32 символа',
               passwordMismatch: 'Пароли не совпадают',
-              currentPasswordRequired: 'Текущий пароль обязателен'
-            }
+              currentPasswordRequired: 'Текущий пароль обязателен',
+            },
           },
           session: {
             title: 'Управление Сессией',
@@ -785,9 +828,9 @@ export const i18n = createI18n({
             timeoutInfo: 'Сессии автоматически истекают через 30 минут неактивности.',
             logout: 'Выйти',
             loggingOut: 'Выход...',
-            loggedIn: 'Вошел в систему'
-          }
-        }
+            loggedIn: 'Вошел в систему',
+          },
+        },
       },
       components: {
         hostDialog: {
@@ -833,8 +876,8 @@ export const i18n = createI18n({
             macInvalid: 'Неверный формат MAC (XX:XX:XX:XX:XX:XX)',
             ipInvalid: 'Неверный формат IP',
             hostLimitReached: 'Достигнут максимальный лимит хостов',
-            generalError: 'Ошибка сохранения хоста'
-          }
+            generalError: 'Ошибка сохранения хоста',
+          },
         },
         hostCard: {
           online: 'В сети',
@@ -844,8 +887,8 @@ export const i18n = createI18n({
           edit: 'Редактировать',
           delete: 'Удалить',
           waking: 'Пробуждение...',
-          pinging: 'Пинг...'
-        }
+          pinging: 'Пинг...',
+        },
       },
     },
   },
