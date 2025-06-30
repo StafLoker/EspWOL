@@ -1,5 +1,5 @@
 <div align="center">
-   <img width="150" height="150" src="logo.jpeg" alt="Logo">
+   <img width="93" src="logo.png" alt="Logo">
    <h1><b>EspWOL</b></h1>
    <p><i>~ Wake & play! ~</i></p>
    <p align="center">
@@ -14,6 +14,11 @@
    <a href="https://github.com/StafLoker/EspWOL/releases"><img src="https://img.shields.io/github/release-pre/StafLoker/EspWOL.svg?style=flat" alt="latest version"/></a>
    <a href="https://github.com/StafLoker/EspWOL/blob/main/LICENSE"><img src="https://img.shields.io/github/license/StafLoker/EspWOL.svg?style=flat" alt="license"/></a>
    <img src="https://img.shields.io/badge/platform-ESP8266-blue.svg?style=flat" alt="platform"/>
+   <div align="center">
+      <a href="https://github.com/StafLoker/EspWOL/actions/workflows/build-and-release.yml">
+         <img src="https://github.com/StafLoker/EspWOL/actions/workflows/build-and-release.yml/badge.svg" alt="Build & Release"/>
+      </a>
+   </div>
 
    <p>This project provides a web-based interface for power on hosts using an ESP8266 and Wake On Lan magic packets.</p>
 
@@ -21,35 +26,36 @@
 </div>
 
 ## Alerts
-> [!IMPORTANT]
-> [Instruction](#migration-from-v1xx-to-v2xx) of migration to version `2.x.x`.
 
 > [!IMPORTANT]
-> Same [instruction](#migration-from-v1xx-to-v2xx) to upgrade from version `2.0.0` to version >= `2.1.0`.
+> [Instruction](#migration-from-v2xx-to-v3xx) of migration to version `3.x.x`.
+
+> [!IMPORTANT]
+> Same [instruction](#migration-from-v2xx-to-v3xx) to upgrade from version `2.x.x` to version >= `3.x.x`.
 
 ## Features
 
-- **CRUD Host Management**: CRUD functionality to manage host information.
-- **Wake on LAN (WoL)**: Send a WoL request to wake a host remotely.
-- **Basic HTTP Authentication**: Enable/disable authentication and update credentials (username/password) as needed.
-- **Network Configuration**: Switch seamlessly between static IP and DHCP modes.
-- **Host Ping Utility**: Test connectivity by pinging a specified host.
+### App logic
+
+- **CRUD Host Management**: Full CRUD functionality to manage host information with persistent storage.
+- **Wake on LAN (WoL)**: Send magic packets to wake hosts remotely with real-time feedback.
+- **Session-Based Authentication**: Secure token-based authentication with configurable credentials and 15-minute session timeout.
+- **Network Configuration**: Switch seamlessly between static IP and DHCP modes with automatic restart.
+- **Host Ping Utility**: Test connectivity by pinging specified hosts with automatic status updates.
+- **Periodic Ping & Auto-Wake**: Configure periodic pings with automatic WoL for offline hosts.
+- **Database Export/Import**: Export and import host databases in CSV format.
+
+### User experience
+
+- **Mobile-Friendly UI**: Responsive web interface optimized for all screen sizes.
+- **Dark Mode**: Toggle between light and dark themes for better user experience.
+- **Internalization**: Web UI in Russian, English, Spanish languages.
+
+### Other
+
 - **Over-The-Air (OTA) Updates**: Secure OTA updates with password: `ber#912NerYi`.
-- **Auto-Update**: Update to the latest version without using an IDE via internet.
-- **Dark Mode**: Toggle between light and dark themes.
-- **Periodic Ping**: Configure periodic pings; if a ping fails, the program attempts to wake the host.
-- **Export database**: Export database to **CSV** file.  
-- **Import database**: Import database from **CSV** file.
-- **mDNS**: You can access the web page using a domain name. The default is `wol.local`.
-- **Mobile-Friendly UI**: The web interface is optimized for mobile screens.
-
-## Build Status
-
-<div align="center">
-   <a href="https://github.com/StafLoker/EspWOL/actions/workflows/build-and-release.yml">
-      <img src="https://github.com/StafLoker/EspWOL/actions/workflows/build-and-release.yml/badge.svg" alt="Build & Release"/>
-   </a>
-</div>
+- **mDNS Support**: Access the web interface using `wol.local` domain name.
+- **WiFi Manager**: Built-in WiFi configuration portal for easy network setup.
 
 ## Requirements
 
@@ -64,80 +70,117 @@
   - [ESP8266Ping](https://github.com/dancol90/ESP8266Ping)
   - [ArduinoOTA](https://github.com/JAndrassy/ArduinoOTA)
   - [GTimer](https://github.com/GyverLibs/GTimer)
-  - [AutoOTA](https://github.com/GyverLibs/AutoOTA)
 
 ## Installation
 
-### Requirements  
+### Requirements
 
-Installation of the CH341 driver is required. Use the following links to download and install it:  
+Installation of the CH341 driver is required. Use the following links to download and install it:
 
 - **Windows:** [Download CH341SER.EXE](https://wch-ic.com/downloads/CH341SER_EXE.html)
 - **Linux** [Download CH341SER_LINUX_ZIP](https://wch-ic.com/downloads/CH341SER_LINUX_ZIP.html)
 - **MacOS:** [Download CH341SER_MAC.ZIP](https://wch-ic.com/downloads/CH341SER_MAC_ZIP.html)
 
-After installation, add the following URL to the **Arduino IDE** settings:  
+After installation, add the following URL to the **Arduino IDE** settings:
 
 ```
 http://arduino.esp8266.com/stable/package_esp8266com_index.json
-```  
+```
 
-Then, install the latest version of the **ESP8266** board package via the **Boards Manager** in the Arduino IDE.  
+Then, install the latest version of the **ESP8266** board package via the **Boards Manager** in the Arduino IDE.
 
 ---
 
-### Method 1: Using Arduino IDE  
+### Method 1: Using Arduino IDE
 
-1. **Clone the Repository:**  
+1. **Clone the Repository:**
    ```bash
    git clone [repository-url]
-   ```  
-2. **Open the Project:** Open the cloned project in the **Arduino IDE**.  
-3. **Install Required Libraries:** Use the **Library Manager** in the Arduino IDE to install all necessary libraries.  
-4. **Upload the Code:** Connect your ESP8266 board and upload the code.  
+   ```
+2. **Open the Project:** Open the cloned project in the **Arduino IDE**.
+3. **Install Required Libraries:** Use the **Library Manager** in the Arduino IDE to install all necessary libraries.
+4. **Upload the Code:** Connect your ESP8266 board and upload the code.
 
 ---
 
-### Method 2: Using Precompiled Binary  
+### Method 2: Using Precompiled Binary
 
-1. **Download the Binary File** (`EspWOL.bin`) from the latest release.  
-2. **Flash the Firmware:** Use one of the following online tools to flash the binary:  
-   - [ESP Huhn](https://esp.huhn.me)  
-   - [ESPHome Web](https://web.esphome.io)  
+1. **Download the Binary File** (`EspWOL.bin`) from the latest release.
+2. **Flash the Firmware:** Use one of the following online tools to flash the binary:
+   - [ESP Huhn](https://esp.huhn.me)
+   - [ESPHome Web](https://web.esphome.io)
 
 ## Usage
 
-1. **Access Web Interface**:  
-   - Power the ESP8266 and connect it to Wi-Fi.  
-   - Open the IP address of the board in a web browser (the IP is set using the DHCP protocol).
+### Initial Setup
 
-2. **Manage Hosts**:  
-   - **Add Host**: Click the `+` button.  
-   - **Wake Host**: Click the **play** button (▶️) next to a host to send a WoL request.  
+1. **First Boot**:
 
-### Updating to the Latest Version
+   - Power the ESP8266. If no WiFi is configured, it will create an access point named `WOL-ESP8266`.
+   - Connect to this network and configure your WiFi credentials.
 
-> [!WARNING]
-> In version `2.0.0`, it is not possible to perform an update. This functionality is available starting from version `2.1.0`. [Instruction](#migration-from-v1xx-to-v2xx) to upgrade from version `2.0.0` to version >= `2.1.0`.
+2. **Access Web Interface**:
 
-1. **Open Settings**:  
-   - Click the **Settings** button.  
-     - **Green Badge**: Indicates the latest version is installed.  
-     - **Yellow Badge**: An update is available.  
+   - After WiFi setup, find the device IP address (check your router or use `wol.local` if mDNS is enabled).
+   - Open the IP address in a web browser.
 
-2. **Start Update**:  
-   - Click the yellow badge, then click **Update** in the next window.  
+3. **Login**:
+   - Default credentials: `glavniy` / `Lep#Chick43`
+   - Change these credentials immediately in Avatar → Account.
 
-3. **Wait for Completion**:  
-   - Do not disconnect power until the update finishes.
+### Configuration
 
-## Migration from v1.x.x to v2.x.x  
+- **Network Settings**: Configure static IP or use DHCP.
+- **Ping Period**: Set automatic ping intervals (0 to disable, or 1 min to 24 hours).
+- **Authentication**: Update username and password.
+- **WiFi Reset**: Reset WiFi credentials to reconfigure network.
 
-1. Ensure your firmware version is **1.2.3**.  
-2. Click the **Export** button.  
-3. Export the database and download the export file.  
-4. Upload **version 2.x.x** to the device with the **"All Flash Contents"** option enabled.  
-5. Click the **Export** button again.  
-6. Upload the previously exported file.  
-7. Click **Import**.  
-8. Migration complete!
+## Migration from v2.x.x to v3.x.x
+
+> [!CAUTION]
+> Version 3.x.x introduces breaking changes in authentication and data storage format.
+
+1. **Export from v2.x.x**:
+
+   - Export your host database before upgrading.
+   - Note your current settings and credentials.
+
+2. **Flash v3.x.x**:
+
+   - Upload **version 3.x.x** to the device with the **"All Flash Contents"** option enabled.
+
+3. **Reconfigure**:
+
+   - Set up WiFi connection.
+   - Login with default credentials: `glavniy` / `Lep#Chick43`
+   - Import your host database via the Import function.
+   - Reconfigure your settings and update credentials.
+
+4. **Verify**:
+   - Test all hosts and functionality.
+   - Migration complete!
+
+## Technical Details
+
+- **Session Management**: 15-minute timeout with automatic cleanup
+- **Password Requirements**: Minimum 8 characters with uppercase, lowercase, and special characters
+- **Storage**: LittleFS for persistent configuration and host data
+- **Network**: Supports both DHCP and static IP configuration
+- **Ping Values**: Configurable intervals from 1 minute to 24 hours
+- **MAC Format**: Standard format AA:BB:CC:DD:EE:FF
+- **File System**: JSON-based configuration files
+
+## Troubleshooting
+
+- **Can't connect to WiFi**: Reset WiFi settings via the web interface or reflash firmware
+- **Forgot password**: Reflash firmware to reset to defaults
+- **Host won't wake**: Verify MAC address, ensure target device supports WoL
+- **mDNS not working**: Some networks don't support mDNS; use IP address instead
+
+## Contributing
+
+Contributions are welcome! Please read the contributing guidelines and submit pull requests for any improvements.
+
+## License
+
+This project is licensed under the terms specified in the LICENSE file.
