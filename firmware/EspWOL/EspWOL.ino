@@ -45,6 +45,7 @@
 #include "repository.h"
 #include "validation.h"
 #include "index.h"
+#include "404.h"
 
 /* === LIB VARS === */
 

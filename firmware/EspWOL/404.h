@@ -1,3 +1,4 @@
+const char notFoundHtmlPage[] PROGMEM = R"rawliteral(
 <!doctype html>
 <html lang="en">
   <head>
@@ -65,3 +66,4 @@
     </script>
   </body>
 </html>
+)rawliteral";

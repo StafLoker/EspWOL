@@ -14,11 +14,9 @@ void setupWebRoutes() {
 // =============================================================================
 
 void handleRoot() {
-  if (isAuthenticated()) {
-    server.send_P(200, CONTENT_TYPE_HTML, indexHtmlPage);
-  }
+  server.send_P(200, CONTENT_TYPE_HTML, indexHtmlPage);
 }
 
 void handleNotFound() {
-  sendJsonResponse(404, false, FPSTR(MSG_NOT_FOUND));
+  server.send_P(404, CONTENT_TYPE_HTML, notFoundHtmlPage);
 }
