@@ -5,15 +5,15 @@
 // =============================================================================
 
 void setupHostRoutes() {
-  server.on("/hosts", HTTP_ANY, []() {
-    if (server.hasArg("id")) {
+  server.on(FPSTR(ROUTE_HOSTS), HTTP_ANY, []() {
+    if (server.hasArg(FPSTR(ARG_ID))) {
       handleHostsById();
     } else {
       handleHosts();
     }
   });
 
-  server.on("/import", HTTP_POST, handleImportDatabase);
+  server.on(FPSTR(ROUTE_IMPORT), HTTP_POST, handleImportDatabase);
 }
 
 // =============================================================================
@@ -22,7 +22,7 @@ void setupHostRoutes() {
 
 bool validateHostData(const JsonDocument &doc, String &name, String &mac, String &ip, bool &autoWake) {
   if (!doc.containsKey(F("name")) || !doc.containsKey(F("mac")) || !doc.containsKey(F("ip")) || !doc.containsKey(F("autoWake"))) {
-    sendJsonResponse(400, false, "Missing required fields");
+    sendJsonResponse(400, false, FPSTR(MSG_MISSING_FIELDS));
     return false;
   }
 
@@ -32,7 +32,7 @@ bool validateHostData(const JsonDocument &doc, String &name, String &mac, String
   autoWake = doc[F("autoWake")].as<bool>();
 
   if (name.isEmpty() || !isValidMACAddress(mac) || !isValidIPAddress(ip)) {
-    sendJsonResponse(400, false, "Invalid data format");
+    sendJsonResponse(400, false, FPSTR(MSG_INVALID_FORMAT));
     return false;
   }
 
@@ -95,19 +95,19 @@ void getHost(int id) {
     createHostJson(doc, id, host);
     sendJsonResponse(200, true, "Your host", doc);
   } else {
-    sendJsonResponse(400, false, "Host not found");
+    sendJsonResponse(400, false, FPSTR(MSG_HOST_NOT_FOUND));
   }
 }
 
 void addHost() {
-  if (!server.hasArg("plain")) {
-    sendJsonResponse(400, false, "Missing body");
+  if (!server.hasArg(FPSTR(ARG_PLAIN))) {
+    sendJsonResponse(400, false, FPSTR(MSG_MISSING_BODY));
     return;
   }
 
   JsonDocument doc;
-  if (deserializeJson(doc, server.arg("plain"))) {
-    sendJsonResponse(400, false, "Invalid JSON");
+  if (deserializeJson(doc, server.arg(FPSTR(ARG_PLAIN)))) {
+    sendJsonResponse(400, false, FPSTR(MSG_INVALID_JSON));
     return;
   }
 
@@ -118,7 +118,7 @@ void addHost() {
   Host host = { name, mac, ip, autoWake };
 
   if (isHostDuplicate(host)) {
-    sendJsonResponse(409, false, "Duplicate host");
+    sendJsonResponse(409, false, FPSTR(MSG_DUPLICATE_HOST));
     return;
   }
 
@@ -127,7 +127,6 @@ void addHost() {
 
   saveHosts();
 
-  // Crear JSON con el host añadido
   JsonDocument responseDoc;
   createHostJson(responseDoc, id, host);
   sendJsonResponse(200, true, "Host added", responseDoc);
@@ -180,7 +179,7 @@ void deleteHost(int id) {
     saveHosts();
     server.send(204);
   } else {
-    sendJsonResponse(400, false, "Host not found");
+    sendJsonResponse(400, false, FPSTR(MSG_HOST_NOT_FOUND));
   }
 }
 

@@ -5,8 +5,8 @@
 // =============================================================================
 
 void setupNetworkRoutes() {
-  server.on("/wake", HTTP_POST, handleWakeHost);
-  server.on("/ping", HTTP_POST, handlePingHost);
+  server.on(FPSTR(ROUTE_WAKE), HTTP_POST, handleWakeHost);
+  server.on(FPSTR(ROUTE_PING), HTTP_POST, handlePingHost);
 }
 
 // =============================================================================
@@ -27,7 +27,7 @@ void pingHost(int id) {
       sendJsonResponse(200, false, "Host is offline");
     }
   } else {
-    sendJsonResponse(400, false, "Host not found");
+    sendJsonResponse(400, false, FPSTR(MSG_HOST_NOT_FOUND));
   }
 }
 
@@ -37,8 +37,8 @@ void pingHost(int id) {
 
 void handleWakeHost() {
   if (isAuthenticated()) {
-    if (server.hasArg("id")) {
-      int id = server.arg("id").toInt();
+    if (server.hasArg(FPSTR(ARG_ID))) {
+      int id = server.arg(FPSTR(ARG_ID)).toInt();
       if (id >= 0 && id < hosts.size()) {
         Host &host = hosts[id];
         if (wol.sendMagicPacket(host.mac.c_str())) {
@@ -47,10 +47,10 @@ void handleWakeHost() {
           sendJsonResponse(200, false, "Failed to send WOL packet");
         }
       } else {
-        sendJsonResponse(400, false, "Host not found");
+        sendJsonResponse(400, false, FPSTR(MSG_HOST_NOT_FOUND));
       }
     } else {
-      sendJsonResponse(405, false, "HTTP Method Not Allowed");
+      sendJsonResponse(405, false, FPSTR(MSG_METHOD_NOT_ALLOWED));
     }
   }
 }
@@ -60,7 +60,7 @@ void handlePingHost() {
     if (server.hasArg("id")) {
       pingHost(server.arg("id").toInt());
     } else {
-      sendJsonResponse(405, false, "HTTP Method Not Allowed");
+      sendJsonResponse(405, false, FPSTR(MSG_METHOD_NOT_ALLOWED));
     }
   }
 }

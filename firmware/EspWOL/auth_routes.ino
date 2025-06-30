@@ -5,8 +5,8 @@
 // =============================================================================
 
 void setupAuthRoutes() {
-  server.on("/login", HTTP_POST, handleLogin);
-  server.on("/logout", HTTP_POST, handleLogout);
+  server.on(FPSTR(ROUTE_LOGIN), HTTP_POST, handleLogin);
+  server.on(FPSTR(ROUTE_LOGOUT), HTTP_POST, handleLogout);
 }
 
 // =============================================================================
@@ -73,14 +73,14 @@ void destroySession(const String &sessionToken) {
 // =============================================================================
 
 void handleLogin() {
-  if (!server.hasArg("plain")) {
-    sendJsonResponse(400, false, "Missing body");
+  if (!server.hasArg(FPSTR(ARG_PLAIN))) {
+    sendJsonResponse(400, false, FPSTR(MSG_MISSING_BODY));
     return;
   }
 
   JsonDocument doc;
-  if (deserializeJson(doc, server.arg("plain"))) {
-    sendJsonResponse(400, false, "Invalid JSON");
+  if (deserializeJson(doc, server.arg(FPSTR(ARG_PLAIN)))) {
+    sendJsonResponse(400, false, FPSTR(MSG_INVALID_JSON));
     return;
   }
 

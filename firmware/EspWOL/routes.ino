@@ -7,9 +7,8 @@ void sendJsonResponse(int statusCode, bool success, const String &message) {
 
   String response;
   serializeJson(doc, response);
-  server.send(statusCode, "application/json", response);
+  server.send(statusCode, FPSTR(CONTENT_TYPE_JSON), response);
 }
-
 
 void sendJsonResponse(int statusCode, bool success, const String &message, const JsonDocument &dataDoc) {
   JsonDocument doc;
@@ -19,21 +18,19 @@ void sendJsonResponse(int statusCode, bool success, const String &message, const
 
   String response;
   serializeJson(doc, response);
-  server.send(statusCode, "application/json", response);
+  server.send(statusCode, FPSTR(CONTENT_TYPE_JSON), response);
 }
-
 
 bool isAuthenticated() {
   bool valid = false;
 
-  if (server.hasHeader("X-Session-Token")) {
-    String sessionToken = server.header("X-Session-Token");
-
+  if (server.hasHeader(FPSTR(HEADER_SESSION_TOKEN))) {
+    String sessionToken = server.header(FPSTR(HEADER_SESSION_TOKEN));
     valid = isSessionValid(sessionToken);
   }
 
   if (!valid) {
-    sendJsonResponse(401, false, "Authentication required");
+    sendJsonResponse(401, false, FPSTR(MSG_AUTH_REQUIRED));
   }
 
   return valid;

@@ -8,17 +8,17 @@ struct Host {
   bool autoWake;
 };
 
+struct User {
+  String username;
+  String password;
+};
+
 struct NetworkConfig {
   bool enable = false;
   IPAddress ip;
   IPAddress networkMask;
   IPAddress gateway;
   IPAddress dns;
-};
-
-struct User {
-  String username;
-  String password;
 };
 
 struct Settings {

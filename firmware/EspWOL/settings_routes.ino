@@ -5,12 +5,12 @@
 // =============================================================================
 
 void setupSettingsRoutes() {
-  server.on("/settings", HTTP_GET, handleGetSettings);
-  server.on("/settings/network", HTTP_ANY, handleNetworkSettings);
-  server.on("/settings/auth", HTTP_ANY, handleUser);
-  server.on("/settings/about", HTTP_GET, handleGetAbout);
-  server.on("/settings/ping_period", HTTP_ANY, handlePingPeriod);
-  server.on("/settings/reset_wifi", HTTP_POST, handleResetWiFiSettings);
+  server.on(FPSTR(ROUTE_SETTINGS), HTTP_GET, handleGetSettings);
+  server.on(FPSTR(ROUTE_SETTINGS_NETWORK), HTTP_ANY, handleNetworkSettings);
+  server.on(FPSTR(ROUTE_SETTINGS_AUTH), HTTP_ANY, handleUser);
+  server.on(FPSTR(ROUTE_SETTINGS_ABOUT), HTTP_GET, handleGetAbout);
+  server.on(FPSTR(ROUTE_SETTINGS_PING), HTTP_ANY, handlePingPeriod);
+  server.on(FPSTR(ROUTE_SETTINGS_RESET_WIFI), HTTP_POST, handleResetWiFiSettings);
 }
 
 // =============================================================================
@@ -53,14 +53,14 @@ void getPingPeriod() {
 }
 
 void updatePingPeriod() {
-  if (!server.hasArg("plain")) {
-    sendJsonResponse(400, false, "Missing body");
+  if (!server.hasArg(FPSTR(ARG_PLAIN))) {
+    sendJsonResponse(400, false, FPSTR(MSG_MISSING_BODY));
     return;
   }
 
   JsonDocument doc;
-  if (deserializeJson(doc, server.arg("plain"))) {
-    sendJsonResponse(400, false, "Invalid JSON");
+  if (deserializeJson(doc, server.arg(FPSTR(ARG_PLAIN)))) {
+    sendJsonResponse(400, false, FPSTR(MSG_INVALID_JSON));
     return;
   }
 
@@ -88,19 +88,19 @@ void updatePingPeriod() {
 }
 
 void updateNetworkSettings() {
-  if (!server.hasArg("plain")) {
-    sendJsonResponse(400, false, "Missing body");
+  if (!server.hasArg(FPSTR(ARG_PLAIN))) {
+    sendJsonResponse(400, false, FPSTR(MSG_MISSING_BODY));
     return;
   }
 
   JsonDocument doc;
-  if (deserializeJson(doc, server.arg("plain"))) {
-    sendJsonResponse(400, false, "Invalid JSON");
+  if (deserializeJson(doc, server.arg(FPSTR(ARG_PLAIN)))) {
+    sendJsonResponse(400, false, FPSTR(MSG_INVALID_JSON));
     return;
   }
 
   if (!doc.containsKey(F("enable")) || !doc.containsKey(F("ip")) || !doc.containsKey(F("networkMask")) || !doc.containsKey(F("gateway")) || !doc.containsKey(F("dns"))) {
-    sendJsonResponse(400, false, "Missing required fields");
+    sendJsonResponse(400, false, FPSTR(MSG_MISSING_FIELDS));
     return;
   }
 
@@ -110,14 +110,14 @@ void updateNetworkSettings() {
   String dns_str = doc[F("dns")].as<String>();
 
   if (!doc[F("enable")].is<bool>()) {
-    sendJsonResponse(400, false, "Invalid data format");
+    sendJsonResponse(400, false, FPSTR(MSG_INVALID_FORMAT));
     return;
   }
 
   settings.networkConfig.enable = doc[F("enable")];
   if (settings.networkConfig.enable) {
     if (!isValidIPAddress(ip_str) || !isValidIPAddress(networkMask_str) || !isValidIPAddress(gateway_str) || !isValidIPAddress(dns_str)) {
-      sendJsonResponse(400, false, "Invalid data format");
+      sendJsonResponse(400, false, FPSTR(MSG_INVALID_FORMAT));
       return;
     }
 
@@ -173,19 +173,19 @@ void getNetworkSettings() {
 }
 
 void updateUser() {
-  if (!server.hasArg("plain")) {
-    sendJsonResponse(400, false, "Missing body");
+  if (!server.hasArg(FPSTR(ARG_PLAIN))) {
+    sendJsonResponse(400, false, FPSTR(MSG_MISSING_BODY));
     return;
   }
 
   JsonDocument doc;
-  if (deserializeJson(doc, server.arg("plain"))) {
-    sendJsonResponse(400, false, "Invalid JSON");
+  if (deserializeJson(doc, server.arg(FPSTR(ARG_PLAIN)))) {
+    sendJsonResponse(400, false, FPSTR(MSG_INVALID_JSON));
     return;
   }
 
   if (!doc.containsKey(F("username")) || !doc.containsKey(F("password"))) {
-    sendJsonResponse(400, false, "Missing required fields");
+    sendJsonResponse(400, false, FPSTR(MSG_MISSING_FIELDS));
     return;
   }
 
@@ -193,15 +193,13 @@ void updateUser() {
   String password = doc[F("password")].as<String>();
 
   if (username.length() < 3 || !isValidPassword(password)) {
-    sendJsonResponse(400, false, "Invalid data format");
+    sendJsonResponse(400, false, FPSTR(MSG_INVALID_FORMAT));
     return;
   }
 
   User user = { username, password };
-
   saveUser(user);
 
-  // Devolver el nuevo username
   JsonDocument responseDoc;
   responseDoc[F("username")] = username;
   sendJsonResponse(200, true, "User updated", responseDoc);

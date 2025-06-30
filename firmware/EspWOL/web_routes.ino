@@ -5,7 +5,7 @@
 // =============================================================================
 
 void setupWebRoutes() {
-  server.on("/", HTTP_GET, handleRoot);
+  server.on(FPSTR(ROUTE_ROOT), HTTP_GET, handleRoot);
   server.onNotFound(handleNotFound);
 }
 
@@ -15,10 +15,10 @@ void setupWebRoutes() {
 
 void handleRoot() {
   if (isAuthenticated()) {
-    server.send_P(200, "text/html", indexHtmlPage);
+    server.send_P(200, CONTENT_TYPE_HTML, indexHtmlPage);
   }
 }
 
 void handleNotFound() {
-  sendJsonResponse(404, false, "Not found");
+  sendJsonResponse(404, false, FPSTR(MSG_NOT_FOUND));
 }

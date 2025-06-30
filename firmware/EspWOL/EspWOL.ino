@@ -74,8 +74,8 @@ struct Settings settings = {
 #if ENABLE_STANDARD_OTA == 1
 // Function to setup OTA
 void setupOTA() {
-  ArduinoOTA.setHostname(hostname);
-  ArduinoOTA.setPassword(otaPassword);
+  ArduinoOTA.setHostname(HOSTNAME);
+  ArduinoOTA.setPassword(OTA_PASSWORD);
   ArduinoOTA.setPort(ARDUINO_OTA_PORT);
   ArduinoOTA.begin(false);
 }
@@ -112,7 +112,7 @@ void pingAllHosts() {
 
 // Server setup
 void setup() {
-  WiFi.hostname(hostname);
+  WiFi.hostname(FPSTR(HOSTNAME));
 
   // Initialize file system
   if (!LittleFS.begin()) {
@@ -135,7 +135,7 @@ void setup() {
 #if ENABLE_mDNS == 1
   // Set up mDNS responder
   //  the fully-qualified domain name is "wol.local"
-  MDNS.begin(hostname);
+  MDNS.begin(FPSTR(HOSTNAME));
   MDNS.addService("http", "tcp", 80);
 #if ENABLE_STANDARD_OTA == 1
   MDNS.enableArduino(ENABLE_STANDARD_OTA, true);

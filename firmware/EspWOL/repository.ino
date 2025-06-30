@@ -2,7 +2,7 @@
 
 void loadHosts() {
   if (LittleFS.begin()) {
-    File file = LittleFS.open(hostsFile, "r");
+    File file = LittleFS.open(FPSTR(HOSTS_FILE_PATH), "r");
     if (file) {
       JsonDocument doc;
       DeserializationError error = deserializeJson(doc, file);
@@ -25,7 +25,7 @@ void loadHosts() {
 
 void saveHosts() {
   if (LittleFS.begin()) {
-    File file = LittleFS.open(hostsFile, "w");
+    File file = LittleFS.open(FPSTR(HOSTS_FILE_PATH), "w");
     if (file) {
       JsonDocument doc;
       JsonArray array = doc.to<JsonArray>();
@@ -47,7 +47,7 @@ void saveHosts() {
 
 void saveSettings() {
   if (LittleFS.begin()) {
-    File file = LittleFS.open(settingsFile, "w");
+    File file = LittleFS.open(FPSTR(SETTINS_FILE_PATH), "w");
     if (file) {
       JsonDocument doc;
       doc[F("pingPeriod")] = settings.pingPeriod;
@@ -65,8 +65,8 @@ void saveSettings() {
 
 void loadSettings() {
   if (LittleFS.begin()) {
-    if (LittleFS.exists(settingsFile)) {
-      File file = LittleFS.open(settingsFile, "r");
+    if (LittleFS.exists(FPSTR(SETTINS_FILE_PATH))) {
+      File file = LittleFS.open(FPSTR(SETTINS_FILE_PATH), "r");
       if (file) {
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, file);
@@ -97,7 +97,7 @@ void loadSettings() {
 
 void saveUser(User& user) {
   if (LittleFS.begin()) {
-    File file = LittleFS.open(userFile, "w");
+    File file = LittleFS.open(FPSTR(USER_FILE_PATH), "w");
     if (file) {
       JsonDocument doc;
       doc[F("username")] = user.username;
@@ -110,10 +110,10 @@ void saveUser(User& user) {
 }
 
 User loadUser() {
-  User user = { INIT_USER_USERNAME, INIT_USER_PASSWORD };
+  User user = { FPSTR(INIT_USER_USERNAME), FPSTR(INIT_USER_PASSWORD) };
   if (LittleFS.begin()) {
-    if (LittleFS.exists(userFile)) {
-      File file = LittleFS.open(userFile, "r");
+    if (LittleFS.exists(FPSTR(USER_FILE_PATH))) {
+      File file = LittleFS.open(FPSTR(USER_FILE_PATH), "r");
       if (file) {
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, file);
