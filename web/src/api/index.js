@@ -12,14 +12,12 @@ class ApiError extends Error {
 }
 
 class ApiService {
-  constructor(baseUrl = '') {
-    this.baseUrl = baseUrl
+  constructor() {
     this.sessionToken = localStorage.getItem('sessionToken') || null
   }
 
   // Método base para realizar peticiones HTTP
   async request(endpoint, options = {}) {
-    const url = `${this.baseUrl}${endpoint}`
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -28,13 +26,13 @@ class ApiService {
       ...options,
     }
 
-    // Agregar session token si existe (según especificación OpenAPI)
+    // Agregar session token si existe
     if (this.sessionToken) {
       config.headers['X-Session-Token'] = this.sessionToken
     }
 
     try {
-      const response = await fetch(url, config)
+      const response = await fetch(endpoint, config)
 
       // Manejar respuesta 204 (No Content) para DELETE
       if (response.status === 204) {
@@ -63,17 +61,19 @@ class ApiService {
     return this.request(url, { method: 'GET' })
   }
 
-  async post(endpoint, data = {}) {
+  async post(endpoint, data = null) {
     return this.request(endpoint, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: data ? JSON.stringify(data) : null,
     })
   }
 
-  async put(endpoint, data = {}) {
-    return this.request(endpoint, {
+  async put(endpoint, data = null, params = {}) {
+    const queryString = new URLSearchParams(params).toString()
+    const url = queryString ? `${endpoint}?${queryString}` : endpoint
+    return this.request(url, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: data ? JSON.stringify(data) : null,
     })
   }
 
@@ -100,28 +100,14 @@ class AuthService extends ApiService {
   }
 
   async logout() {
-    try {
-      const response = await this.post('/logout')
-
-      this.sessionToken = null
-      localStorage.removeItem('sessionToken')
-      localStorage.removeItem('username')
-
-      return response
-    } catch (error) {
-      // Limpiar datos locales aunque falle la petición
-      this.sessionToken = null
-      localStorage.removeItem('sessionToken')
-      localStorage.removeItem('username')
-      throw error
-    }
+    const response = await this.post('/logout')
+    this.sessionToken = null
+    localStorage.removeItem('sessionToken')
+    localStorage.removeItem('username')
+    return response
   }
 
-  isAuthenticated() {
-    return this.sessionToken !== null
-  }
-
-  getUsername() {
+  getStoredUsername() {
     return localStorage.getItem('username')
   }
 }
@@ -133,7 +119,10 @@ class AuthService extends ApiService {
 class HostService extends ApiService {
   async getAllHosts() {
     const response = await this.get('/hosts')
-    return response.data || []
+    return {
+      hosts: response.data || [],
+      metadata: response.metadata || {},
+    }
   }
 
   async getHost(id) {
@@ -142,13 +131,11 @@ class HostService extends ApiService {
   }
 
   async addHost(hostData) {
-    const response = await this.post('/hosts', hostData)
-    return response
+    return this.post('/hosts', hostData)
   }
 
   async updateHost(id, hostData) {
-    const response = await this.put('/hosts', hostData, { id })
-    return response
+    return this.put('/hosts', hostData, { id })
   }
 
   async deleteHost(id) {
@@ -179,106 +166,73 @@ class NetworkService extends ApiService {
 // =============================================================================
 
 class SettingsService extends ApiService {
-  // Obtener todas las configuraciones
   async getAllSettings() {
     const response = await this.get('/settings')
     return response.data
   }
 
-  // Network Settings
   async getNetworkSettings() {
     const response = await this.get('/settings/network')
     return response.data
   }
 
   async updateNetworkSettings(networkConfig) {
-    const response = await this.put('/settings/network', networkConfig)
-    return response
+    return this.put('/settings/network', networkConfig)
   }
 
-  // Authentication Settings
   async getAuthSettings() {
     const response = await this.get('/settings/auth')
     return response.data
   }
 
   async updateAuthSettings(authConfig) {
-    const response = await this.put('/settings/auth', authConfig)
-    return response
+    return this.put('/settings/auth', authConfig)
   }
 
-  // About - System information
   async getAbout() {
     const response = await this.get('/settings/about')
     return response.data
   }
 
-  // Ping Period Settings
   async getPingPeriod() {
     const response = await this.get('/settings/ping_period')
     return response.data
   }
 
   async updatePingPeriod(pingPeriod) {
-    const response = await this.put('/settings/ping_period', { pingPeriod })
-    return response
+    return this.put('/settings/ping_period', { pingPeriod })
   }
 
-  // WiFi Reset
   async resetWiFi() {
     return this.post('/settings/reset_wifi')
   }
 }
 
 // =============================================================================
-// WEB INTERFACE SERVICE - Servicio para interfaz web
-// =============================================================================
-
-class WebInterfaceService extends ApiService {
-  async getWebInterface() {
-    // Esta llamada devuelve HTML, no JSON
-    const response = await fetch(`${this.baseUrl}/`, {
-      headers: this.sessionToken ? { 'X-Session-Token': this.sessionToken } : {}
-    })
-
-    if (!response.ok) {
-      throw new ApiError('Failed to load web interface', response.status)
-    }
-
-    return response.text()
-  }
-}
-
-// =============================================================================
-// API CLIENT - Cliente principal que agrupa todos los servicios
+// API CLIENT - Cliente principal
 // =============================================================================
 
 class ApiClient {
-  constructor(baseUrl = '') {
-    this.auth = new AuthService(baseUrl)
-    this.hosts = new HostService(baseUrl)
-    this.network = new NetworkService(baseUrl)
-    this.settings = new SettingsService(baseUrl)
-    this.web = new WebInterfaceService(baseUrl)
+  constructor() {
+    this.auth = new AuthService()
+    this.hosts = new HostService()
+    this.network = new NetworkService()
+    this.settings = new SettingsService()
   }
 
-  // Método para sincronizar sessionToken entre servicios
   setSessionToken(token) {
     this.auth.sessionToken = token
     this.hosts.sessionToken = token
     this.network.sessionToken = token
     this.settings.sessionToken = token
-    this.web.sessionToken = token
   }
 
-  // Método para limpiar sesión en todos los servicios
   clearSession() {
     this.setSessionToken(null)
     localStorage.removeItem('sessionToken')
     localStorage.removeItem('username')
   }
 
-  // Método de conveniencia para hacer login y configurar el token
   async login(username, password) {
     const response = await this.auth.login(username, password)
     if (response.success && response.token) {
@@ -287,7 +241,6 @@ class ApiClient {
     return response
   }
 
-  // Método de conveniencia para logout
   async logout() {
     const response = await this.auth.logout()
     this.clearSession()
@@ -296,129 +249,38 @@ class ApiClient {
 }
 
 // =============================================================================
-// UTILITY FUNCTIONS - Funciones de utilidad
+// UTILITY FUNCTIONS
 // =============================================================================
 
-// Validar formato MAC address
 function isValidMACAddress(mac) {
   const macRegex = /^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/
   return macRegex.test(mac)
 }
 
-// Validar formato IPv4
 function isValidIPv4(ip) {
-  const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+  const ipRegex =
+    /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
   return ipRegex.test(ip)
 }
 
-// Validar datos de host según especificación
-function validateHostData(hostData) {
-  const errors = []
-
-  if (!hostData.name || hostData.name.length < 1 || hostData.name.length > 32) {
-    errors.push('Name is required and must be between 1-32 characters')
-  }
-
-  if (!hostData.mac || !isValidMACAddress(hostData.mac)) {
-    errors.push('Valid MAC address is required (format: AA:BB:CC:DD:EE:FF)')
-  }
-
-  if (!hostData.ip || !isValidIPv4(hostData.ip)) {
-    errors.push('Valid IPv4 address is required')
-  }
-
-  if (typeof hostData.autoWake !== 'boolean') {
-    errors.push('autoWake must be a boolean value')
-  }
-
-  return errors
-}
-
-// Validar configuración de red
-function validateNetworkConfig(config) {
-  const errors = []
-
-  if (typeof config.enable !== 'boolean') {
-    errors.push('enable must be a boolean value')
-  }
-
-  if (!isValidIPv4(config.ip)) {
-    errors.push('Valid IP address is required')
-  }
-
-  if (!isValidIPv4(config.networkMask)) {
-    errors.push('Valid network mask is required')
-  }
-
-  if (!isValidIPv4(config.gateway)) {
-    errors.push('Valid gateway address is required')
-  }
-
-  if (!isValidIPv4(config.dns)) {
-    errors.push('Valid DNS server address is required')
-  }
-
-  return errors
-}
-
-// Validar credenciales de usuario
-function validateUserCredentials(credentials) {
-  const errors = []
-
-  if (!credentials.username || credentials.username.length < 3 || credentials.username.length > 20) {
-    errors.push('Username must be between 3-20 characters long')
-  }
-
-  if (!credentials.password || credentials.password.length < 8 || credentials.password.length > 32) {
-    errors.push('Password must be between 8-32 characters long')
-  }
-
-  // Verificar patrón de contraseña (al menos una mayúscula, una minúscula y un carácter especial)
-  const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).*$/
-  if (credentials.password && !passwordPattern.test(credentials.password)) {
-    errors.push('Password must contain at least one uppercase letter, one lowercase letter, and one special character')
-  }
-
-  return errors
-}
-
-// Constantes para períodos de ping válidos (en segundos)
-const VALID_PING_PERIODS = [0, 60, 300, 600, 900, 1800, 2700, 3600, 10800, 21600, 43200, 86400]
-
-function isValidPingPeriod(period) {
-  return VALID_PING_PERIODS.includes(period)
-}
-
-// Error handler helper
 function handleApiError(error) {
   if (error instanceof ApiError) {
     return error.message
   }
-  return 'An unexpected error occurred'
+  return 'Network error'
 }
 
 // =============================================================================
-// EXPORT - Instancia global del cliente API
+// EXPORT - Cliente API configurado
 // =============================================================================
 
-// Crear instancia global
-const apiClient = new ApiClient()
+// Las peticiones siempre van al mismo dominio donde está alojada la aplicación
+export const apiClient = new ApiClient()
 
-// Sincronizar sessionToken al cargar
-if (localStorage.getItem('sessionToken')) {
-  apiClient.setSessionToken(localStorage.getItem('sessionToken'))
+// Auto-configurar el token al cargar
+const storedToken = localStorage.getItem('sessionToken')
+if (storedToken) {
+  apiClient.setSessionToken(storedToken)
 }
 
-// Exportar utilidades
-export {
-  apiClient,
-  ApiError,
-  isValidMACAddress,
-  isValidIPv4,
-  validateHostData,
-  validateNetworkConfig,
-  validateUserCredentials,
-  isValidPingPeriod,
-  handleApiError,
-  VALID_PING_PERIODS
-}
+export { ApiError, handleApiError, isValidMACAddress, isValidIPv4 }

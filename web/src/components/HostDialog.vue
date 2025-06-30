@@ -2,13 +2,12 @@
   <DialogRoot v-model:open="open">
     <DialogPortal>
       <DialogOverlay class="dialog-overlay" />
-      <DialogContent class="dialog-content">
+      <DialogContent class="dialog-content max-w-[500px]">
         <DialogTitle class="dialog-title">
           {{
             isEdit ? $t('components.hostDialog.editTitle') : $t('components.hostDialog.addTitle')
           }}
         </DialogTitle>
-
         <DialogDescription class="dialog-description">
           {{
             isEdit
@@ -17,89 +16,140 @@
           }}
         </DialogDescription>
 
-        <form @submit.prevent="handleSubmit" class="dialog-form">
-          <!-- Hostname -->
-          <div class="dialog-form-field">
-            <label for="host-name" class="dialog-form-label">
-              {{ $t('components.hostDialog.hostName') }}
+        <!-- Advertencia de límite de hosts -->
+        <div
+          v-if="!isEdit && !canAddMore"
+          class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+        >
+          <div class="flex items-center">
+            <i class="material-symbols-outlined text-red-600 dark:text-red-400 mr-2 text-sm"
+              >warning</i
+            >
+            <p class="text-red-800 dark:text-red-200 text-sm">
+              {{ $t('components.hostDialog.hostLimitReached') }}
+            </p>
+          </div>
+        </div>
+
+        <form @submit.prevent="handleSubmit" class="space-y-4">
+          <!-- Name Field -->
+          <div class="space-y-2">
+            <label class="label-input">
+              {{ $t('components.hostDialog.name') }}
+              <span class="text-red-500">*</span>
             </label>
             <input
-              id="host-name"
               v-model="formData.name"
               type="text"
-              class="dialog-form-input"
-              :placeholder="$t('components.hostDialog.hostNamePlaceholder')"
+              :placeholder="$t('components.hostDialog.namePlaceholder')"
+              class="input-field"
+              :class="{ 'border-red-500 dark:border-red-400': errors.name }"
+              maxlength="32"
               required
             />
+            <div class="flex justify-between text-xs">
+              <span v-if="errors.name" class="text-red-600 dark:text-red-400">
+                {{ errors.name }}
+              </span>
+              <span class="text-warm-gray-500 dark:text-stone-400 ml-auto">
+                {{ formData.name.length }}/32
+              </span>
+            </div>
           </div>
 
-          <!-- MAC Address -->
-          <div class="dialog-form-field">
-            <label for="host-mac" class="dialog-form-label">
-              {{ $t('components.hostDialog.macAddress') }}
+          <!-- MAC Address Field -->
+          <div class="space-y-2">
+            <label class="label-input">
+              {{ $t('components.hostDialog.mac') }}
+              <span class="text-red-500">*</span>
             </label>
             <input
-              id="host-mac"
               v-model="formData.mac"
               type="text"
-              class="dialog-form-input"
-              :placeholder="$t('components.hostDialog.macAddressPlaceholder')"
-              pattern="^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$"
+              :placeholder="$t('components.hostDialog.macPlaceholder')"
+              class="input-field font-mono"
+              :class="{ 'border-red-500 dark:border-red-400': errors.mac }"
+              @input="formatMacAddress"
+              maxlength="17"
               required
             />
+            <div class="flex justify-between text-xs">
+              <span v-if="errors.mac" class="text-red-600 dark:text-red-400">
+                {{ errors.mac }}
+              </span>
+              <span v-else class="text-warm-gray-500 dark:text-stone-400">
+                {{ $t('components.hostDialog.macFormat') }}
+              </span>
+            </div>
           </div>
 
-          <!-- IP Address -->
-          <div class="dialog-form-field">
-            <label for="host-ip" class="dialog-form-label">
-              {{ $t('components.hostDialog.ipAddress') }}
+          <!-- IP Address Field -->
+          <div class="space-y-2">
+            <label class="label-input">
+              {{ $t('components.hostDialog.ip') }}
             </label>
             <input
-              id="host-ip"
               v-model="formData.ip"
               type="text"
-              class="dialog-form-input"
-              :placeholder="$t('components.hostDialog.ipAddressPlaceholder')"
-              pattern="^(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])){3}$"
-              required
+              :placeholder="$t('components.hostDialog.ipPlaceholder')"
+              class="input-field font-mono"
+              :class="{ 'border-red-500 dark:border-red-400': errors.ip }"
             />
+            <div class="flex justify-between text-xs">
+              <span v-if="errors.ip" class="text-red-600 dark:text-red-400">
+                {{ errors.ip }}
+              </span>
+              <span v-else class="text-warm-gray-500 dark:text-stone-400">
+                {{ $t('components.hostDialog.ipOptional') }}
+              </span>
+            </div>
           </div>
 
-          <!-- Auto Wake on Ping Failure -->
-          <div class="dialog-form-field">
-            <div class="flex items-center justify-between">
-              <div class="flex-1">
-                <label class="dialog-form-label mb-1">
-                  {{ $t('components.hostDialog.autoWake') }}
-                </label>
-                <p class="text-xs text-warm-gray-500 dark:text-stone-400">
-                  {{ $t('components.hostDialog.autoWakeDescription') }}
-                </p>
-              </div>
-              <SwitchRoot
-                v-model="formData.autoWake"
-                class="w-[42px] h-[24px] shadow-sm flex data-[state=unchecked]:bg-stone-300 data-[state=checked]:bg-green-600 dark:data-[state=unchecked]:bg-zinc-600 dark:data-[state=checked]:bg-green-500 border border-stone-300 data-[state=checked]:border-green-600 dark:border-zinc-600 dark:data-[state=checked]:border-green-500 rounded-full relative transition-[background] focus-within:outline-none focus-within:shadow-[0_0_0_2px] focus-within:shadow-green-200 dark:focus-within:shadow-green-800"
+          <!-- Auto Wake Switch -->
+          <div
+            class="flex items-center justify-between p-3 bg-stone-50 dark:bg-zinc-800 rounded-lg"
+          >
+            <div class="flex-1">
+              <label class="font-medium text-warm-gray-900 dark:text-stone-100">
+                {{ $t('components.hostDialog.autoWake') }}
+              </label>
+              <p class="text-sm text-warm-gray-600 dark:text-stone-400 mt-1">
+                {{ $t('components.hostDialog.autoWakeDescription') }}
+              </p>
+            </div>
+            <SwitchRoot v-model:checked="formData.autoWake" class="switch-root">
+              <SwitchThumb class="switch-thumb" />
+            </SwitchRoot>
+          </div>
+
+          <!-- Error general -->
+          <div
+            v-if="submitError"
+            class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+          >
+            <div class="flex items-center">
+              <i class="material-symbols-outlined text-red-600 dark:text-red-400 mr-2 text-sm"
+                >error</i
               >
-                <SwitchThumb
-                  class="w-5 h-5 my-auto bg-white text-xs flex items-center justify-center shadow-lg rounded-full transition-transform translate-x-0.5 will-change-transform data-[state=checked]:translate-x-[18px]"
-                />
-              </SwitchRoot>
+              <p class="text-red-800 dark:text-red-200 text-sm">{{ submitError }}</p>
             </div>
           </div>
         </form>
 
         <div class="dialog-actions">
-          <DialogClose as-child>
-            <button type="button" class="pill-button-cancel">
-              {{ $t('components.hostDialog.cancel') }}
-            </button>
-          </DialogClose>
           <button
-            type="submit"
-            form="host-form"
-            class="pill-button-apply-solid"
+            type="button"
+            @click="handleCancel"
+            class="pill-button-cancel"
             :disabled="isSubmitting"
+          >
+            {{ $t('components.hostDialog.cancel') }}
+          </button>
+          <button
+            type="button"
             @click="handleSubmit"
+            class="pill-button-apply-solid"
+            :disabled="isSubmitting || !isValid || (!isEdit && !canAddMore)"
           >
             <span v-if="isSubmitting" class="flex items-center">
               <svg
@@ -124,11 +174,9 @@
               </svg>
               {{ isEdit ? $t('components.hostDialog.saving') : $t('components.hostDialog.adding') }}
             </span>
-            <span v-else>
-              <div class="flex items-center">
-                <i class="material-symbols-outlined mr-1 text-sm">{{ isEdit ? 'save' : 'add' }}</i>
-                {{ isEdit ? $t('components.hostDialog.save') : $t('components.hostDialog.add') }}
-              </div>
+            <span v-else class="flex items-center">
+              <i class="material-symbols-outlined mr-1 text-sm">{{ isEdit ? 'save' : 'add' }}</i>
+              {{ isEdit ? $t('components.hostDialog.save') : $t('components.hostDialog.add') }}
             </span>
           </button>
         </div>
@@ -139,6 +187,7 @@
       </DialogContent>
     </DialogPortal>
   </DialogRoot>
+  >
 </template>
 
 <script setup>
@@ -151,12 +200,18 @@ import {
   DialogDescription,
   DialogClose,
   SwitchRoot,
-  SwitchThumb
+  SwitchThumb,
 } from 'reka-ui'
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useHostsStore } from '@/stores/hostsStore'
 
 const { t } = useI18n()
+const hostsStore = useHostsStore()
+
+// =============================================================================
+// PROPS & EMITS
+// =============================================================================
 
 const props = defineProps({
   open: {
@@ -167,220 +222,238 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  canAddMore: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 const emit = defineEmits(['update:open', 'save'])
 
-const open = computed({
-  get: () => props.open,
-  set: (value) => emit('update:open', value),
-})
+// =============================================================================
+// STATE
+// =============================================================================
 
-const isEdit = computed(() => !!props.host)
-const isSubmitting = ref(false)
-
-const formData = ref({
+const formData = reactive({
   name: '',
   mac: '',
   ip: '',
   autoWake: false,
 })
 
+const errors = reactive({
+  name: '',
+  mac: '',
+  ip: '',
+})
+
+const isSubmitting = ref(false)
+const submitError = ref('')
+
+// =============================================================================
+// COMPUTED
+// =============================================================================
+
+const open = computed({
+  get: () => props.open,
+  set: (value) => emit('update:open', value),
+})
+
+const isEdit = computed(() => !!(props.host && props.host.id))
+
+const isValid = computed(() => {
+  return (
+    formData.name.trim().length > 0 &&
+    formData.name.length <= 32 &&
+    isValidMACAddress(formData.mac) &&
+    (formData.ip === '' || isValidIPv4(formData.ip)) &&
+    !errors.name &&
+    !errors.mac &&
+    !errors.ip
+  )
+})
+
+// =============================================================================
+// VALIDATION FUNCTIONS
+// =============================================================================
+
+function isValidMACAddress(mac) {
+  const macRegex = /^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/
+  return macRegex.test(mac)
+}
+
+function isValidIPv4(ip) {
+  const ipRegex =
+    /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+  return ipRegex.test(ip)
+}
+
+function validateForm() {
+  // Reset errors
+  errors.name = ''
+  errors.mac = ''
+  errors.ip = ''
+
+  // Validate name
+  if (!formData.name.trim()) {
+    errors.name = t('components.hostDialog.validation.nameRequired')
+  } else if (formData.name.length > 32) {
+    errors.name = t('components.hostDialog.validation.nameMaxLength')
+  }
+
+  // Validate MAC address
+  if (!formData.mac) {
+    errors.mac = t('components.hostDialog.validation.macRequired')
+  } else if (!isValidMACAddress(formData.mac)) {
+    errors.mac = t('components.hostDialog.validation.macInvalid')
+  }
+
+  // Validate IP address (optional)
+  if (formData.ip && !isValidIPv4(formData.ip)) {
+    errors.ip = t('components.hostDialog.validation.ipInvalid')
+  }
+
+  return !errors.name && !errors.mac && !errors.ip
+}
+
+// =============================================================================
+// METHODS
+// =============================================================================
+
+function formatMacAddress(event) {
+  let value = event.target.value.replace(/[^0-9A-Fa-f]/g, '').toUpperCase()
+
+  // Add colons every 2 characters
+  if (value.length > 0) {
+    value = value.match(/.{1,2}/g).join(':')
+    if (value.length > 17) {
+      value = value.substring(0, 17)
+    }
+  }
+
+  formData.mac = value
+}
+
+function resetForm() {
+  formData.name = ''
+  formData.mac = ''
+  formData.ip = ''
+  formData.autoWake = false
+
+  errors.name = ''
+  errors.mac = ''
+  errors.ip = ''
+
+  submitError.value = ''
+  isSubmitting.value = false
+}
+
+function loadHostData() {
+  if (props.host) {
+    formData.name = props.host.name || ''
+    formData.mac = props.host.mac || ''
+    formData.ip = props.host.ip || ''
+    formData.autoWake = props.host.autoWake || false
+  } else {
+    resetForm()
+  }
+}
+
+function handleCancel() {
+  open.value = false
+}
+
+async function handleSubmit() {
+  if (!validateForm()) {
+    return
+  }
+
+  if (!isEdit.value && !props.canAddMore) {
+    submitError.value = t('components.hostDialog.validation.hostLimitReached')
+    return
+  }
+
+  isSubmitting.value = true
+  submitError.value = ''
+
+  try {
+    const hostData = {
+      name: formData.name.trim(),
+      mac: formData.mac,
+      ip: formData.ip || undefined,
+      autoWake: formData.autoWake,
+    }
+
+    emit('save', hostData)
+
+    // El cierre del diálogo se maneja en el componente padre
+    // después de que la operación sea exitosa
+  } catch (error) {
+    submitError.value = error.message || t('components.hostDialog.validation.generalError')
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+// =============================================================================
+// WATCHERS
+// =============================================================================
+
 watch(
   () => props.open,
   (newValue) => {
     if (newValue) {
-      if (props.host) {
-        // Modo edición - cargar datos del host
-        formData.value = {
-          name: props.host.name || '',
-          mac: props.host.mac || '',
-          ip: props.host.ip || '',
-          autoWake: props.host.autoWake || false,
-        }
+      loadHostData()
+    } else {
+      // Delay reset to avoid visual glitches during closing animation
+      setTimeout(resetForm, 300)
+    }
+  },
+)
+
+watch(() => props.host, loadHostData)
+
+// Real-time validation
+watch(
+  () => formData.name,
+  () => {
+    if (errors.name) {
+      if (!formData.name.trim()) {
+        errors.name = t('components.hostDialog.validation.nameRequired')
+      } else if (formData.name.length > 32) {
+        errors.name = t('components.hostDialog.validation.nameMaxLength')
       } else {
-        // Modo agregar - limpiar formulario
-        formData.value = {
-          name: '',
-          mac: '',
-          ip: '',
-          autoWake: false,
-        }
+        errors.name = ''
       }
     }
   },
 )
 
-async function handleSubmit() {
-  if (isSubmitting.value) return
-
-  isSubmitting.value = true
-
-  try {
-    // Validación básica
-    if (!formData.value.name.trim() || !formData.value.mac.trim() || !formData.value.ip.trim()) {
-      throw new Error('Todos los campos son obligatorios')
+watch(
+  () => formData.mac,
+  () => {
+    if (errors.mac) {
+      if (!formData.mac) {
+        errors.mac = t('components.hostDialog.validation.macRequired')
+      } else if (!isValidMACAddress(formData.mac)) {
+        errors.mac = t('components.hostDialog.validation.macInvalid')
+      } else {
+        errors.mac = ''
+      }
     }
+  },
+)
 
-    // Emitir evento con los datos del formulario
-    emit('save', {
-      ...formData.value,
-      periodicPing: 0, // Remove periodicPing since it's now global
-    })
-
-    // Cerrar el diálogo después de un pequeño delay para mostrar el estado de carga
-    setTimeout(() => {
-      open.value = false
-      isSubmitting.value = false
-    }, 500)
-  } catch (error) {
-    console.error('Error al guardar host:', error)
-    isSubmitting.value = false
-    // Aquí puedes mostrar una notificación de error
-  }
-}
+watch(
+  () => formData.ip,
+  () => {
+    if (errors.ip) {
+      if (formData.ip && !isValidIPv4(formData.ip)) {
+        errors.ip = t('components.hostDialog.validation.ipInvalid')
+      } else {
+        errors.ip = ''
+      }
+    }
+  },
+)
 </script>
-
-<style scoped>
-@reference "@/assets/main.css";
-
-/* Dialog animations */
-@keyframes overlayShow {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes contentShow {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -48%) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
-
-@keyframes contentHide {
-  from {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translate(-50%, -48%) scale(0.96);
-  }
-}
-
-@keyframes overlayHide {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-/* Dialog base styles */
-.dialog-overlay {
-  @apply bg-black/50 dark:bg-black/70 fixed inset-0 z-30 transition-all duration-200;
-  animation: overlayShow 200ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.dialog-overlay[data-state='closed'] {
-  animation: overlayHide 200ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.dialog-content {
-  @apply z-[100] data-[state=open]:animate-none fixed top-[50%] left-[50%] max-h-[85vh] w-[90vw] max-w-[500px] translate-x-[-50%] translate-y-[-50%];
-  @apply rounded-2xl bg-stone-50 dark:bg-zinc-800 p-6 shadow-2xl border border-stone-200 dark:border-zinc-700;
-  @apply focus:outline-none transition-all duration-200;
-  animation: contentShow 200ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.dialog-content[data-state='closed'] {
-  animation: contentHide 150ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.dialog-title {
-  @apply text-warm-gray-800 dark:text-stone-100 m-0 text-xl font-semibold mb-4;
-}
-
-.dialog-description {
-  @apply text-warm-gray-600 dark:text-stone-300 text-sm leading-relaxed mb-6;
-}
-
-.dialog-close {
-  @apply absolute top-4 right-4 inline-flex h-8 w-8 items-center justify-center rounded-lg;
-  @apply text-warm-gray-500 dark:text-stone-400 hover:text-warm-gray-700 dark:hover:text-stone-200;
-  @apply hover:bg-stone-200 dark:hover:bg-zinc-700 transition-all duration-200;
-  @apply focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600;
-}
-
-/* Form elements in dialogs */
-.dialog-form {
-  @apply space-y-4;
-}
-
-.dialog-form-field {
-  @apply space-y-2;
-}
-
-.dialog-form-label {
-  @apply block text-sm font-medium text-warm-gray-700 dark:text-stone-200;
-}
-
-.dialog-form-input {
-  @apply w-full rounded-lg border border-stone-300 dark:border-zinc-600 bg-stone-100 dark:bg-zinc-700 px-4 py-2.5;
-  @apply text-warm-gray-800 dark:text-stone-100 placeholder:text-warm-gray-400 dark:placeholder:text-zinc-400;
-  @apply shadow-sm focus:border-slate-500 dark:focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:focus:ring-slate-800;
-  @apply transition-all duration-200;
-}
-
-.dialog-form-input:invalid {
-  @apply border-red-300 dark:border-red-600 focus:border-red-500 dark:focus:border-red-400 focus:ring-red-200 dark:focus:ring-red-800;
-}
-
-.dialog-form-select {
-  @apply w-full rounded-lg border border-stone-300 dark:border-zinc-600 bg-stone-100 dark:bg-zinc-700 px-4 py-2.5;
-  @apply text-warm-gray-800 dark:text-stone-100 shadow-sm focus:border-slate-500 dark:focus:border-slate-400;
-  @apply focus:outline-none focus:ring-2 focus:ring-slate-200 dark:focus:ring-slate-800 transition-all duration-200;
-  @apply min-h-[42px] flex items-center justify-between cursor-pointer;
-}
-
-.dialog-form-select:hover {
-  @apply bg-stone-200 dark:bg-zinc-600;
-}
-
-.dialog-actions {
-  @apply flex justify-end gap-3 mt-6 pt-4 border-t border-stone-200 dark:border-zinc-700;
-}
-
-/* Select dropdown specific styles */
-.select-content {
-  @apply bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-lg shadow-lg z-[200];
-  @apply min-w-[var(--reka-select-trigger-width)] max-h-[300px] overflow-hidden;
-}
-
-.select-viewport {
-  @apply p-2;
-}
-
-.select-item {
-  @apply px-3 py-2 rounded-md hover:bg-stone-200 dark:hover:bg-zinc-700 cursor-pointer;
-  @apply text-warm-gray-800 dark:text-stone-200 transition-colors duration-150;
-  @apply focus:outline-none focus:bg-stone-200 dark:focus:bg-zinc-700;
-}
-
-.select-item[data-state="checked"] {
-  @apply bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100;
-}
-
-.select-item[data-disabled] {
-  @apply opacity-50 cursor-not-allowed;
-}
-</style>

@@ -1,23 +1,18 @@
 <template>
-  <div class="min-h-screen bg-stone-200 dark:bg-zinc-900 relative px-3 py-4 flex flex-col">
-    <div class="fixed inset-0 opacity-25 pointer-events-none">
-      <svg class="w-full h-full" viewBox="0 0 1400 800" xmlns="http://www.w3.org/2000/svg">
-        <g
-          stroke="currentColor"
-          stroke-width="0.8"
-          fill="none"
-          class="text-warm-gray-400 dark:text-zinc-600"
-        >
-          <path d="M-200,100 Q100,80 400,100 T1000,100 T1600,100">
-            <animateTransform
-              attributeName="transform"
-              type="translateX"
-              values="0; -400; 0"
-              dur="20s"
-              repeatCount="indefinite"
-            />
-          </path>
-          <path d="M-200,150 Q150,170 450,150 T1050,150 T1650,150">
+  <div
+    class="h-screen flex flex-col bg-gradient-to-br from-white to-stone-100 dark:from-zinc-900 dark:to-zinc-950 relative overflow-hidden"
+  >
+    <!-- Animated Background -->
+    <div class="absolute inset-0 opacity-30 dark:opacity-20">
+      <svg class="w-full h-full" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.1" />
+            <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.05" />
+          </linearGradient>
+        </defs>
+        <g fill="url(#waveGradient)" stroke="none">
+          <path d="M-200,300 Q200,250 400,300 T800,300 T1200,300 T1600,300">
             <animateTransform
               attributeName="transform"
               type="translateX"
@@ -26,30 +21,12 @@
               repeatCount="indefinite"
             />
           </path>
-          <path d="M-200,200 Q200,180 500,200 T1100,200 T1700,200">
+          <path d="M-200,400 Q300,380 500,400 T900,400 T1300,400 T1700,400">
             <animateTransform
               attributeName="transform"
               type="translateX"
               values="0; -400; 0"
               dur="30s"
-              repeatCount="indefinite"
-            />
-          </path>
-          <path d="M-200,300 Q250,320 550,300 T1150,300 T1750,300">
-            <animateTransform
-              attributeName="transform"
-              type="translateX"
-              values="0; -400; 0"
-              dur="22s"
-              repeatCount="indefinite"
-            />
-          </path>
-          <path d="M-200,400 Q300,380 600,400 T1200,400 T1800,400">
-            <animateTransform
-              attributeName="transform"
-              type="translateX"
-              values="0; -400; 0"
-              dur="28s"
               repeatCount="indefinite"
             />
           </path>
@@ -75,7 +52,10 @@
       </svg>
     </div>
 
-    <header v-if="$route.path !== '/login'" class="h-min-10 flex justify-between items-center z-10 flex-shrink-0">
+    <header
+      v-if="$route.path !== '/login'"
+      class="h-min-10 flex justify-between items-center z-10 flex-shrink-0"
+    >
       <div class="flex items-center">
         <RouterLink
           to="/"
@@ -106,27 +86,26 @@
       <div class="flex items-center space-x-3">
         <!-- Language Selector -->
         <div class="relative">
-          <SelectRoot v-model="currentLocale" @update:model-value="changeLanguage">
-            <SelectTrigger class="nav-pill flex items-center min-w-[120px]">
-              <div class="flex items-center">
-                <i class="material-symbols-outlined text-lg mr-2">language</i>
-                <SelectValue :placeholder="getLanguageName(currentLocale)" />
-              </div>
-              <i class="material-symbols-outlined text-sm ml-1">expand_more</i>
+          <SelectRoot v-model="currentLocale">
+            <SelectTrigger class="nav-pill cursor-pointer">
+              <SelectValue>
+                <div class="flex items-center">
+                  <i class="material-symbols-outlined text-lg mr-2">language</i>
+                  {{ getLanguageName(currentLocale) }}
+                </div>
+              </SelectValue>
             </SelectTrigger>
             <SelectPortal>
-              <SelectContent class="select-content bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-lg shadow-lg z-[200] min-w-[120px]">
-                <SelectViewport class="p-2">
+              <SelectContent class="select-content">
+                <SelectViewport>
                   <SelectItem
                     v-for="lang in availableLanguages"
                     :key="lang.code"
                     :value="lang.code"
-                    class="select-item px-3 py-2 rounded-md hover:bg-stone-200 dark:hover:bg-zinc-700 cursor-pointer text-warm-gray-800 dark:text-stone-200 transition-colors duration-150 focus:outline-none focus:bg-stone-200 dark:focus:bg-zinc-700"
-                    :class="{ 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100': currentLocale === lang.code }"
+                    class="select-item"
+                    @click="changeLanguage(lang.code)"
                   >
-                    <SelectItemText class="flex items-center">
-                      {{ getLanguageName(lang.code) }}
-                    </SelectItemText>
+                    <SelectItemText>{{ lang.name }}</SelectItemText>
                   </SelectItem>
                 </SelectViewport>
               </SelectContent>
@@ -137,52 +116,71 @@
         <!-- Theme Toggle -->
         <button
           @click="toggleTheme"
-          class="nav-pill flex items-center"
-          :title="$t('theme.toggle')"
+          class="nav-pill cursor-pointer flex items-center"
+          :title="isDark ? $t('theme.switchToLight') : $t('theme.switchToDark')"
         >
-          <i class="material-symbols-outlined text-lg mr-2">
+          <i class="material-symbols-outlined text-lg">
             {{ isDark ? 'light_mode' : 'dark_mode' }}
           </i>
-          <span class="hidden sm:inline">
-            {{ isDark ? $t('theme.light') : $t('theme.dark') }}
-          </span>
         </button>
 
-        <!-- User Avatar Dropdown -->
+        <!-- User Menu -->
         <DropdownMenuRoot v-model:open="dropdownOpen">
-          <DropdownMenuTrigger class="avatar-link">
-            <AvatarRoot class="avatar-root" :class="{ 'avatar-active': $route.path === '/account' || dropdownOpen }">
-              <AvatarFallback class="avatar-fallback">
-                {{ shortUsername }}
+          <DropdownMenuTrigger class="nav-pill cursor-pointer outline-none">
+            <AvatarRoot class="size-8">
+              <AvatarFallback
+                class="size-8 bg-blue-600 text-white text-sm font-medium flex items-center justify-center rounded-full"
+              >
+                {{ authStore.shortUsername }}
               </AvatarFallback>
             </AvatarRoot>
           </DropdownMenuTrigger>
-
           <DropdownMenuPortal>
-            <DropdownMenuContent
-              class="min-w-[180px] outline-none bg-stone-50 dark:bg-zinc-800 rounded-xl p-2 shadow-xl border border-stone-200 dark:border-zinc-700 z-[200]"
-              :side-offset="8"
-              align="end"
-            >
+            <DropdownMenuContent class="dropdown-content" align="end">
+              <div class="px-3 py-2 border-b border-stone-200 dark:border-zinc-700">
+                <p class="text-sm font-medium text-warm-gray-900 dark:text-stone-100">
+                  {{ authStore.username }}
+                </p>
+                <p class="text-xs text-warm-gray-500 dark:text-stone-400">
+                  {{ $t('pages.account.session.loggedIn') }}
+                </p>
+              </div>
+
               <DropdownMenuItem
-                class="group text-sm leading-none text-warm-gray-800 dark:text-stone-200 rounded-lg flex items-center h-10 px-3 relative select-none outline-none data-[disabled]:text-warm-gray-400 data-[disabled]:pointer-events-none data-[highlighted]:bg-stone-200 dark:data-[highlighted]:bg-zinc-700 transition-colors duration-150 cursor-pointer"
+                class="text-warm-gray-700 dark:text-stone-200 rounded-lg flex items-center h-10 px-3 relative select-none outline-none data-[disabled]:text-warm-gray-400 data-[disabled]:pointer-events-none data-[highlighted]:bg-stone-100 dark:data-[highlighted]:bg-zinc-700 transition-colors duration-150 cursor-pointer"
                 @click="handleGoToAccount"
               >
                 <i class="material-symbols-outlined text-lg mr-3">person</i>
-                {{ $t('header.account') }}
+                {{ $t('pages.account.title') }}
               </DropdownMenuItem>
 
-              <DropdownMenuSeparator class="h-px bg-stone-200 dark:bg-zinc-700 my-2" />
+              <DropdownMenuSeparator class="h-px bg-stone-200 dark:bg-zinc-700 my-1" />
 
               <DropdownMenuItem
-                class="group text-sm leading-none text-warm-gray-800 dark:text-stone-200 rounded-lg flex items-center h-10 px-3 relative select-none outline-none data-[disabled]:text-warm-gray-400 data-[disabled]:pointer-events-none data-[highlighted]:bg-red-100 dark:data-[highlighted]:bg-red-900/30 transition-colors duration-150 cursor-pointer"
+                class="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 border-stone-200 rounded-lg flex items-center h-10 px-3 relative select-none outline-none data-[disabled]:text-warm-gray-400 data-[disabled]:pointer-events-none data-[highlighted]:bg-red-100 dark:data-[highlighted]:bg-red-900/30 transition-colors duration-150 cursor-pointer"
                 @click="handleLogout"
-                :disabled="logoutLoading"
+                :disabled="authStore.isLoading"
               >
-                <span v-if="logoutLoading" class="flex items-center">
-                  <svg class="animate-spin mr-3 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <span v-if="authStore.isLoading" class="flex items-center">
+                  <svg
+                    class="animate-spin mr-3 h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    ></circle>
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   {{ $t('pages.account.session.loggingOut') }}
                 </span>
@@ -208,8 +206,8 @@
 <script setup>
 import { RouterView, RouterLink, useRouter } from 'vue-router'
 import {
-  AvatarFallback,
   AvatarRoot,
+  AvatarFallback,
   SelectRoot,
   SelectTrigger,
   SelectValue,
@@ -223,15 +221,17 @@ import {
   DropdownMenuPortal,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator
+  DropdownMenuSeparator,
 } from 'reka-ui'
 import { ref, onMounted } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import { useLanguage } from '@/composables/useLanguage'
+import { useAuthStore } from '@/stores/authStore'
 import EspWol from '@/assets/icons/espwol.svg'
 
-// Router
+// Router & Stores
 const router = useRouter()
+const authStore = useAuthStore()
 
 // Composables
 const { isDark, toggleTheme } = useTheme()
@@ -240,13 +240,11 @@ const {
   availableLanguages,
   changeLanguage,
   getLanguageName,
-  detectBrowserLanguage
+  detectBrowserLanguage,
 } = useLanguage()
 
 // Reactive data
-const shortUsername = ref('ST')
 const dropdownOpen = ref(false)
-const logoutLoading = ref(false)
 
 // Methods
 function handleGoToAccount() {
@@ -255,15 +253,8 @@ function handleGoToAccount() {
 }
 
 async function handleLogout() {
-  logoutLoading.value = true
-
   try {
-    // Clear any stored authentication data
-    localStorage.clear()
-    sessionStorage.clear()
-
-    // Small delay to show loading state
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await authStore.logout()
 
     // Close dropdown
     dropdownOpen.value = false
@@ -271,15 +262,15 @@ async function handleLogout() {
     // Redirect to login page
     router.push('/login')
 
-    // Optionally reload the page to clear any cached data
+    // Small delay then reload to clear any cached data
     setTimeout(() => {
       location.reload()
     }, 100)
-
   } catch (error) {
     console.error('Error during logout:', error)
-  } finally {
-    logoutLoading.value = false
+    // Even if logout fails on server, we still redirect
+    dropdownOpen.value = false
+    router.push('/login')
   }
 }
 

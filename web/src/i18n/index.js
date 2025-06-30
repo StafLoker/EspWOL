@@ -21,7 +21,9 @@ export const i18n = createI18n({
       theme: {
         light: 'Light',
         dark: 'Dark',
-        toggle: 'Toggle theme'
+        toggle: 'Toggle theme',
+        switchToLight: 'Switch to light theme',
+        switchToDark: 'Switch to dark theme'
       },
       pages: {
         login: {
@@ -36,18 +38,31 @@ export const i18n = createI18n({
         },
         home: {
           hosts: 'Hosts',
-          addHost: 'Add',
+          addHost: 'Add Host',
+          addFirstHost: 'Add Your First Host',
+          searchPlaceholder: 'Search hosts...',
+          noHosts: 'No hosts configured',
+          noHostsDescription: 'Get started by adding your first device. You can wake up computers, servers, and other network devices.',
+          noResults: 'No results found',
+          noResultsDescription: 'No hosts found matching "{searchTerm}"',
+          clearSearch: 'Clear search',
+          errorLoading: 'Error loading hosts',
+          retry: 'Retry',
+          hostLimitReached: 'Host limit reached ({max} maximum)',
           deleteHost: {
-            title: 'Are you absolutely sure?',
-            description:
-              'This action cannot be undone. This will permanently delete the host {hostName} ({hostIp}) from your list.',
+            title: 'Delete Host',
+            description: 'Are you sure you want to delete "{hostName}" ({hostIp})? This action cannot be undone.',
             cancel: 'Cancel',
-            confirm: 'Yes, delete host',
+            confirm: 'Delete',
+            deleting: 'Deleting...'
           },
         },
         settings: {
           title: 'Settings',
+          save: 'Save',
           saving: 'Saving...',
+          error: 'Settings error',
+          dismiss: 'Dismiss',
           systemInfo: {
             title: 'System Information',
             version: 'Version',
@@ -57,8 +72,8 @@ export const i18n = createI18n({
           ping: {
             title: 'Ping Settings',
             globalInterval: 'Global Ping Interval',
-            selectInterval: 'Select ping interval...',
-            description: 'Set how often the system pings all devices to check their status.',
+            selectInterval: 'Select interval',
+            description: 'How often to check the status of all hosts',
             save: 'Save Ping Settings',
             options: {
               disabled: 'Disabled',
@@ -76,12 +91,30 @@ export const i18n = createI18n({
             mode: 'Network Mode',
             staticIP: 'Static IP',
             dhcp: 'DHCP',
+            enableStatic: 'Use Static IP',
+            enableStaticDescription: 'Configure a fixed IP address instead of DHCP',
             ipAddress: 'IP Address',
+            ipPlaceholder: '192.168.1.50',
             networkMask: 'Network Mask',
+            maskPlaceholder: '255.255.255.0',
             gateway: 'Gateway',
+            gatewayPlaceholder: '192.168.1.1',
             dns: 'DNS Server',
+            dnsPlaceholder: '8.8.8.8',
+            currentConfig: 'Current Configuration (DHCP)',
+            restartWarning: 'Device will restart after saving network changes',
             resetWiFi: 'Reset WiFi',
             save: 'Save Settings'
+          },
+          wifi: {
+            title: 'Reset WiFi',
+            description: 'Reset WiFi configuration to defaults. Device will enter access point mode for reconfiguration.',
+            reset: 'Reset WiFi',
+            resetting: 'Resetting...',
+            confirmTitle: 'Confirm WiFi Reset',
+            confirmDescription: 'Are you sure you want to reset the WiFi configuration? The device will restart and you will need to reconfigure the connection.',
+            cancel: 'Cancel',
+            confirmReset: 'Reset'
           },
           data: {
             title: 'Data Management',
@@ -117,17 +150,24 @@ export const i18n = createI18n({
           }
         },
         account: {
-          title: 'Account Settings',
+          title: 'Account',
+          error: 'Account error',
+          dismiss: 'Dismiss',
+          userInfo: {
+            title: 'User Information',
+            administrator: 'Administrator',
+            loggedIn: 'Active session'
+          },
           authentication: {
             title: 'Authentication Settings',
             username: 'Username',
-            usernamePlaceholder: 'Enter username',
+            usernamePlaceholder: 'new_user',
             usernameHelper: 'Username must be at least 3 characters long.',
             currentPassword: 'Current Password',
             currentPasswordPlaceholder: 'Enter your current password',
             password: 'Password',
             newPassword: 'New Password',
-            passwordPlaceholder: 'Enter password',
+            passwordPlaceholder: 'Enter a secure password',
             confirmPassword: 'Confirm Password',
             confirmPasswordPlaceholder: 'Confirm your password',
             requirements: {
@@ -137,35 +177,83 @@ export const i18n = createI18n({
               number: 'At least one number',
               special: 'At least one special character'
             },
+            securityNote: 'Security Note',
+            securityDescription: 'Changing these credentials will close all active sessions and require re-login.',
             save: 'Save Changes',
-            saving: 'Saving...'
+            saving: 'Saving...',
+            validation: {
+              usernameRequired: 'Username is required',
+              usernameMaxLength: 'Username cannot exceed 20 characters',
+              passwordRequired: 'Password is required',
+              passwordMaxLength: 'Password cannot exceed 32 characters',
+              passwordMismatch: 'Passwords do not match',
+              currentPasswordRequired: 'Current password is required'
+            }
+          },
+          auth: {
+            title: 'Authentication Settings',
+            username: 'Username',
+            usernamePlaceholder: 'new_user',
+            currentPassword: 'Current Password',
+            currentPasswordPlaceholder: 'Enter your current password',
+            password: 'Password',
+            newPassword: 'New Password',
+            passwordPlaceholder: 'Enter a secure password',
+            confirmPassword: 'Confirm Password',
+            confirmPasswordPlaceholder: 'Confirm your password',
+            securityNote: 'Security Note',
+            securityDescription: 'Changing these credentials will close all active sessions and require re-login.',
+            save: 'Save Changes',
+            saving: 'Saving...',
+            validation: {
+              usernameRequired: 'Username is required',
+              usernameMaxLength: 'Username cannot exceed 20 characters',
+              passwordRequired: 'Password is required',
+              passwordMaxLength: 'Password cannot exceed 32 characters',
+              passwordMismatch: 'Passwords do not match',
+              currentPasswordRequired: 'Current password is required'
+            }
           },
           session: {
             title: 'Session Management',
             description: 'End your current session and return to the login screen.',
+            currentSession: 'Current Session',
+            sessionActive: 'Your session is active on this device',
+            active: 'Active',
+            timeoutInfo: 'Sessions automatically expire after 30 minutes of inactivity.',
             logout: 'Logout',
-            loggingOut: 'Logging out...'
+            loggingOut: 'Logging out...',
+            loggedIn: 'Logged in'
           }
         }
       },
       components: {
         hostDialog: {
-          addTitle: 'Add Host',
+          addTitle: 'Add New Host',
           editTitle: 'Edit Host',
-          addDescription: 'Enter the information for the new host you want to add.',
-          editDescription: 'Modify the information for the selected host.',
+          addDescription: 'Configure a new device for Wake-on-LAN',
+          editDescription: 'Modify host configuration',
+          hostLimitReached: 'Cannot add more hosts. Maximum limit reached.',
           hostName: 'Host Name',
           hostNamePlaceholder: 'e.g. Main Server',
+          name: 'Name',
+          namePlaceholder: 'My Computer',
           macAddress: 'MAC Address',
           macAddressPlaceholder: 'AA:BB:CC:DD:EE:FF',
+          mac: 'MAC Address',
+          macPlaceholder: 'AA:BB:CC:DD:EE:FF',
+          macFormat: 'Format: XX:XX:XX:XX:XX:XX',
           ipAddress: 'IP Address',
           ipAddressPlaceholder: '192.168.1.100',
-          autoWake: 'Enable auto-wake if no ping response',
-          autoWakeDescription: 'Automatically send WOL packet if device doesn\'t respond to ping',
+          ip: 'IP Address',
+          ipPlaceholder: '192.168.1.100',
+          ipOptional: 'Optional - for ping and verification',
+          autoWake: 'Auto-wake',
+          autoWakeDescription: 'Automatically wake if ping fails',
           lastPing: 'Last ping',
           cancel: 'Cancel',
-          save: 'Save Changes',
-          add: 'Add Host',
+          save: 'Save',
+          add: 'Add',
           saving: 'Saving...',
           adding: 'Adding...',
           notAvailable: 'N/A',
@@ -176,7 +264,26 @@ export const i18n = createI18n({
             oneHourAgo: '1 hour ago',
             hoursAgo: '{hours} hours ago',
           },
+          validation: {
+            nameRequired: 'Name is required',
+            nameMaxLength: 'Name cannot exceed 32 characters',
+            macRequired: 'MAC address is required',
+            macInvalid: 'Invalid MAC format (XX:XX:XX:XX:XX:XX)',
+            ipInvalid: 'Invalid IP format',
+            hostLimitReached: 'Maximum host limit reached',
+            generalError: 'Error saving host'
+          }
         },
+        hostCard: {
+          online: 'Online',
+          offline: 'Offline',
+          wake: 'Wake',
+          ping: 'Ping',
+          edit: 'Edit',
+          delete: 'Delete',
+          waking: 'Waking...',
+          pinging: 'Pinging...'
+        }
       },
     },
     es: {
@@ -195,7 +302,9 @@ export const i18n = createI18n({
       theme: {
         light: 'Claro',
         dark: 'Oscuro',
-        toggle: 'Cambiar tema'
+        toggle: 'Cambiar tema',
+        switchToLight: 'Cambiar a tema claro',
+        switchToDark: 'Cambiar a tema oscuro'
       },
       pages: {
         login: {
@@ -210,18 +319,31 @@ export const i18n = createI18n({
         },
         home: {
           hosts: 'Hosts',
-          addHost: 'Agregar',
+          addHost: 'Añadir Host',
+          addFirstHost: 'Añadir tu primer host',
+          searchPlaceholder: 'Buscar hosts...',
+          noHosts: 'No hay hosts configurados',
+          noHostsDescription: 'Comienza añadiendo tu primer dispositivo. Puedes despertar ordenadores, servidores y otros dispositivos de red.',
+          noResults: 'No se encontraron resultados',
+          noResultsDescription: 'No se encontraron hosts que coincidan con "{searchTerm}"',
+          clearSearch: 'Limpiar búsqueda',
+          errorLoading: 'Error cargando hosts',
+          retry: 'Reintentar',
+          hostLimitReached: 'Límite de hosts alcanzado ({max} máximo)',
           deleteHost: {
-            title: '¿Estás absolutamente seguro?',
-            description:
-              'Esta acción no se puede deshacer. Esto eliminará permanentemente el host {hostName} ({hostIp}) de tu lista.',
+            title: 'Eliminar Host',
+            description: '¿Estás seguro de que quieres eliminar "{hostName}" ({hostIp})? Esta acción no se puede deshacer.',
             cancel: 'Cancelar',
-            confirm: 'Sí, eliminar host',
+            confirm: 'Eliminar',
+            deleting: 'Eliminando...'
           },
         },
         settings: {
           title: 'Configuración',
+          save: 'Guardar',
           saving: 'Guardando...',
+          error: 'Error en configuración',
+          dismiss: 'Descartar',
           systemInfo: {
             title: 'Información del Sistema',
             version: 'Versión',
@@ -231,8 +353,8 @@ export const i18n = createI18n({
           ping: {
             title: 'Configuración de Ping',
             globalInterval: 'Intervalo Global de Ping',
-            selectInterval: 'Seleccionar intervalo de ping...',
-            description: 'Establece con qué frecuencia el sistema hace ping a todos los dispositivos para verificar su estado.',
+            selectInterval: 'Seleccionar intervalo',
+            description: 'Frecuencia con la que se verificará el estado de todos los hosts',
             save: 'Guardar Configuración de Ping',
             options: {
               disabled: 'Deshabilitado',
@@ -250,12 +372,30 @@ export const i18n = createI18n({
             mode: 'Modo de Red',
             staticIP: 'IP Estática',
             dhcp: 'DHCP',
+            enableStatic: 'Usar IP Estática',
+            enableStaticDescription: 'Configurar una dirección IP fija en lugar de DHCP',
             ipAddress: 'Dirección IP',
+            ipPlaceholder: '192.168.1.50',
             networkMask: 'Máscara de Red',
-            gateway: 'Puerta de Enlace',
+            maskPlaceholder: '255.255.255.0',
+            gateway: 'Gateway',
+            gatewayPlaceholder: '192.168.1.1',
             dns: 'Servidor DNS',
-            resetWiFi: 'Resetear WiFi',
+            dnsPlaceholder: '8.8.8.8',
+            currentConfig: 'Configuración Actual (DHCP)',
+            restartWarning: 'El dispositivo se reiniciará después de guardar los cambios de red',
+            resetWiFi: 'Restablecer WiFi',
             save: 'Guardar Configuración'
+          },
+          wifi: {
+            title: 'Restablecer WiFi',
+            description: 'Restablece la configuración WiFi a los valores predeterminados. El dispositivo entrará en modo punto de acceso para reconfigurarse.',
+            reset: 'Restablecer WiFi',
+            resetting: 'Restableciendo...',
+            confirmTitle: 'Confirmar Restablecimiento WiFi',
+            confirmDescription: '¿Estás seguro de que quieres restablecer la configuración WiFi? El dispositivo se reiniciará y tendrás que volver a configurar la conexión.',
+            cancel: 'Cancelar',
+            confirmReset: 'Restablecer'
           },
           data: {
             title: 'Gestión de Datos',
@@ -291,17 +431,24 @@ export const i18n = createI18n({
           }
         },
         account: {
-          title: 'Configuración de Cuenta',
+          title: 'Cuenta',
+          error: 'Error en cuenta',
+          dismiss: 'Descartar',
+          userInfo: {
+            title: 'Información del Usuario',
+            administrator: 'Administrador',
+            loggedIn: 'Sesión activa'
+          },
           authentication: {
             title: 'Configuración de Autenticación',
             username: 'Usuario',
-            usernamePlaceholder: 'Ingresa usuario',
+            usernamePlaceholder: 'nuevo_usuario',
             usernameHelper: 'El usuario debe tener al menos 3 caracteres.',
             currentPassword: 'Contraseña Actual',
             currentPasswordPlaceholder: 'Ingresa tu contraseña actual',
             password: 'Contraseña',
             newPassword: 'Nueva Contraseña',
-            passwordPlaceholder: 'Ingresa contraseña',
+            passwordPlaceholder: 'Ingresa una contraseña segura',
             confirmPassword: 'Confirmar Contraseña',
             confirmPasswordPlaceholder: 'Confirma tu contraseña',
             requirements: {
@@ -311,37 +458,85 @@ export const i18n = createI18n({
               number: 'Al menos un número',
               special: 'Al menos un carácter especial'
             },
+            securityNote: 'Nota de Seguridad',
+            securityDescription: 'Cambiar estas credenciales cerrará todas las sesiones activas y será necesario volver a iniciar sesión.',
             save: 'Guardar Cambios',
-            saving: 'Guardando...'
+            saving: 'Guardando...',
+            validation: {
+              usernameRequired: 'El nombre de usuario es obligatorio',
+              usernameMaxLength: 'El nombre de usuario no puede superar los 20 caracteres',
+              passwordRequired: 'La contraseña es obligatoria',
+              passwordMaxLength: 'La contraseña no puede superar los 32 caracteres',
+              passwordMismatch: 'Las contraseñas no coinciden',
+              currentPasswordRequired: 'La contraseña actual es obligatoria'
+            }
+          },
+          auth: {
+            title: 'Configuración de Autenticación',
+            username: 'Usuario',
+            usernamePlaceholder: 'nuevo_usuario',
+            currentPassword: 'Contraseña Actual',
+            currentPasswordPlaceholder: 'Ingresa tu contraseña actual',
+            password: 'Contraseña',
+            newPassword: 'Nueva Contraseña',
+            passwordPlaceholder: 'Ingresa una contraseña segura',
+            confirmPassword: 'Confirmar Contraseña',
+            confirmPasswordPlaceholder: 'Confirma tu contraseña',
+            securityNote: 'Nota de Seguridad',
+            securityDescription: 'Cambiar estas credenciales cerrará todas las sesiones activas y será necesario volver a iniciar sesión.',
+            save: 'Guardar Cambios',
+            saving: 'Guardando...',
+            validation: {
+              usernameRequired: 'El nombre de usuario es obligatorio',
+              usernameMaxLength: 'El nombre de usuario no puede superar los 20 caracteres',
+              passwordRequired: 'La contraseña es obligatoria',
+              passwordMaxLength: 'La contraseña no puede superar los 32 caracteres',
+              passwordMismatch: 'Las contraseñas no coinciden',
+              currentPasswordRequired: 'La contraseña actual es obligatoria'
+            }
           },
           session: {
             title: 'Gestión de Sesión',
             description: 'Finaliza tu sesión actual y regresa a la pantalla de inicio de sesión.',
+            currentSession: 'Sesión Actual',
+            sessionActive: 'Tu sesión está activa en este dispositivo',
+            active: 'Activa',
+            timeoutInfo: 'Las sesiones expiran automáticamente después de 30 minutos de inactividad.',
             logout: 'Cerrar Sesión',
-            loggingOut: 'Cerrando sesión...'
+            loggingOut: 'Cerrando sesión...',
+            loggedIn: 'Sesión iniciada'
           }
         }
       },
       components: {
         hostDialog: {
-          addTitle: 'Agregar Host',
+          addTitle: 'Añadir Nuevo Host',
           editTitle: 'Editar Host',
-          addDescription: 'Ingresa la información del nuevo host que quieres agregar.',
-          editDescription: 'Modifica la información del host seleccionado.',
+          addDescription: 'Configura un nuevo dispositivo para Wake-on-LAN',
+          editDescription: 'Modifica la configuración del host',
+          hostLimitReached: 'No se pueden añadir más hosts. Límite máximo alcanzado.',
           hostName: 'Nombre del Host',
           hostNamePlaceholder: 'ej. Servidor Principal',
+          name: 'Nombre',
+          namePlaceholder: 'Mi Ordenador',
           macAddress: 'Dirección MAC',
           macAddressPlaceholder: 'AA:BB:CC:DD:EE:FF',
+          mac: 'Dirección MAC',
+          macPlaceholder: 'AA:BB:CC:DD:EE:FF',
+          macFormat: 'Formato: XX:XX:XX:XX:XX:XX',
           ipAddress: 'Dirección IP',
           ipAddressPlaceholder: '192.168.1.100',
-          autoWake: 'Habilitar auto-despertar si no hay respuesta de ping',
-          autoWakeDescription: 'Enviar automáticamente paquete WOL si el dispositivo no responde al ping',
+          ip: 'Dirección IP',
+          ipPlaceholder: '192.168.1.100',
+          ipOptional: 'Opcional - para ping y verificación',
+          autoWake: 'Auto-despertar',
+          autoWakeDescription: 'Despertar automáticamente si no responde al ping',
           lastPing: 'Último ping',
           cancel: 'Cancelar',
-          save: 'Guardar Cambios',
-          add: 'Agregar Host',
+          save: 'Guardar',
+          add: 'Añadir',
           saving: 'Guardando...',
-          adding: 'Agregando...',
+          adding: 'Añadiendo...',
           notAvailable: 'N/A',
           timeFormats: {
             lessThanMinute: 'hace menos de un minuto',
@@ -350,7 +545,26 @@ export const i18n = createI18n({
             oneHourAgo: 'hace 1 hora',
             hoursAgo: 'hace {hours} horas',
           },
+          validation: {
+            nameRequired: 'El nombre es obligatorio',
+            nameMaxLength: 'El nombre no puede superar los 32 caracteres',
+            macRequired: 'La dirección MAC es obligatoria',
+            macInvalid: 'Formato de MAC inválido (XX:XX:XX:XX:XX:XX)',
+            ipInvalid: 'Formato de IP inválido',
+            hostLimitReached: 'Límite máximo de hosts alcanzado',
+            generalError: 'Error al guardar el host'
+          }
         },
+        hostCard: {
+          online: 'En línea',
+          offline: 'Desconectado',
+          wake: 'Despertar',
+          ping: 'Ping',
+          edit: 'Editar',
+          delete: 'Eliminar',
+          waking: 'Despertando...',
+          pinging: 'Verificando...'
+        }
       },
     },
     ru: {
@@ -369,7 +583,9 @@ export const i18n = createI18n({
       theme: {
         light: 'Светлая',
         dark: 'Темная',
-        toggle: 'Переключить тему'
+        toggle: 'Переключить тему',
+        switchToLight: 'Переключить на светлую тему',
+        switchToDark: 'Переключить на темную тему'
       },
       pages: {
         login: {
@@ -384,18 +600,31 @@ export const i18n = createI18n({
         },
         home: {
           hosts: 'Хосты',
-          addHost: 'Добавить',
+          addHost: 'Добавить Хост',
+          addFirstHost: 'Добавить ваш первый хост',
+          searchPlaceholder: 'Поиск хостов...',
+          noHosts: 'Хосты не настроены',
+          noHostsDescription: 'Начните с добавления вашего первого устройства. Вы можете будить компьютеры, серверы и другие сетевые устройства.',
+          noResults: 'Результаты не найдены',
+          noResultsDescription: 'Хосты, соответствующие "{searchTerm}", не найдены',
+          clearSearch: 'Очистить поиск',
+          errorLoading: 'Ошибка загрузки хостов',
+          retry: 'Повторить',
+          hostLimitReached: 'Достигнут лимит хостов ({max} максимум)',
           deleteHost: {
-            title: 'Вы абсолютно уверены?',
-            description:
-              'Это действие нельзя отменить. Это навсегда удалит хост {hostName} ({hostIp}) из вашего списка.',
+            title: 'Удалить Хост',
+            description: 'Вы уверены, что хотите удалить "{hostName}" ({hostIp})? Это действие нельзя отменить.',
             cancel: 'Отмена',
-            confirm: 'Да, удалить хост',
+            confirm: 'Удалить',
+            deleting: 'Удаление...'
           },
         },
         settings: {
           title: 'Настройки',
+          save: 'Сохранить',
           saving: 'Сохранение...',
+          error: 'Ошибка настроек',
+          dismiss: 'Закрыть',
           systemInfo: {
             title: 'Информация о Системе',
             version: 'Версия',
@@ -405,8 +634,8 @@ export const i18n = createI18n({
           ping: {
             title: 'Настройки Пинга',
             globalInterval: 'Глобальный Интервал Пинга',
-            selectInterval: 'Выберите интервал пинга...',
-            description: 'Установите, как часто система пингует все устройства для проверки их состояния.',
+            selectInterval: 'Выбрать интервал',
+            description: 'Как часто проверять статус всех хостов',
             save: 'Сохранить Настройки Пинга',
             options: {
               disabled: 'Отключено',
@@ -424,12 +653,30 @@ export const i18n = createI18n({
             mode: 'Режим Сети',
             staticIP: 'Статический IP',
             dhcp: 'DHCP',
+            enableStatic: 'Использовать статический IP',
+            enableStaticDescription: 'Настроить фиксированный IP-адрес вместо DHCP',
             ipAddress: 'IP-адрес',
+            ipPlaceholder: '192.168.1.50',
             networkMask: 'Маска Сети',
+            maskPlaceholder: '255.255.255.0',
             gateway: 'Шлюз',
+            gatewayPlaceholder: '192.168.1.1',
             dns: 'DNS Сервер',
+            dnsPlaceholder: '8.8.8.8',
+            currentConfig: 'Текущая Конфигурация (DHCP)',
+            restartWarning: 'Устройство перезагрузится после сохранения сетевых изменений',
             resetWiFi: 'Сбросить WiFi',
             save: 'Сохранить Настройки'
+          },
+          wifi: {
+            title: 'Сброс WiFi',
+            description: 'Сбросить конфигурацию WiFi к настройкам по умолчанию. Устройство войдет в режим точки доступа для перенастройки.',
+            reset: 'Сбросить WiFi',
+            resetting: 'Сброс...',
+            confirmTitle: 'Подтвердить Сброс WiFi',
+            confirmDescription: 'Вы уверены, что хотите сбросить конфигурацию WiFi? Устройство перезагрузится и вам нужно будет перенастроить соединение.',
+            cancel: 'Отмена',
+            confirmReset: 'Сбросить'
           },
           data: {
             title: 'Управление Данными',
@@ -465,17 +712,24 @@ export const i18n = createI18n({
           }
         },
         account: {
-          title: 'Настройки Аккаунта',
+          title: 'Аккаунт',
+          error: 'Ошибка аккаунта',
+          dismiss: 'Закрыть',
+          userInfo: {
+            title: 'Информация Пользователя',
+            administrator: 'Администратор',
+            loggedIn: 'Активная сессия'
+          },
           authentication: {
             title: 'Настройки Аутентификации',
             username: 'Имя пользователя',
-            usernamePlaceholder: 'Введите имя пользователя',
+            usernamePlaceholder: 'новый_пользователь',
             usernameHelper: 'Имя пользователя должно быть не менее 3 символов.',
             currentPassword: 'Текущий Пароль',
             currentPasswordPlaceholder: 'Введите ваш текущий пароль',
             password: 'Пароль',
             newPassword: 'Новый Пароль',
-            passwordPlaceholder: 'Введите пароль',
+            passwordPlaceholder: 'Введите безопасный пароль',
             confirmPassword: 'Подтвердить Пароль',
             confirmPasswordPlaceholder: 'Подтвердите ваш пароль',
             requirements: {
@@ -485,35 +739,83 @@ export const i18n = createI18n({
               number: 'Не менее одной цифры',
               special: 'Не менее одного специального символа'
             },
+            securityNote: 'Примечание по Безопасности',
+            securityDescription: 'Изменение этих учетных данных закроет все активные сессии и потребует повторного входа.',
             save: 'Сохранить Изменения',
-            saving: 'Сохранение...'
+            saving: 'Сохранение...',
+            validation: {
+              usernameRequired: 'Имя пользователя обязательно',
+              usernameMaxLength: 'Имя пользователя не может превышать 20 символов',
+              passwordRequired: 'Пароль обязателен',
+              passwordMaxLength: 'Пароль не может превышать 32 символа',
+              passwordMismatch: 'Пароли не совпадают',
+              currentPasswordRequired: 'Текущий пароль обязателен'
+            }
+          },
+          auth: {
+            title: 'Настройки Аутентификации',
+            username: 'Имя пользователя',
+            usernamePlaceholder: 'новый_пользователь',
+            currentPassword: 'Текущий Пароль',
+            currentPasswordPlaceholder: 'Введите ваш текущий пароль',
+            password: 'Пароль',
+            newPassword: 'Новый Пароль',
+            passwordPlaceholder: 'Введите безопасный пароль',
+            confirmPassword: 'Подтвердить Пароль',
+            confirmPasswordPlaceholder: 'Подтвердите ваш пароль',
+            securityNote: 'Примечание по Безопасности',
+            securityDescription: 'Изменение этих учетных данных закроет все активные сессии и потребует повторного входа.',
+            save: 'Сохранить Изменения',
+            saving: 'Сохранение...',
+            validation: {
+              usernameRequired: 'Имя пользователя обязательно',
+              usernameMaxLength: 'Имя пользователя не может превышать 20 символов',
+              passwordRequired: 'Пароль обязателен',
+              passwordMaxLength: 'Пароль не может превышать 32 символа',
+              passwordMismatch: 'Пароли не совпадают',
+              currentPasswordRequired: 'Текущий пароль обязателен'
+            }
           },
           session: {
             title: 'Управление Сессией',
             description: 'Завершите текущую сессию и вернитесь к экрану входа.',
+            currentSession: 'Текущая Сессия',
+            sessionActive: 'Ваша сессия активна на этом устройстве',
+            active: 'Активна',
+            timeoutInfo: 'Сессии автоматически истекают через 30 минут неактивности.',
             logout: 'Выйти',
-            loggingOut: 'Выход...'
+            loggingOut: 'Выход...',
+            loggedIn: 'Вошел в систему'
           }
         }
       },
       components: {
         hostDialog: {
-          addTitle: 'Добавить Хост',
+          addTitle: 'Добавить Новый Хост',
           editTitle: 'Редактировать Хост',
-          addDescription: 'Введите информацию о новом хосте, который вы хотите добавить.',
-          editDescription: 'Измените информацию о выбранном хосте.',
+          addDescription: 'Настроить новое устройство для Wake-on-LAN',
+          editDescription: 'Изменить конфигурацию хоста',
+          hostLimitReached: 'Невозможно добавить больше хостов. Достигнут максимальный лимит.',
           hostName: 'Имя Хоста',
           hostNamePlaceholder: 'например, Основной Сервер',
+          name: 'Имя',
+          namePlaceholder: 'Мой Компьютер',
           macAddress: 'MAC-адрес',
           macAddressPlaceholder: 'AA:BB:CC:DD:EE:FF',
+          mac: 'MAC-адрес',
+          macPlaceholder: 'AA:BB:CC:DD:EE:FF',
+          macFormat: 'Формат: XX:XX:XX:XX:XX:XX',
           ipAddress: 'IP-адрес',
           ipAddressPlaceholder: '192.168.1.100',
-          autoWake: 'Включить авто-пробуждение при отсутствии пинга',
-          autoWakeDescription: 'Автоматически отправлять WOL пакет, если устройство не отвечает на пинг',
+          ip: 'IP-адрес',
+          ipPlaceholder: '192.168.1.100',
+          ipOptional: 'Необязательно - для пинга и проверки',
+          autoWake: 'Авто-пробуждение',
+          autoWakeDescription: 'Автоматически будить, если пинг не проходит',
           lastPing: 'Последний пинг',
           cancel: 'Отмена',
-          save: 'Сохранить Изменения',
-          add: 'Добавить Хост',
+          save: 'Сохранить',
+          add: 'Добавить',
           saving: 'Сохранение...',
           adding: 'Добавление...',
           notAvailable: 'Н/Д',
@@ -524,7 +826,26 @@ export const i18n = createI18n({
             oneHourAgo: '1 час назад',
             hoursAgo: '{hours} часов назад',
           },
+          validation: {
+            nameRequired: 'Имя обязательно',
+            nameMaxLength: 'Имя не может превышать 32 символа',
+            macRequired: 'MAC-адрес обязателен',
+            macInvalid: 'Неверный формат MAC (XX:XX:XX:XX:XX:XX)',
+            ipInvalid: 'Неверный формат IP',
+            hostLimitReached: 'Достигнут максимальный лимит хостов',
+            generalError: 'Ошибка сохранения хоста'
+          }
         },
+        hostCard: {
+          online: 'В сети',
+          offline: 'Не в сети',
+          wake: 'Разбудить',
+          ping: 'Пинг',
+          edit: 'Редактировать',
+          delete: 'Удалить',
+          waking: 'Пробуждение...',
+          pinging: 'Пинг...'
+        }
       },
     },
   },

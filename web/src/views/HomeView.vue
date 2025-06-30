@@ -1,16 +1,80 @@
 <template>
   <div class="h-full">
-    <div class="flex justify-between items-center">
-      <p class="text-2xl font-medium text">{{ $t('pages.home.hosts') }}</p>
-      <button class="button-apply flex items-center" @click="handleAddHost()">
-        <i class="material-symbols-outlined mr-1">add</i>
-        {{ $t('pages.home.addHost') }}
-      </button>
+    <!-- Header con información de hosts y búsqueda -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+        <p class="text-2xl font-medium text">
+          {{ $t('pages.home.hosts') }}
+          <span class="text-lg text-warm-gray-600 dark:text-stone-400 ml-2">
+            ({{ hostsStore.hostsCount }} {{ hostsStore.hostsCount === 1 ? 'host' : 'hosts' }})
+          </span>
+        </p>
+
+        <!-- Indicador de límites -->
+        <div class="flex items-center gap-2 text-sm">
+          <div class="px-2 py-1 rounded-lg bg-stone-100 dark:bg-zinc-800">
+            <span class="text-warm-gray-600 dark:text-stone-400">
+              {{ hostsStore.hostLimits.remaining }} slots restantes
+            </span>
+          </div>
+          <div
+            class="px-2 py-1 rounded-lg"
+            :class="
+              hostsStore.onlineHosts.length > 0
+                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+            "
+          >
+            {{ hostsStore.onlineHosts.length }} online
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+        <!-- Barra de búsqueda -->
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="material-symbols-outlined text-warm-gray-400 dark:text-stone-500 text-lg"
+              >search</i
+            >
+          </div>
+          <input
+            v-model="searchTerm"
+            type="text"
+            :placeholder="$t('pages.home.searchPlaceholder')"
+            class="pl-10 pr-4 py-2 border border-stone-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-warm-gray-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64"
+          />
+          <button
+            v-if="searchTerm"
+            @click="searchTerm = ''"
+            class="absolute inset-y-0 right-0 pr-3 flex items-center"
+          >
+            <i class="material-symbols-outlined text-warm-gray-400 hover:text-warm-gray-600 text-lg"
+              >close</i
+            >
+          </button>
+        </div>
+
+        <!-- Botón añadir host -->
+        <button
+          class="button-apply flex items-center justify-center whitespace-nowrap"
+          @click="handleAddHost"
+          :disabled="!hostsStore.hostLimits.canAddMore"
+          :class="{ 'opacity-50 cursor-not-allowed': !hostsStore.hostLimits.canAddMore }"
+        >
+          <i class="material-symbols-outlined mr-1">add</i>
+          {{ $t('pages.home.addHost') }}
+        </button>
+      </div>
     </div>
-    <Separator class="separator-bold" />
+
+    <Separator class="separator-bold mb-6" />
 
     <!-- Loading State -->
-    <div v-if="loading" class="mt-7 grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+    <div
+      v-if="hostsStore.isLoading"
+      class="grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4"
+    >
       <div v-for="n in 6" :key="n" class="host-card animate-pulse">
         <div class="h-6 bg-stone-300 dark:bg-zinc-600 rounded mb-4"></div>
         <div class="flex items-center mb-4 bg-zinc-200 dark:bg-zinc-700 rounded-2xl px-2 py-3">
@@ -29,20 +93,40 @@
 
     <!-- Hosts Grid -->
     <div
-      v-else-if="hosts.length > 0"
-      class="mt-7 grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4"
+      v-else-if="filteredHosts.length > 0"
+      class="grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4"
     >
       <HostCard
-        v-for="(host, index) in hosts"
-        :key="`${host.name}-${index}`"
-        :name="host.name"
-        :ip="host.ip"
-        :mac="host.mac"
-        :is-wake="host.isOnline || false"
-        @toggle-power="handleTogglePower(index)"
-        @edit="handleEditHost(index)"
-        @delete="handleDeleteHost(index)"
+        v-for="host in filteredHosts"
+        :key="host.id"
+        :host="host"
+        :is-waking="hostsStore.isHostOperationInProgress(host.id, 'waking')"
+        :is-pinging="hostsStore.isHostOperationInProgress(host.id, 'pinging')"
+        @toggle-power="handleTogglePower"
+        @edit="handleEditHost"
+        @delete="handleDeleteHost"
+        @ping="handlePingHost"
       />
+    </div>
+
+    <!-- No results state (when searching) -->
+    <div v-else-if="searchTerm && filteredHosts.length === 0" class="mt-16 text-center">
+      <div
+        class="mx-auto w-24 h-24 bg-stone-200 dark:bg-zinc-700 rounded-full flex items-center justify-center mb-6"
+      >
+        <i class="material-symbols-outlined text-4xl text-stone-400 dark:text-zinc-500"
+          >search_off</i
+        >
+      </div>
+      <h3 class="text-lg font-semibold text-warm-gray-800 dark:text-stone-100 mb-2">
+        {{ $t('pages.home.noResults') }}
+      </h3>
+      <p class="text-warm-gray-600 dark:text-stone-400 mb-6 max-w-md mx-auto">
+        {{ $t('pages.home.noResultsDescription', { searchTerm }) }}
+      </p>
+      <button @click="searchTerm = ''" class="pill-button-apply">
+        {{ $t('pages.home.clearSearch') }}
+      </button>
     </div>
 
     <!-- Empty State -->
@@ -53,40 +137,50 @@
         <i class="material-symbols-outlined text-4xl text-stone-400 dark:text-zinc-500">devices</i>
       </div>
       <h3 class="text-lg font-semibold text-warm-gray-800 dark:text-stone-100 mb-2">
-        No hosts configured
+        {{ $t('pages.home.noHosts') }}
       </h3>
       <p class="text-warm-gray-600 dark:text-stone-400 mb-6 max-w-md mx-auto">
-        Get started by adding your first device. You can wake up computers, servers, and other
-        network devices.
+        {{ $t('pages.home.noHostsDescription') }}
       </p>
-      <button class="button-apply flex items-center mx-auto" @click="handleAddHost()">
+      <button
+        class="button-apply flex items-center mx-auto"
+        @click="handleAddHost"
+        :disabled="!hostsStore.hostLimits.canAddMore"
+        :class="{ 'opacity-50 cursor-not-allowed': !hostsStore.hostLimits.canAddMore }"
+      >
         <i class="material-symbols-outlined mr-2">add</i>
-        Add Your First Host
+        {{ $t('pages.home.addFirstHost') }}
       </button>
+
+      <!-- Mensaje de límite alcanzado -->
+      <div
+        v-if="!hostsStore.hostLimits.canAddMore"
+        class="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg max-w-md mx-auto"
+      >
+        <p class="text-amber-800 dark:text-amber-200 text-sm">
+          <i class="material-symbols-outlined text-sm mr-1">warning</i>
+          {{ $t('pages.home.hostLimitReached', { max: hostsStore.hostLimits.max }) }}
+        </p>
+      </div>
     </div>
 
     <!-- Error State -->
     <div
-      v-if="error"
+      v-if="hostsStore.error"
       class="mt-8 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
     >
       <div class="flex items-center">
         <i class="material-symbols-outlined text-red-600 dark:text-red-400 mr-3">error</i>
-        <div>
-          <h4 class="text-red-800 dark:text-red-200 font-medium">Error loading hosts</h4>
-          <p class="text-red-600 dark:text-red-400 text-sm mt-1">{{ error }}</p>
+        <div class="flex-1">
+          <h4 class="text-red-800 dark:text-red-200 font-medium">
+            {{ $t('pages.home.errorLoading') }}
+          </h4>
+          <p class="text-red-600 dark:text-red-400 text-sm mt-1">{{ hostsStore.error }}</p>
         </div>
-        <button @click="loadHosts" class="ml-auto pill-button-apply text-xs">
+        <button @click="hostsStore.fetchHosts()" class="ml-auto pill-button-apply text-xs">
           <i class="material-symbols-outlined text-sm mr-1">refresh</i>
-          Retry
+          {{ $t('pages.home.retry') }}
         </button>
-      </div>
-    </div>
-
-    <!-- Service Status (Development only) -->
-    <div v-if="environment.isDevelopment" class="fixed bottom-4 right-4 z-50">
-      <div class="bg-stone-800 dark:bg-zinc-900 text-white text-xs px-3 py-2 rounded-lg shadow-lg">
-        {{ environment.useMockData ? '🔧 Mock Data' : '📡 Real API' }}
       </div>
     </div>
 
@@ -113,9 +207,9 @@
             <AlertDialogAction
               class="pill-button-deny-solid"
               @click="confirmDeleteHost"
-              :disabled="deleteLoading"
+              :disabled="hostsStore.operations.deleting"
             >
-              <span v-if="deleteLoading" class="flex items-center">
+              <span v-if="hostsStore.operations.deleting" class="flex items-center">
                 <svg
                   class="animate-spin -ml-1 mr-2 h-4 w-4"
                   xmlns="http://www.w3.org/2000/svg"
@@ -136,7 +230,7 @@
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                Deleting...
+                {{ $t('pages.home.deleteHost.deleting') }}
               </span>
               <span v-else>
                 {{ $t('pages.home.deleteHost.confirm') }}
@@ -148,7 +242,12 @@
     </AlertDialogRoot>
 
     <!-- Host Dialog -->
-    <HostDialog v-model:open="hostDialogOpen" :host="hostToEdit" @save="handleSaveHost" />
+    <HostDialog
+      v-model:open="hostDialogOpen"
+      :host="hostToEdit"
+      :can-add-more="hostsStore.hostLimits.canAddMore"
+      @save="handleSaveHost"
+    />
   </div>
 </template>
 
@@ -164,165 +263,122 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogCancel,
-  AlertDialogAction
+  AlertDialogAction,
 } from 'reka-ui'
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useHostsStore } from '@/stores/hostsStore'
 
-// State
-const hosts = ref([])
-const loading = ref(true)
-const error = ref(null)
+const { t } = useI18n()
+const hostsStore = useHostsStore()
 
+// =============================================================================
+// STATE
+// =============================================================================
+
+const searchTerm = ref('')
 const hostDialogOpen = ref(false)
 const deleteDialogOpen = ref(false)
-const deleteLoading = ref(false)
-const hostToDeleteIndex = ref(null)
 const hostToDelete = ref(null)
 const hostToEdit = ref(null)
 
-// Methods
-async function loadHosts() {
-  try {
-    loading.value = true
-    error.value = null
+// Auto-refresh interval
+let refreshInterval = null
 
-    const data = await hostsService.getAll()
-    hosts.value = data || []
+// =============================================================================
+// COMPUTED
+// =============================================================================
 
-    console.log('Hosts loaded:', data?.length || 0)
-  } catch (err) {
-    console.error('Error loading hosts:', err)
-    error.value = handleApiError(err)
-  } finally {
-    loading.value = false
-  }
-}
+const filteredHosts = computed(() => {
+  return hostsStore.searchHosts(searchTerm.value)
+})
+
+// =============================================================================
+// METHODS
+// =============================================================================
 
 function handleAddHost() {
+  if (!hostsStore.hostLimits.canAddMore) {
+    return
+  }
+
   hostToEdit.value = null
   hostDialogOpen.value = true
 }
 
-async function handleTogglePower(index) {
-  const host = hostsService.value[index]
-  if (!host) return
-
-  try {
-    if (host.isOnline) {
-      // For now, we'll just simulate turning off
-      // In a real implementation, you might have a shutdown endpoint
-      hostsService.value[index].isOnline = false
-      console.log(`Simulated power off for ${host.name}`)
-    } else {
-      // Send WOL packet
-      await networkOpsService.wake(index)
-      console.log(`WOL packet sent to ${host.name}`)
-
-      // Optimistically update UI
-      host.value[index].isOnline = true
-
-      // Optionally verify with ping after a delay
-      setTimeout(async () => {
-        try {
-          await networkOpsService.ping(index)
-        } catch (err) {
-          console.warn('Ping verification failed:', err)
-        }
-      }, 3000)
-    }
-  } catch (err) {
-    console.error('Error toggling power:', err)
-    // Show error notification
-    const errorMessage = handleApiError(err)
-    // You can add a toast notification here
-    console.error('Power toggle failed:', errorMessage)
-  }
-}
-
-function handleEditHost(index) {
-  const host = hosts.value[index]
-  if (!host) return
-
-  hostToEdit.value = { ...host, index }
+function handleEditHost(host) {
+  hostToEdit.value = { ...host }
   hostDialogOpen.value = true
 }
 
-function handleDeleteHost(index) {
-  const host = hosts.value[index]
-  if (!host) return
-
-  hostToDeleteIndex.value = index
+function handleDeleteHost(host) {
   hostToDelete.value = host
   deleteDialogOpen.value = true
 }
 
 async function confirmDeleteHost() {
-  if (hostToDeleteIndex.value === null) return
+  if (!hostToDelete.value) return
 
   try {
-    deleteLoading.value = true
-
-    await hostsService.delete(hostToDeleteIndex.value)
-
-    // Remove from local state
-    hosts.value.splice(hostToDeleteIndex.value, 1)
-
-    console.log('Host deleted successfully')
-  } catch (err) {
-    console.error('Error deleting host:', err)
-    const errorMessage = handleApiError(err)
-    error.value = errorMessage
+    await hostsStore.deleteHost(hostToDelete.value.id)
+  } catch (error) {
+    console.error('Error deleting host:', error)
   } finally {
-    deleteLoading.value = false
     deleteDialogOpen.value = false
-    hostToDeleteIndex.value = null
     hostToDelete.value = null
   }
 }
 
 async function handleSaveHost(hostData) {
   try {
-    if (hostToEdit.value && hostToEdit.value.index !== undefined) {
+    if (hostToEdit.value && hostToEdit.value.id) {
       // Edit mode
-      const index = hostToEdit.value.index
-      await hostsService.update(index, hostData)
-
-      // Update local state
-      hosts.value[index] = {
-        ...hosts.value[index],
-        ...hostData
-      }
-
-      console.log('Host updated successfully')
+      await hostsStore.updateHost(hostToEdit.value.id, hostData)
     } else {
       // Add mode
-      await hostsService.create(hostData)
-
-      // Reload hosts to get the updated list
-      await loadHosts()
-
-      console.log('Host added successfully')
+      await hostsStore.addHost(hostData)
     }
 
+    hostDialogOpen.value = false
     hostToEdit.value = null
-  } catch (err) {
-    console.error('Error saving host:', err)
-    const errorMessage = handleApiError(err)
-    error.value = errorMessage
+  } catch (error) {
+    console.error('Error saving host:', error)
+    // El error se mostrará en el diálogo
   }
 }
 
-// Auto-refresh functionality
-let refreshInterval = null
+async function handleTogglePower(host) {
+  try {
+    if (host.status) {
+      // TODO: Implementar shutdown si la API lo soporta
+      console.log(`Shutdown not implemented for ${host.name}`)
+    } else {
+      await hostsStore.wakeHost(host.id)
+    }
+  } catch (error) {
+    console.error('Error toggling power:', error)
+  }
+}
+
+async function handlePingHost(host) {
+  try {
+    await hostsStore.pingHost(host.id)
+  } catch (error) {
+    console.error('Error pinging host:', error)
+  }
+}
+
+// =============================================================================
+// AUTO-REFRESH
+// =============================================================================
 
 function startAutoRefresh() {
-  const interval = 60000
+  const interval = 60000 // 60 segundos
 
   refreshInterval = setInterval(async () => {
-    if (!loading.value && !error.value) {
+    if (!hostsStore.isLoading && !hostsStore.error) {
       try {
-        const data = await hostsService.getAll()
-        hosts.value = data || []
+        await hostsStore.refreshHosts()
       } catch (err) {
         console.warn('Auto-refresh failed:', err)
       }
@@ -337,10 +393,17 @@ function stopAutoRefresh() {
   }
 }
 
-// Lifecycle
+// =============================================================================
+// LIFECYCLE
+// =============================================================================
+
 onMounted(async () => {
-  await loadHosts()
-  startAutoRefresh()
+  try {
+    await hostsStore.fetchHosts()
+    startAutoRefresh()
+  } catch (error) {
+    console.error('Error loading hosts:', error)
+  }
 })
 
 onUnmounted(() => {

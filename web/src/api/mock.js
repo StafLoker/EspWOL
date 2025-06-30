@@ -2,62 +2,45 @@
 // MIRAGE MOCK SERVER - Configuración para simular el backend ESP8266 v3.0.0
 // =============================================================================
 
-// Importar MirageJS
-import { createServer, Model, Factory } from 'miragejs'
+import { createServer, Model, Factory, Response } from 'miragejs'
+
+// =============================================================================
+// CONSTANTES DEL ESP8266
+// =============================================================================
+
+const MAX_HOST_NAME_LENGTH = 32
+const MAX_USERNAME_LENGTH = 20
+const MAX_PASSWORD_LENGTH = 32
+const HARD_MAX_HOSTS = 50
+
+const VALID_PING_PERIODS = [0, 60, 300, 600, 900, 1800, 2700, 3600, 10800, 21600, 43200, 86400]
 
 // =============================================================================
 // DATOS MOCK INICIALES
 // =============================================================================
 
-const MOCK_HOSTS = [
-  {
-    id: 1,
-    name: 'PC Gaming',
-    mac: 'AA:BB:CC:DD:EE:FF',
-    ip: '192.168.1.100',
-    autoWake: true,
-    status: true,
+let currentHostId = 4
+const sessionToken = 'abc123def456ghij789klmno012pqrs'
+
+const mockMemoryInfo = {
+  memory: {
+    freeHeap: 45632,
+    totalHeap: 81920,
+    heapUsagePercent: 44,
   },
-  {
-    id: 2,
-    name: 'Servidor NAS',
-    mac: '11:22:33:44:55:66',
-    ip: '192.168.1.101',
-    autoWake: false,
-    status: false,
+  storage: {
+    freeFlash: 2048000,
+    totalFlash: 3145728,
+    flashUsagePercent: 35,
   },
-  {
-    id: 3,
-    name: 'Laptop Trabajo',
-    mac: '77:88:99:AA:BB:CC',
-    ip: '192.168.1.102',
-    autoWake: true,
-    status: true,
+  hosts: {
+    count: 3,
+    maxAllowed: HARD_MAX_HOSTS,
+    remaining: 42,
   },
-]
-
-const MOCK_NETWORK_CONFIG = {
-  enable: false,
-  ip: '192.168.1.50',
-  networkMask: '255.255.255.0',
-  gateway: '192.168.1.1',
-  dns: '8.8.8.8',
+  hasEnoughMemory: true,
+  canAddMoreHosts: true,
 }
-
-const MOCK_USER = {
-  username: 'glavniy',
-  password: 'Lep#Chick43' // Ejemplo de la especificación
-}
-
-const MOCK_ABOUT = {
-  version: '3.0.0',
-  hostname: 'wol',
-}
-
-const MOCK_PING_PERIOD = 60000 // 60 segundos en milisegundos
-
-// Períodos válidos según especificación (en segundos)
-const VALID_PING_PERIODS = [0, 60, 300, 600, 900, 1800, 2700, 3600, 10800, 21600, 43200, 86400]
 
 // =============================================================================
 // CONFIGURACIÓN DEL SERVIDOR MIRAGE
@@ -83,8 +66,8 @@ export function setupMirageServer() {
               .toUpperCase(),
           ).join(':')
         },
-        ip(i) {
-          return `192.168.1.${100 + i}`
+        ip() {
+          return `192.168.1.${Math.floor(Math.random() * 200) + 50}`
         },
         autoWake() {
           return Math.random() > 0.5
@@ -96,77 +79,63 @@ export function setupMirageServer() {
     },
 
     seeds(server) {
-      // Crear hosts iniciales
-      MOCK_HOSTS.forEach((host) => {
-        server.create('host', host)
+      server.create('host', {
+        id: 1,
+        name: 'PC Gaming',
+        mac: 'AA:BB:CC:DD:EE:FF',
+        ip: '192.168.1.100',
+        autoWake: true,
+        status: true,
+      })
+      server.create('host', {
+        id: 2,
+        name: 'Servidor NAS',
+        mac: '11:22:33:44:55:66',
+        ip: '192.168.1.101',
+        autoWake: false,
+        status: false,
+      })
+      server.create('host', {
+        id: 3,
+        name: 'Laptop Trabajo',
+        mac: '77:88:99:AA:BB:CC',
+        ip: '192.168.1.102',
+        autoWake: true,
+        status: true,
       })
     },
 
     routes() {
-      // Namespace para las rutas
-      this.namespace = ''
-
-      // Variables para simular estado del servidor
-      let currentSessionToken = null
-      let networkConfig = { ...MOCK_NETWORK_CONFIG }
-      let currentUser = { ...MOCK_USER }
-      let pingPeriod = MOCK_PING_PERIOD
+      // MirageJS intercepta automáticamente las peticiones en desarrollo
+      // No necesitamos namespace específico
 
       // =============================================================================
-      // MIDDLEWARE DE AUTENTICACIÓN
-      // =============================================================================
-
-      function requireAuth(schema, request) {
-        const sessionToken = request.requestHeaders['X-Session-Token']
-        return sessionToken && sessionToken === currentSessionToken
-      }
-
-      function sendAuthError() {
-        return new Response(
-          401,
-          {},
-          {
-            success: false,
-            message: 'Authentication required',
-          },
-        )
-      }
-
-      // =============================================================================
-      // RUTAS DE AUTENTICACIÓN
+      // AUTHENTICATION
       // =============================================================================
 
       this.post('/login', (schema, request) => {
         const { username, password } = JSON.parse(request.requestBody)
 
-        if (username === currentUser.username && password === currentUser.password) {
-          currentSessionToken = 'abc123def456ghij789klmno012pqrs' // Token de ejemplo
-
+        if (username === 'glavniy' && password === 'Lep#Chick43') {
           return {
             success: true,
             message: 'Login successful',
-            username: username,
-            token: currentSessionToken
+            username: 'glavniy',
+            token: sessionToken,
           }
-        } else {
-          return new Response(
-            401,
-            {},
-            {
-              success: false,
-              message: 'Invalid credentials',
-            },
-          )
         }
+
+        return new Response(
+          401,
+          {},
+          {
+            success: false,
+            message: 'Invalid credentials',
+          },
+        )
       })
 
-      this.post('/logout', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
-        }
-
-        currentSessionToken = null
-
+      this.post('/logout', () => {
         return {
           success: true,
           message: 'Logout successful',
@@ -174,154 +143,96 @@ export function setupMirageServer() {
       })
 
       // =============================================================================
-      // RUTAS DE HOSTS
+      // HOSTS MANAGEMENT
       // =============================================================================
 
-      this.get('/hosts', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
-        }
+      this.get('/hosts', (schema) => {
+        const hosts = schema.hosts.all().models
 
-        if (request.queryParams.id !== undefined) {
-          // Obtener host específico
-          const host = schema.hosts.find(request.queryParams.id)
-          if (host) {
-            return {
-              success: true,
-              message: 'Host retrieved',
-              data: host.attrs
-            }
-          } else {
-            return new Response(
-              400,
-              {},
-              {
-                success: false,
-                message: 'Host not found',
-              },
-            )
-          }
-        } else {
-          // Obtener todos los hosts con metadata
-          const hosts = schema.hosts.all().models.map((host) => host.attrs)
+        // Actualizar metadata
+        mockMemoryInfo.hosts.count = hosts.length
+        mockMemoryInfo.hosts.remaining = mockMemoryInfo.hosts.maxAllowed - hosts.length
+        mockMemoryInfo.canAddMoreHosts = hosts.length < mockMemoryInfo.hosts.maxAllowed
 
-          return {
-            success: true,
-            message: 'Hosts retrieved',
-            data: hosts,
-            metadata: {
-              memory: {
-                freeHeap: 45632,
-                totalHeap: 81920,
-                heapUsagePercent: 44
-              },
-              storage: {
-                freeFlash: 2048000,
-                totalFlash: 3145728,
-                flashUsagePercent: 35
-              },
-              hosts: {
-                count: hosts.length,
-                maxAllowed: 45,
-                remaining: 45 - hosts.length
-              },
-              hasEnoughMemory: true,
-              canAddMoreHosts: hosts.length < 45
-            }
-          }
+        return {
+          success: true,
+          message: 'Hosts retrieved successfully',
+          data: hosts,
+          metadata: mockMemoryInfo,
         }
       })
 
       this.post('/hosts', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
-        }
-
         const hostData = JSON.parse(request.requestBody)
 
-        // Validar datos
-        if (!hostData.name || !hostData.mac || !hostData.ip || typeof hostData.autoWake !== 'boolean') {
+        // Validaciones de límites de caracteres
+        if (hostData.name && hostData.name.length > MAX_HOST_NAME_LENGTH) {
           return new Response(
             400,
             {},
             {
               success: false,
-              message: 'Missing or invalid required fields',
+              message: `Host name exceeds maximum length of ${MAX_HOST_NAME_LENGTH} characters`,
             },
           )
         }
 
         // Verificar límite de hosts
-        if (schema.hosts.all().length >= 45) {
+        const currentCount = schema.hosts.all().length
+        if (currentCount >= mockMemoryInfo.hosts.maxAllowed) {
           return new Response(
-            507,
+            400,
             {},
             {
               success: false,
-              message: 'Insufficient storage - maximum number of hosts reached',
+              message: 'Maximum number of hosts reached',
             },
           )
         }
 
-        // Verificar duplicados
-        const existingHost = schema.hosts
-          .all()
-          .models.find((h) => h.mac === hostData.mac || h.ip === hostData.ip)
-
+        // Verificar duplicados por MAC
+        const existingHost = schema.hosts.findBy({ mac: hostData.mac })
         if (existingHost) {
           return new Response(
-            409,
+            400,
             {},
             {
               success: false,
-              message: 'Duplicate host (MAC or IP already exists)',
+              message: 'Duplicate host',
             },
           )
         }
 
-        // Crear nuevo host con ID auto-incrementado
-        const hostId = Math.max(...schema.hosts.all().models.map(h => h.id), 0) + 1
         const newHost = schema.hosts.create({
+          id: currentHostId++,
           ...hostData,
-          id: hostId,
-          status: false,
+          status: false, // Los nuevos hosts empiezan offline
         })
 
         return {
           success: true,
           message: 'Host added successfully',
-          data: newHost.attrs,
-          metadata: {
-            memory: {
-              freeHeap: 45632,
-              totalHeap: 81920,
-              heapUsagePercent: 44
-            },
-            storage: {
-              freeFlash: 2048000,
-              totalFlash: 3145728,
-              flashUsagePercent: 35
-            },
-            hosts: {
-              count: schema.hosts.all().length,
-              maxAllowed: 45,
-              remaining: 45 - schema.hosts.all().length
-            },
-            hasEnoughMemory: true,
-            canAddMoreHosts: schema.hosts.all().length < 45
-          }
+          data: newHost,
         }
       })
 
       this.put('/hosts', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
+        const { id } = request.queryParams
+        const hostData = JSON.parse(request.requestBody)
+
+        // Validaciones
+        if (hostData.name && hostData.name.length > MAX_HOST_NAME_LENGTH) {
+          return new Response(
+            400,
+            {},
+            {
+              success: false,
+              message: `Host name exceeds maximum length of ${MAX_HOST_NAME_LENGTH} characters`,
+            },
+          )
         }
 
-        const hostData = JSON.parse(request.requestBody)
-        const hostId = request.queryParams.id
-        const host = schema.hosts.find(hostId)
-
+        const host = schema.hosts.find(id)
         if (!host) {
           return new Response(
             400,
@@ -333,20 +244,19 @@ export function setupMirageServer() {
           )
         }
 
-        // Verificar duplicados excluyendo el host actual
-        const existingHost = schema.hosts
-          .all()
-          .models.find((h) => h.id != hostId && (h.mac === hostData.mac || h.ip === hostData.ip))
-
-        if (existingHost) {
-          return new Response(
-            409,
-            {},
-            {
-              success: false,
-              message: 'Duplicate host',
-            },
-          )
+        // Verificar duplicados por MAC (excluyendo el host actual)
+        if (hostData.mac && hostData.mac !== host.mac) {
+          const existingHost = schema.hosts.findBy({ mac: hostData.mac })
+          if (existingHost) {
+            return new Response(
+              400,
+              {},
+              {
+                success: false,
+                message: 'Duplicate host',
+              },
+            )
+          }
         }
 
         host.update(hostData)
@@ -354,36 +264,13 @@ export function setupMirageServer() {
         return {
           success: true,
           message: 'Host updated successfully',
-          data: host.attrs,
-          metadata: {
-            memory: {
-              freeHeap: 45632,
-              totalHeap: 81920,
-              heapUsagePercent: 44
-            },
-            storage: {
-              freeFlash: 2048000,
-              totalFlash: 3145728,
-              flashUsagePercent: 35
-            },
-            hosts: {
-              count: schema.hosts.all().length,
-              maxAllowed: 45,
-              remaining: 45 - schema.hosts.all().length
-            },
-            hasEnoughMemory: true,
-            canAddMoreHosts: schema.hosts.all().length < 45
-          }
+          data: host,
         }
       })
 
       this.delete('/hosts', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
-        }
-
-        const hostId = request.queryParams.id
-        const host = schema.hosts.find(hostId)
+        const { id } = request.queryParams
+        const host = schema.hosts.find(id)
 
         if (!host) {
           return new Response(
@@ -398,15 +285,10 @@ export function setupMirageServer() {
 
         host.destroy()
 
-        // Retornar 204 No Content según especificación
-        return new Response(204, {}, '')
+        return new Response(204)
       })
 
       this.post('/hosts/import', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
-        }
-
         const hostsArray = JSON.parse(request.requestBody)
 
         if (!Array.isArray(hostsArray)) {
@@ -415,82 +297,55 @@ export function setupMirageServer() {
             {},
             {
               success: false,
-              message: 'Expected JSON array',
+              message: 'Invalid data format',
             },
           )
         }
 
-        let importedCount = 0
-        let ignoredCount = 0
+        const currentCount = schema.hosts.all().length
+        if (currentCount + hostsArray.length > mockMemoryInfo.hosts.maxAllowed) {
+          return new Response(
+            400,
+            {},
+            {
+              success: false,
+              message: 'Import would exceed maximum host limit',
+            },
+          )
+        }
+
+        let imported = 0
+        let skipped = 0
 
         hostsArray.forEach((hostData) => {
-          if (!hostData.name || !hostData.mac || !hostData.ip || typeof hostData.autoWake !== 'boolean') {
-            ignoredCount++
-            return
-          }
-
           // Verificar duplicados
-          const existingHost = schema.hosts
-            .all()
-            .models.find((h) => h.mac === hostData.mac || h.ip === hostData.ip)
-
-          if (existingHost) {
-            ignoredCount++
-            return
+          if (!schema.hosts.findBy({ mac: hostData.mac })) {
+            schema.hosts.create({
+              id: currentHostId++,
+              ...hostData,
+              status: false,
+            })
+            imported++
+          } else {
+            skipped++
           }
-
-          // Verificar límite de hosts
-          if (schema.hosts.all().length >= 45) {
-            ignoredCount++
-            return
-          }
-
-          const hostId = Math.max(...schema.hosts.all().models.map(h => h.id), 0) + 1
-          schema.hosts.create({
-            ...hostData,
-            id: hostId,
-            status: false,
-          })
-
-          importedCount++
         })
 
         return {
           success: true,
-          message: `Imported ${importedCount} hosts from ${hostsArray.length}. ${ignoredCount} hosts ignored. Hosts in database after import: ${schema.hosts.all().length}.`,
-          metadata: {
-            memory: {
-              freeHeap: 45632,
-              totalHeap: 81920,
-              heapUsagePercent: 44
-            },
-            storage: {
-              freeFlash: 2048000,
-              totalFlash: 3145728,
-              flashUsagePercent: 35
-            },
-            hosts: {
-              count: schema.hosts.all().length,
-              maxAllowed: 45,
-              remaining: 45 - schema.hosts.all().length
-            },
-            hasEnoughMemory: true,
-            canAddMoreHosts: schema.hosts.all().length < 45
-          }
+          message: `Import completed: ${imported} added, ${skipped} skipped`,
+          imported,
+          skipped,
         }
       })
 
       // =============================================================================
-      // RUTAS DE RED (WOL Y PING)
+      // NETWORK OPERATIONS
       // =============================================================================
 
       this.post('/hosts/wake', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
-        }
-
-        const hostId = request.queryParams.id
-        const host = schema.hosts.find(hostId)
+        const { id } = request.queryParams
+        const host = schema.hosts.find(id)
 
         if (!host) {
           return new Response(
@@ -503,22 +358,18 @@ export function setupMirageServer() {
           )
         }
 
-        // Simular envío de WOL con posible fallo
-        const success = Math.random() > 0.1 // 90% éxito
+        // Simular WOL exitoso
+        host.update({ status: true })
 
         return {
-          success: success,
-          message: success ? 'WOL packet sent' : 'Failed to send WOL packet',
+          success: true,
+          message: `WOL packet sent to ${host.name}`,
         }
       })
 
       this.post('/hosts/ping', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
-        }
-
-        const hostId = request.queryParams.id
-        const host = schema.hosts.find(hostId)
+        const { id } = request.queryParams
+        const host = schema.hosts.find(id)
 
         if (!host) {
           return new Response(
@@ -532,7 +383,7 @@ export function setupMirageServer() {
         }
 
         // Simular ping con resultado aleatorio
-        const isOnline = Math.random() > 0.4
+        const isOnline = Math.random() > 0.3
         host.update({ status: isOnline })
 
         return {
@@ -542,211 +393,145 @@ export function setupMirageServer() {
       })
 
       // =============================================================================
-      // RUTAS DE CONFIGURACIÓN
+      // SETTINGS
       // =============================================================================
 
-      // Obtener todas las configuraciones
-      this.get('/settings', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
-        }
-
+      this.get('/settings', () => {
         return {
           success: true,
-          message: 'Settings retrieved',
+          message: 'Settings retrieved successfully',
           data: {
-            about: MOCK_ABOUT,
-            pingPeriod: pingPeriod,
-            network: networkConfig
-          }
+            networkConfig: {
+              enable: false,
+              ip: '192.168.1.50',
+              networkMask: '255.255.255.0',
+              gateway: '192.168.1.1',
+              dns: '8.8.8.8',
+            },
+            pingPeriod: 60000,
+          },
         }
       })
 
-      // Network Settings
-      this.get('/settings/network', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
-        }
-
+      this.get('/settings/network', () => {
         return {
           success: true,
           message: 'Network settings retrieved',
-          data: networkConfig
+          data: {
+            enable: false,
+            ip: '192.168.1.50',
+            networkMask: '255.255.255.0',
+            gateway: '192.168.1.1',
+            dns: '8.8.8.8',
+          },
         }
       })
 
       this.put('/settings/network', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
-        }
-
-        const newConfig = JSON.parse(request.requestBody)
-        networkConfig = { ...networkConfig, ...newConfig }
+        const networkConfig = JSON.parse(request.requestBody)
 
         return {
           success: true,
-          message: 'Network settings updated (device will restart)',
-          data: networkConfig
+          message: 'Network settings updated',
+          data: networkConfig,
         }
       })
 
-      // Auth Settings
-      this.get('/settings/auth', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
-        }
-
+      this.get('/settings/auth', () => {
         return {
           success: true,
-          message: 'User information retrieved',
+          message: 'Auth settings retrieved',
           data: {
-            username: currentUser.username
-          }
+            username: 'glavniy',
+          },
         }
       })
 
       this.put('/settings/auth', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
-        }
-
         const { username, password } = JSON.parse(request.requestBody)
 
-        // Validar según especificación
-        if (!username || username.length < 3 || username.length > 20) {
-          return new Response(400, {}, {
-            success: false,
-            message: 'Username must be between 3-20 characters long'
-          })
+        // Validaciones
+        if (username && username.length > MAX_USERNAME_LENGTH) {
+          return new Response(
+            400,
+            {},
+            {
+              success: false,
+              message: `Username exceeds maximum length of ${MAX_USERNAME_LENGTH} characters`,
+            },
+          )
         }
 
-        if (!password || password.length < 8 || password.length > 32) {
-          return new Response(400, {}, {
-            success: false,
-            message: 'Password must be between 8-32 characters long'
-          })
+        if (password && password.length > MAX_PASSWORD_LENGTH) {
+          return new Response(
+            400,
+            {},
+            {
+              success: false,
+              message: `Password exceeds maximum length of ${MAX_PASSWORD_LENGTH} characters`,
+            },
+          )
         }
-
-        // Verificar patrón de contraseña
-        const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).*$/
-        if (!passwordPattern.test(password)) {
-          return new Response(400, {}, {
-            success: false,
-            message: 'Password must contain at least one uppercase, one lowercase, and one special character'
-          })
-        }
-
-        currentUser = { username, password }
-        currentSessionToken = null // Invalidar sesión actual
 
         return {
           success: true,
-          message: 'User updated successfully',
+          message: 'Auth settings updated successfully',
+        }
+      })
+
+      this.get('/settings/about', () => {
+        return {
+          success: true,
+          message: 'About information retrieved',
           data: {
-            username: username
-          }
+            version: '3.0.0',
+            hostname: 'wol',
+          },
         }
       })
 
-      // About
-      this.get('/settings/about', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
-        }
-
-        return {
-          success: true,
-          message: 'System information retrieved',
-          data: MOCK_ABOUT
-        }
-      })
-
-      // Ping Period
-      this.get('/settings/ping_period', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
-        }
-
+      this.get('/settings/ping_period', () => {
         return {
           success: true,
           message: 'Ping period retrieved',
           data: {
-            pingPeriod: pingPeriod
-          }
+            pingPeriod: 60000,
+          },
         }
       })
 
       this.put('/settings/ping_period', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
+        const { pingPeriod } = JSON.parse(request.requestBody)
+
+        if (!VALID_PING_PERIODS.includes(pingPeriod / 1000)) {
+          return new Response(
+            400,
+            {},
+            {
+              success: false,
+              message: 'Invalid ping period',
+            },
+          )
         }
-
-        const { pingPeriod: newPeriod } = JSON.parse(request.requestBody)
-
-        if (!VALID_PING_PERIODS.includes(newPeriod)) {
-          return new Response(400, {}, {
-            success: false,
-            message: 'Invalid ping period'
-          })
-        }
-
-        pingPeriod = newPeriod * 1000 // Convertir a milisegundos
 
         return {
           success: true,
           message: 'Ping period updated',
-          data: {
-            pingPeriod: pingPeriod
-          }
+          data: { pingPeriod },
         }
       })
 
-      // WiFi Reset
-      this.post('/settings/reset_wifi', (schema, request) => {
-        if (!requireAuth(schema, request)) {
-          return sendAuthError()
-        }
-
+      this.post('/settings/reset_wifi', () => {
         return {
           success: true,
-          message: 'WiFi settings reset (device will restart)',
+          message: 'WiFi reset successful',
         }
       })
+
+      // En producción, permitir que las peticiones pasen al servidor real
+      if (import.meta.env.MODE === 'production') {
+        this.passthrough()
+      }
     },
   })
-}
-
-// =============================================================================
-// UTILITY FUNCTIONS FOR MOCK SERVER
-// =============================================================================
-
-// Generar MAC address aleatoria
-export function generateRandomMAC() {
-  return Array.from({ length: 6 }, () =>
-    Math.floor(Math.random() * 256)
-      .toString(16)
-      .padStart(2, '0')
-      .toUpperCase(),
-  ).join(':')
-}
-
-// Generar IP aleatoria en rango 192.168.1.x
-export function generateRandomIP(baseRange = '192.168.1') {
-  const lastOctet = Math.floor(Math.random() * 200) + 50 // 50-249
-  return `${baseRange}.${lastOctet}`
-}
-
-// Simular latencia de red
-export function addNetworkDelay(minMs = 100, maxMs = 500) {
-  const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs
-  return new Promise(resolve => setTimeout(resolve, delay))
-}
-
-// Exportar constantes útiles
-export const MOCK_CONSTANTS = {
-  VALID_PING_PERIODS,
-  DEFAULT_USER: MOCK_USER,
-  DEFAULT_NETWORK_CONFIG: MOCK_NETWORK_CONFIG,
-  DEFAULT_ABOUT: MOCK_ABOUT,
-  DEFAULT_PING_PERIOD: MOCK_PING_PERIOD
 }
