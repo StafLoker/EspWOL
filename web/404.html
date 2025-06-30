@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 - Page Not Found</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+      .fade-in {
+        animation: fadeIn 1s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body class="min-h-screen bg-stone-200 dark:bg-zinc-900 flex items-center justify-center">
+    <div class="text-center">
+      <div class="mb-8 fade-in">
+        <h1
+          class="text-9xl font-light text-gray-800 dark:text-gray-100 tracking-wider hover:scale-105 transition-transform duration-300 cursor-default"
+        >
+          404
+        </h1>
+      </div>
+
+      <div class="mb-12 fade-in" style="animation-delay: 0.2s">
+        <h2 class="text-xl font-medium text-gray-600 dark:text-gray-400 mb-2">Page Not Found</h2>
+        <p class="text-gray-500 dark:text-gray-500">The page you're looking for doesn't exist.</p>
+      </div>
+
+      <button
+        onclick="goHome()"
+        class="px-6 py-3 bg-gray-800 hover:bg-gray-700 dark:bg-gray-100 dark:hover:bg-gray-200 text-white dark:text-gray-900 rounded-full transition-all duration-300 hover:scale-105 shadow-lg fade-in font-medium"
+        style="animation-delay: 0.4s"
+      >
+        Go Home
+      </button>
+    </div>
+
+    <script>
+      function goHome() {
+        window.location.href = '/'
+      }
+
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark')
+      }
+
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (event) => {
+        if (event.matches) {
+          document.documentElement.classList.add('dark')
+        } else {
+          document.documentElement.classList.remove('dark')
+        }
+      })
+    </script>
+  </body>
+</html>
