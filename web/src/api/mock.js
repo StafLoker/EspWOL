@@ -11,7 +11,7 @@ import { createServer, Model, Factory } from 'miragejs'
 
 const MOCK_HOSTS = [
   {
-    id: 0,
+    id: 1,
     name: 'PC Gaming',
     mac: 'AA:BB:CC:DD:EE:FF',
     ip: '192.168.1.100',
@@ -19,7 +19,7 @@ const MOCK_HOSTS = [
     status: true,
   },
   {
-    id: 1,
+    id: 2,
     name: 'Servidor NAS',
     mac: '11:22:33:44:55:66',
     ip: '192.168.1.101',
@@ -27,7 +27,7 @@ const MOCK_HOSTS = [
     status: false,
   },
   {
-    id: 2,
+    id: 3,
     name: 'Laptop Trabajo',
     mac: '77:88:99:AA:BB:CC',
     ip: '192.168.1.102',
@@ -145,10 +145,8 @@ export function setupMirageServer() {
           return {
             success: true,
             message: 'Login successful',
-            data: {
-              username: username,
-              token: currentSessionToken
-            }
+            username: username,
+            token: currentSessionToken
           }
         } else {
           return new Response(
@@ -204,11 +202,32 @@ export function setupMirageServer() {
             )
           }
         } else {
-          // Obtener todos los hosts
+          // Obtener todos los hosts con metadata
+          const hosts = schema.hosts.all().models.map((host) => host.attrs)
+
           return {
             success: true,
             message: 'Hosts retrieved',
-            data: schema.hosts.all().models.map((host) => host.attrs)
+            data: hosts,
+            metadata: {
+              memory: {
+                freeHeap: 45632,
+                totalHeap: 81920,
+                heapUsagePercent: 44
+              },
+              storage: {
+                freeFlash: 2048000,
+                totalFlash: 3145728,
+                flashUsagePercent: 35
+              },
+              hosts: {
+                count: hosts.length,
+                maxAllowed: 45,
+                remaining: 45 - hosts.length
+              },
+              hasEnoughMemory: true,
+              canAddMoreHosts: hosts.length < 45
+            }
           }
         }
       })
@@ -232,6 +251,18 @@ export function setupMirageServer() {
           )
         }
 
+        // Verificar límite de hosts
+        if (schema.hosts.all().length >= 45) {
+          return new Response(
+            507,
+            {},
+            {
+              success: false,
+              message: 'Insufficient storage - maximum number of hosts reached',
+            },
+          )
+        }
+
         // Verificar duplicados
         const existingHost = schema.hosts
           .all()
@@ -248,17 +279,37 @@ export function setupMirageServer() {
           )
         }
 
-        // Crear nuevo host
+        // Crear nuevo host con ID auto-incrementado
+        const hostId = Math.max(...schema.hosts.all().models.map(h => h.id), 0) + 1
         const newHost = schema.hosts.create({
           ...hostData,
-          id: schema.hosts.all().length,
+          id: hostId,
           status: false,
         })
 
         return {
           success: true,
           message: 'Host added successfully',
-          data: newHost.attrs
+          data: newHost.attrs,
+          metadata: {
+            memory: {
+              freeHeap: 45632,
+              totalHeap: 81920,
+              heapUsagePercent: 44
+            },
+            storage: {
+              freeFlash: 2048000,
+              totalFlash: 3145728,
+              flashUsagePercent: 35
+            },
+            hosts: {
+              count: schema.hosts.all().length,
+              maxAllowed: 45,
+              remaining: 45 - schema.hosts.all().length
+            },
+            hasEnoughMemory: true,
+            canAddMoreHosts: schema.hosts.all().length < 45
+          }
         }
       })
 
@@ -303,7 +354,26 @@ export function setupMirageServer() {
         return {
           success: true,
           message: 'Host updated successfully',
-          data: host.attrs
+          data: host.attrs,
+          metadata: {
+            memory: {
+              freeHeap: 45632,
+              totalHeap: 81920,
+              heapUsagePercent: 44
+            },
+            storage: {
+              freeFlash: 2048000,
+              totalFlash: 3145728,
+              flashUsagePercent: 35
+            },
+            hosts: {
+              count: schema.hosts.all().length,
+              maxAllowed: 45,
+              remaining: 45 - schema.hosts.all().length
+            },
+            hasEnoughMemory: true,
+            canAddMoreHosts: schema.hosts.all().length < 45
+          }
         }
       })
 
@@ -332,7 +402,7 @@ export function setupMirageServer() {
         return new Response(204, {}, '')
       })
 
-      this.post('/import', (schema, request) => {
+      this.post('/hosts/import', (schema, request) => {
         if (!requireAuth(schema, request)) {
           return sendAuthError()
         }
@@ -369,9 +439,16 @@ export function setupMirageServer() {
             return
           }
 
+          // Verificar límite de hosts
+          if (schema.hosts.all().length >= 45) {
+            ignoredCount++
+            return
+          }
+
+          const hostId = Math.max(...schema.hosts.all().models.map(h => h.id), 0) + 1
           schema.hosts.create({
             ...hostData,
-            id: schema.hosts.all().length,
+            id: hostId,
             status: false,
           })
 
@@ -381,6 +458,25 @@ export function setupMirageServer() {
         return {
           success: true,
           message: `Imported ${importedCount} hosts from ${hostsArray.length}. ${ignoredCount} hosts ignored. Hosts in database after import: ${schema.hosts.all().length}.`,
+          metadata: {
+            memory: {
+              freeHeap: 45632,
+              totalHeap: 81920,
+              heapUsagePercent: 44
+            },
+            storage: {
+              freeFlash: 2048000,
+              totalFlash: 3145728,
+              flashUsagePercent: 35
+            },
+            hosts: {
+              count: schema.hosts.all().length,
+              maxAllowed: 45,
+              remaining: 45 - schema.hosts.all().length
+            },
+            hasEnoughMemory: true,
+            canAddMoreHosts: schema.hosts.all().length < 45
+          }
         }
       })
 
@@ -388,7 +484,7 @@ export function setupMirageServer() {
       // RUTAS DE RED (WOL Y PING)
       // =============================================================================
 
-      this.post('/wake', (schema, request) => {
+      this.post('/hosts/wake', (schema, request) => {
         if (!requireAuth(schema, request)) {
           return sendAuthError()
         }
@@ -416,7 +512,7 @@ export function setupMirageServer() {
         }
       })
 
-      this.post('/ping', (schema, request) => {
+      this.post('/hosts/ping', (schema, request) => {
         if (!requireAuth(schema, request)) {
           return sendAuthError()
         }
@@ -517,17 +613,17 @@ export function setupMirageServer() {
         const { username, password } = JSON.parse(request.requestBody)
 
         // Validar según especificación
-        if (!username || username.length < 3) {
+        if (!username || username.length < 3 || username.length > 20) {
           return new Response(400, {}, {
             success: false,
-            message: 'Username must be at least 3 characters long'
+            message: 'Username must be between 3-20 characters long'
           })
         }
 
-        if (!password || password.length < 8) {
+        if (!password || password.length < 8 || password.length > 32) {
           return new Response(400, {}, {
             success: false,
-            message: 'Password must be at least 8 characters long'
+            message: 'Password must be between 8-32 characters long'
           })
         }
 

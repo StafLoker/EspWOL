@@ -90,10 +90,10 @@ class AuthService extends ApiService {
   async login(username, password) {
     const response = await this.post('/login', { username, password })
 
-    if (response.success && response.data?.token) {
-      this.sessionToken = response.data.token
-      localStorage.setItem('sessionToken', response.data.token)
-      localStorage.setItem('username', response.data.username)
+    if (response.success && response.token) {
+      this.sessionToken = response.token
+      localStorage.setItem('sessionToken', response.token)
+      localStorage.setItem('username', response.username)
     }
 
     return response
@@ -137,7 +137,7 @@ class HostService extends ApiService {
   }
 
   async getHost(id) {
-    const response = await this.get(`/hosts?id=${id}`)
+    const response = await this.get('/hosts', { id })
     return response.data
   }
 
@@ -147,7 +147,7 @@ class HostService extends ApiService {
   }
 
   async updateHost(id, hostData) {
-    const response = await this.put(`/hosts?id=${id}`, hostData)
+    const response = await this.put('/hosts', hostData, { id })
     return response
   }
 
@@ -156,7 +156,7 @@ class HostService extends ApiService {
   }
 
   async importHosts(hostsArray) {
-    return this.post('/import', hostsArray)
+    return this.post('/hosts/import', hostsArray)
   }
 }
 
@@ -166,11 +166,11 @@ class HostService extends ApiService {
 
 class NetworkService extends ApiService {
   async wakeHost(id) {
-    return this.post(`/wake?id=${id}`)
+    return this.post(`/hosts/wake?id=${id}`)
   }
 
   async pingHost(id) {
-    return this.post(`/ping?id=${id}`)
+    return this.post(`/hosts/ping?id=${id}`)
   }
 }
 
@@ -281,8 +281,8 @@ class ApiClient {
   // Método de conveniencia para hacer login y configurar el token
   async login(username, password) {
     const response = await this.auth.login(username, password)
-    if (response.success && response.data?.token) {
-      this.setSessionToken(response.data.token)
+    if (response.success && response.token) {
+      this.setSessionToken(response.token)
     }
     return response
   }
@@ -315,8 +315,8 @@ function isValidIPv4(ip) {
 function validateHostData(hostData) {
   const errors = []
 
-  if (!hostData.name || hostData.name.length < 1) {
-    errors.push('Name is required and must not be empty')
+  if (!hostData.name || hostData.name.length < 1 || hostData.name.length > 32) {
+    errors.push('Name is required and must be between 1-32 characters')
   }
 
   if (!hostData.mac || !isValidMACAddress(hostData.mac)) {
@@ -365,12 +365,12 @@ function validateNetworkConfig(config) {
 function validateUserCredentials(credentials) {
   const errors = []
 
-  if (!credentials.username || credentials.username.length < 3) {
-    errors.push('Username must be at least 3 characters long')
+  if (!credentials.username || credentials.username.length < 3 || credentials.username.length > 20) {
+    errors.push('Username must be between 3-20 characters long')
   }
 
-  if (!credentials.password || credentials.password.length < 8) {
-    errors.push('Password must be at least 8 characters long')
+  if (!credentials.password || credentials.password.length < 8 || credentials.password.length > 32) {
+    errors.push('Password must be between 8-32 characters long')
   }
 
   // Verificar patrón de contraseña (al menos una mayúscula, una minúscula y un carácter especial)
@@ -389,6 +389,14 @@ function isValidPingPeriod(period) {
   return VALID_PING_PERIODS.includes(period)
 }
 
+// Error handler helper
+function handleApiError(error) {
+  if (error instanceof ApiError) {
+    return error.message
+  }
+  return 'An unexpected error occurred'
+}
+
 // =============================================================================
 // EXPORT - Instancia global del cliente API
 // =============================================================================
@@ -399,4 +407,18 @@ const apiClient = new ApiClient()
 // Sincronizar sessionToken al cargar
 if (localStorage.getItem('sessionToken')) {
   apiClient.setSessionToken(localStorage.getItem('sessionToken'))
+}
+
+// Exportar utilidades
+export {
+  apiClient,
+  ApiError,
+  isValidMACAddress,
+  isValidIPv4,
+  validateHostData,
+  validateNetworkConfig,
+  validateUserCredentials,
+  isValidPingPeriod,
+  handleApiError,
+  VALID_PING_PERIODS
 }
