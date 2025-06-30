@@ -85,7 +85,7 @@ void handleLogin() {
   }
 
   if (!doc.containsKey(F("username")) || !doc.containsKey(F("password"))) {
-    sendJsonResponse(400, false, "Missing username or password");
+    sendJsonResponse(400, false, FPSTR(MSG_MISSING_FIELDS));
     return;
   }
 

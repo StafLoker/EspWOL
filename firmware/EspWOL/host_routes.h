@@ -7,9 +7,11 @@ void handleHosts();
 void handleHostsById();
 void handleImportDatabase();
 
+int generateUniqueHostId();
 bool validateHostData(const JsonDocument &doc, String &name, String &mac, String &ip, bool &autoWake);
 JsonObject createHostJson(JsonDocument &doc, int id, const Host &host);
-bool isHostDuplicate(const Host &newHost);
+bool isHostDuplicate(const Host &newHost, int excludeId = -1);
+
 void getHostList();
 void getHost(int id);
 void addHost();

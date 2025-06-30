@@ -20,6 +20,17 @@ void setupHostRoutes() {
 // AUXILIARY FUNCTIONS FOR HOSTS
 // =============================================================================
 
+int generateUniqueHostId() {
+  int newId = 1;
+
+  while (hosts.find(newId) != hosts.end()) {
+    newId++;
+  }
+
+  return newId;
+}
+
+
 bool validateHostData(const JsonDocument &doc, String &name, String &mac, String &ip, bool &autoWake) {
   if (!doc.containsKey(F("name")) || !doc.containsKey(F("mac")) || !doc.containsKey(F("ip")) || !doc.containsKey(F("autoWake"))) {
     sendJsonResponse(400, false, FPSTR(MSG_MISSING_FIELDS));
@@ -54,9 +65,14 @@ JsonObject createHostJson(JsonDocument &doc, int id, const Host &host) {
   return obj;
 }
 
-bool isHostDuplicate(const Host &newHost) {
+bool isHostDuplicate(const Host &newHost, int excludeId = -1) {
   for (const auto &pair : hosts) {
     const Host &existingHost = pair.second;
+    int currentId = pair.first;
+
+    if (currentId == excludeId) {
+      continue;
+    }
 
     if (existingHost.mac == newHost.mac || existingHost.ip == newHost.ip) {
       return true;
@@ -122,8 +138,7 @@ void addHost() {
     return;
   }
 
-  // TODO Assing unique, because if we have two host and delete first and after create other, we replace host [BUG]
-  int id = hosts.size();
+  int id = generateUniqueHostId();
 
   hosts[id] = host;
 
@@ -136,18 +151,18 @@ void addHost() {
 
 void editHost(int id) {
   if (!server.hasArg("plain")) {
-    sendJsonResponse(400, false, "Missing body");
+    sendJsonResponse(400, false, FPSTR(MSG_MISSING_BODY));
     return;
   }
 
   if (hosts.find(id) == hosts.end()) {
-    sendJsonResponse(400, false, "Host not found");
+    sendJsonResponse(400, false, FPSTR(MSG_HOST_NOT_FOUND));
     return;
   }
 
   JsonDocument doc;
   if (deserializeJson(doc, server.arg("plain"))) {
-    sendJsonResponse(400, false, "Invalid JSON");
+    sendJsonResponse(400, false, FPSTR(MSG_INVALID_JSON));
     return;
   }
 
@@ -155,20 +170,17 @@ void editHost(int id) {
   bool autoWake;
   if (!validateHostData(doc, name, mac, ip, autoWake)) return;
 
-  Host &host = hosts[id];
-  host.name = name;
-  host.mac = mac;
-  host.ip = ip;
-  host.autoWake = autoWake;
+  Host newHost = { name, mac, ip, autoWake };
 
-  if (isHostDuplicate(host)) {
-    sendJsonResponse(409, false, "Duplicate host");
+  if (isHostDuplicate(host, id)) {
+    sendJsonResponse(409, false, FPSTR(MSG_DUPLICATE_HOST));
     return;
   }
 
+  hosts[id] = newHost;
+
   saveHosts();
 
-  // Crear JSON con el host editado
   JsonDocument responseDoc;
   createHostJson(responseDoc, id, host);
   sendJsonResponse(200, true, "Host updated", responseDoc);
@@ -203,7 +215,7 @@ void handleHosts() {
 
 void handleHostsById() {
   if (isAuthenticated()) {
-    int id = server.arg("id").toInt();
+    int id = server.arg(FPSTR(ARG_ID)).toInt();
     if (server.method() == HTTP_GET) {
       getHost(id);
     } else if (server.method() == HTTP_PUT) {
@@ -218,14 +230,14 @@ void handleHostsById() {
 
 void handleImportDatabase() {
   if (isAuthenticated()) {
-    if (!server.hasArg("plain")) {
-      sendJsonResponse(400, false, "Missing body");
+    if(!server.hasArg(FPSTR(ARG_PLAIN))) {
+      sendJsonResponse(400, false, FPSTR(MSG_MISSING_BODY));
       return;
     }
 
     JsonDocument doc;
-    if (deserializeJson(doc, server.arg("plain"))) {
-      sendJsonResponse(400, false, "Invalid JSON");
+    if (deserializeJson(doc, server.arg(FPSTR(ARG_PLAIN)))) {
+      sendJsonResponse(400, false, FPSTR(MSG_INVALID_JSON));
       return;
     }
 
@@ -237,9 +249,6 @@ void handleImportDatabase() {
     JsonArray arr = doc.as<JsonArray>();
     int importedCount = 0;
     int ignoredCount = 0;
-    int id;
-
-    extern std::map<int, Host> hosts;
 
     for (JsonVariant v : arr) {
       if (!v.containsKey(F("name")) || !v.containsKey(F("mac")) || !v.containsKey(F("ip"))) {
@@ -264,8 +273,7 @@ void handleImportDatabase() {
         continue;
       }
 
-      id = hosts.size();
-      hosts[id] = host;
+      hosts[id] = generateUniqueHostId();
       importedCount++;
     }
 

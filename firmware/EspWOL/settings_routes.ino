@@ -65,7 +65,7 @@ void updatePingPeriod() {
   }
 
   if (!doc.containsKey(F("pingPeriod"))) {
-    sendJsonResponse(400, false, "Missing pingPeriod field");
+    sendJsonResponse(400, false, FPSTR(MSG_MISSING_FIELDS));
     return;
   }
 
@@ -172,7 +172,6 @@ void getNetworkSettings() {
   sendJsonResponse(200, true, "Network settings", doc);
 }
 
-// TODO After update user, suspend all sessions
 void updateUser() {
   if (!server.hasArg(FPSTR(ARG_PLAIN))) {
     sendJsonResponse(400, false, FPSTR(MSG_MISSING_BODY));
@@ -200,6 +199,9 @@ void updateUser() {
 
   User user = { username, password };
   saveUser(user);
+
+  // Invalidate all sessions
+  activeSessions.clear();
 
   JsonDocument responseDoc;
   responseDoc[F("username")] = username;
@@ -230,7 +232,7 @@ void handleNetworkSettings() {
     } else if (server.method() == HTTP_PUT) {
       updateNetworkSettings();
     } else {
-      sendJsonResponse(405, false, "HTTP Method Not Allowed");
+      sendJsonResponse(405, false, FPSTR(MSG_METHOD_NOT_ALLOWED));
     }
   }
 }
@@ -242,7 +244,7 @@ void handleUser() {
     } else if (server.method() == HTTP_PUT) {
       updateUser();
     } else {
-      sendJsonResponse(405, false, "HTTP Method Not Allowed");
+      sendJsonResponse(405, false, FPSTR(MSG_METHOD_NOT_ALLOWED));
     }
   }
 }
@@ -269,7 +271,7 @@ void handlePingPeriod() {
     } else if (server.method() == HTTP_PUT) {
       updatePingPeriod();
     } else {
-      sendJsonResponse(405, false, "HTTP Method Not Allowed");
+      sendJsonResponse(405, false, FPSTR(MSG_METHOD_NOT_ALLOWED));
     }
   }
 }
