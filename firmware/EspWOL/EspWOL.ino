@@ -66,7 +66,7 @@ std::map<String, unsigned long> activeSessions;  // <session token, create at>
 GTimer<millis> pingTimer;
 
 struct Settings settings = {
-  .pingPeriod = 60000,  // 1 min de
+  .pingPeriod = 60000,  // 1 min
   .networkConfig = {}
 };
 
@@ -143,6 +143,7 @@ void setup() {
 #endif
 #endif
 
+  setupHeaders();
   setupRoutes();
 
   server.begin();
@@ -152,7 +153,7 @@ void setup() {
 }
 
 void loop() {
-
+  
 #if ENABLE_STANDARD_OTA == 1
   ArduinoOTA.handle();
 #endif

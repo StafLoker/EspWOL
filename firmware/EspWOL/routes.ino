@@ -36,6 +36,12 @@ bool isAuthenticated() {
   return valid;
 }
 
+void setupHeaders() {
+  const char *headerKeys[] = { "X-Session-Token" };
+  const size_t headerCount = sizeof(headerKeys) / sizeof(char *);
+  server.collectHeaders(headerKeys, headerCount);
+}
+
 void setupRoutes() {
   setupAuthRoutes();
   setupHostRoutes();

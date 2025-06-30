@@ -1,6 +1,7 @@
 #ifndef ROUTES_H
 #define ROUTES_H
 
+void setupHeaders();
 void setupRoutes();
 
 void sendJsonResponse(int statusCode, bool success, const String &message);

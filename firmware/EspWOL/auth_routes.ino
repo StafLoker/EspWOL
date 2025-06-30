@@ -106,21 +106,10 @@ void handleLogin() {
 }
 
 void handleLogout() {
-  if (!server.hasArg("plain")) {
-    sendJsonResponse(400, false, "Missing body");
-    return;
-  }
-
-  JsonDocument doc;
-  if (deserializeJson(doc, server.arg("plain"))) {
-    sendJsonResponse(400, false, "Invalid JSON");
-    return;
-  }
-
-  if (doc.containsKey(F("token"))) {
-    String sessionToken = doc[F("token")].as<String>();
+  if (isAuthenticated()) {
+    String sessionToken = server.header(FPSTR(HEADER_SESSION_TOKEN));
     destroySession(sessionToken);
-  }
 
-  sendJsonResponse(200, true, "Logout successful");
+    sendJsonResponse(200, true, "Logout successful");
+  }
 }
