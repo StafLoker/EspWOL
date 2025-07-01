@@ -303,6 +303,8 @@ export function setupMirageServer() {
         }
 
         const currentCount = schema.hosts.all().length
+        const inputSize = hostsArray.length
+
         if (currentCount + hostsArray.length > mockMemoryInfo.hosts.maxAllowed) {
           return new Response(
             400,
@@ -314,28 +316,42 @@ export function setupMirageServer() {
           )
         }
 
-        let imported = 0
-        let skipped = 0
+        let importedCount = 0
+        let ignoredCount = 0
 
         hostsArray.forEach((hostData) => {
-          // Verificar duplicados
           if (!schema.hosts.findBy({ mac: hostData.mac })) {
-            schema.hosts.create({
-              id: currentHostId++,
-              ...hostData,
-              status: false,
-            })
-            imported++
+            if (hostData.name && hostData.mac && hostData.ip) {
+              schema.hosts.create({
+                id: currentHostId++,
+                ...hostData,
+                status: false,
+              })
+              importedCount++
+            } else {
+              ignoredCount++
+            }
           } else {
-            skipped++
+            ignoredCount++
           }
         })
 
+        const finalHostCount = schema.hosts.all().length
+
+        mockMemoryInfo.hosts.count = finalHostCount
+        mockMemoryInfo.hosts.remaining = mockMemoryInfo.hosts.maxAllowed - finalHostCount
+
+        const isSuccessful = importedCount > 0
+        const message = `Imported ${importedCount} hosts from ${inputSize}. ${ignoredCount} hosts ignored. Hosts in database after import: ${finalHostCount}.`
+
         return {
-          success: true,
-          message: `Import completed: ${imported} added, ${skipped} skipped`,
-          imported,
-          skipped,
+          success: isSuccessful,
+          message: message,
+          imported_count: importedCount,
+          ignored_count: ignoredCount,
+          input_size: inputSize,
+          current_host_count: finalHostCount,
+          metadata: mockMemoryInfo,
         }
       })
 

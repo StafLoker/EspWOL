@@ -142,8 +142,8 @@ class HostService extends ApiService {
     return this.delete(`/hosts?id=${id}`)
   }
 
-  async importHosts(hostsArray) {
-    return this.post('/hosts/import', hostsArray)
+  async importHosts(hosts) {
+    return this.post('/hosts/import', hosts)
   }
 }
 
@@ -268,6 +268,36 @@ function handleApiError(error) {
     return error.message
   }
   return 'Network error'
+}
+
+export function getImportStatus(importResult) {
+  const { imported, ignored, total } = importResult
+
+  if (imported === 0 && ignored > 0) {
+    return {
+      type: 'error',
+      color: 'red',
+      icon: 'cancel'
+    }
+  } else if (ignored > imported) {
+    return {
+      type: 'warning',
+      color: 'yellow',
+      icon: 'warning'
+    }
+  } else if (imported > 0) {
+    return {
+      type: 'success',
+      color: 'green',
+      icon: 'check_circle'
+    }
+  } else {
+    return {
+      type: 'info',
+      color: 'blue',
+      icon: 'info'
+    }
+  }
 }
 
 // =============================================================================

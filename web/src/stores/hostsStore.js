@@ -225,20 +225,37 @@ export const useHostsStore = defineStore('hosts', () => {
     }
   }
 
-  async function importHosts(hostsArray) {
+  async function importHosts(hosts) {
     operations.value.importing = true
     error.value = null
 
     try {
-      const response = await apiClient.hosts.importHosts(hostsArray)
+      const response = await apiClient.hosts.importHosts(hosts)
 
-      // Recargar la lista completa
-      await fetchHosts()
+      if (response.success) {
+        // Actualizar la lista de hosts después de la importación exitosa
+        await fetchHosts()
 
+        // Actualizar metadatos si están disponibles
+        if (response.metadata) {
+          metadata.value = response.metadata
+        }
+      }
+
+      // Devolver respuesta tal como viene del backend
       return response
     } catch (err) {
       error.value = err.message || 'Error importing hosts'
-      throw err
+
+      // Devolver resultado de error en formato esperado
+      return {
+        success: false,
+        message: err.message || 'Error importing hosts',
+        imported_count: 0,
+        ignored_count: 0,
+        input_size: hosts.length,
+        current_host_count: hostsCount.value,
+      }
     } finally {
       operations.value.importing = false
     }
