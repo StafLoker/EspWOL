@@ -257,7 +257,17 @@ void handleImportDatabase() {
     int importedCount = 0;
     int ignoredCount = 0;
 
+    if (arr.size() > 0 && !hasEnoughMemoryForHost()) {
+      sendJsonResponse(507, false, FPSTR(MSG_MAX_HOSTS_REACHED));
+      return;
+    }
+
     for (JsonVariant v : arr) {
+      if (!hasEnoughMemoryForHost()) {
+        ignoredCount++;
+        continue;
+      }
+
       if (!v.containsKey(F("name")) || !v.containsKey(F("mac")) || !v.containsKey(F("ip"))) {
         ignoredCount++;
         continue;
@@ -275,6 +285,7 @@ void handleImportDatabase() {
       bool autoWake = v.containsKey(F("autoWake")) ? v[F("autoWake")].as<bool>() : false;
 
       Host host = { name, mac, ip, autoWake };
+
       if (isHostDuplicate(host)) {
         ignoredCount++;
         continue;
@@ -284,9 +295,21 @@ void handleImportDatabase() {
       importedCount++;
     }
 
-    saveHosts();
+    if (importedCount > 0) {
+      saveHosts();
+    }
 
-    sendJsonResponse(200, true, (String("Imported ") + importedCount + " hosts from " + arr.size() + ". " + ignoredCount + " hosts ignored. Hosts in database after import: " + hosts.size() + "."), true);
+    JsonDocument responseDoc;
+    responseDoc[F("imported_count")] = importedCount;
+    responseDoc[F("ignored_count")] = ignoredCount;
+    responseDoc[F("input_size")] = arr.size();
+    responseDoc[F("current_host_count")] = hosts.size();
+
+    if (importedCount > 0) {
+      sendJsonResponse(200, true, "Import successful", responseDoc, true);
+    } else {
+      sendJsonResponse(200, false, "No hosts were imported", responseDoc, true);
+    }
   }
 }
 
