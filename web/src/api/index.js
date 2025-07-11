@@ -277,25 +277,25 @@ export function getImportStatus(importResult) {
     return {
       type: 'error',
       color: 'red',
-      icon: 'cancel'
+      icon: 'cancel',
     }
   } else if (ignored > imported) {
     return {
       type: 'warning',
       color: 'yellow',
-      icon: 'warning'
+      icon: 'warning',
     }
   } else if (imported > 0) {
     return {
       type: 'success',
       color: 'green',
-      icon: 'check_circle'
+      icon: 'check_circle',
     }
   } else {
     return {
       type: 'info',
       color: 'blue',
-      icon: 'info'
+      icon: 'info',
     }
   }
 }

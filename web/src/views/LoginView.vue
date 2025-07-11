@@ -1,16 +1,12 @@
 <template>
-  <div
-    class="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-stone-100 dark:from-zinc-900 dark:to-zinc-950 relative overflow-hidden"
-  >
+  <div class="min-h-screen flex items-center justify-center">
     <!-- Login Card -->
     <div class="w-full max-w-md mx-4 relative z-10">
-      <div
-        class="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-8 border border-stone-200 dark:border-zinc-700"
-      >
+      <div class="card">
         <!-- Header -->
         <div class="text-center mb-8">
           <div class="flex items-center justify-center mb-4">
-            <EspWol class="size-12" />
+            <EspWol class="size-17" />
           </div>
           <h1 class="text-2xl font-bold text-warm-gray-900 dark:text-stone-100 mb-2">
             {{ $t('pages.login.title') }}
@@ -23,15 +19,16 @@
         <!-- Login Form -->
         <form @submit.prevent="handleLogin" class="space-y-6">
           <!-- Username Field -->
-          <div class="space-y-2">
-            <label class="label-input">
+          <div class="field">
+            <label for="username">
               {{ $t('pages.login.username') }}
             </label>
             <input
               v-model="credentials.username"
+              name="username"
               type="text"
               :placeholder="$t('pages.login.placeholderUsername')"
-              class="input-field"
+              class="form-input"
               :class="{ 'border-red-500 dark:border-red-400': fieldErrors.username }"
               :disabled="authStore.isLoading"
               required
@@ -43,16 +40,17 @@
           </div>
 
           <!-- Password Field -->
-          <div class="space-y-2">
-            <label class="label-input">
+          <div class="field">
+            <label for="password">
               {{ $t('pages.login.password') }}
             </label>
             <div class="relative">
               <input
                 v-model="credentials.password"
+                name="password"
                 :type="showPassword ? 'text' : 'password'"
                 :placeholder="$t('pages.login.placeholderPassword')"
-                class="input-field pr-10"
+                class="form-input pr-10"
                 :class="{ 'border-red-500 dark:border-red-400': fieldErrors.password }"
                 :disabled="authStore.isLoading"
                 required
@@ -125,102 +123,34 @@
             </span>
           </button>
         </form>
-
-        <!-- Footer Info -->
-        <div class="mt-8 pt-6 border-t border-stone-200 dark:border-zinc-700">
-          <div class="text-center">
-            <p class="text-xs text-warm-gray-500 dark:text-stone-400 mb-2">
-              {{ $t('pages.login.systemInfo') }}
-            </p>
-            <div
-              class="flex items-center justify-center space-x-4 text-xs text-warm-gray-400 dark:text-stone-500"
-            >
-              <span>EspWOL v3.0.0</span>
-              <span>•</span>
-              <span>ESP8266</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Language and Theme Controls -->
       <div class="flex items-center justify-center space-x-4 mt-6">
-        <!-- Language Selector -->
-        <SelectRoot v-model="currentLocale">
-          <SelectTrigger class="nav-pill cursor-pointer">
-            <SelectValue>
-              <div class="flex items-center">
-                <i class="material-symbols-outlined text-sm mr-2">language</i>
-                {{ getLanguageName(currentLocale) }}
-              </div>
-            </SelectValue>
-          </SelectTrigger>
-          <SelectPortal>
-            <SelectContent class="select-content">
-              <SelectViewport>
-                <SelectItem
-                  v-for="lang in availableLanguages"
-                  :key="lang.code"
-                  :value="lang.code"
-                  class="select-item"
-                  @click="changeLanguage(lang.code)"
-                >
-                  <SelectItemText>{{ lang.name }}</SelectItemText>
-                </SelectItem>
-              </SelectViewport>
-            </SelectContent>
-          </SelectPortal>
-        </SelectRoot>
-
-        <!-- Theme Toggle -->
-        <button
-          @click="toggleTheme"
-          class="nav-pill cursor-pointer flex items-center"
-          :title="isDark ? $t('theme.switchToLight') : $t('theme.switchToDark')"
-        >
-          <i class="material-symbols-outlined text-sm mr-2">
-            {{ isDark ? 'light_mode' : 'dark_mode' }}
-          </i>
-          {{ isDark ? $t('theme.light') : $t('theme.dark') }}
-        </button>
+        <LanguageSelector />
+        <ThemeToggle />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import {
-  SelectRoot,
-  SelectTrigger,
-  SelectValue,
-  SelectPortal,
-  SelectContent,
-  SelectViewport,
-  SelectItem,
-  SelectItemText
-} from 'reka-ui'
 import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/authStore'
-import { useTheme } from '@/composables/useTheme'
 import { useLanguage } from '@/composables/useLanguage'
 import EspWol from '@/assets/icons/espwol.svg'
+import ThemeToggle from '@/components/ThemeToggle.vue'
+import LanguageSelector from '@/components/LanguageSelector.vue'
 
 const { t } = useI18n()
 const router = useRouter()
-const route = useRoute()
 const authStore = useAuthStore()
 
 // Composables
-const { isDark, toggleTheme } = useTheme()
-const {
-  currentLocale,
-  availableLanguages,
-  changeLanguage,
-  getLanguageName,
-  detectBrowserLanguage
-} = useLanguage()
+
+const { detectBrowserLanguage } = useLanguage()
 
 // =============================================================================
 // STATE
@@ -228,12 +158,12 @@ const {
 
 const credentials = reactive({
   username: '',
-  password: ''
+  password: '',
 })
 
 const fieldErrors = reactive({
   username: '',
-  password: ''
+  password: '',
 })
 
 const showPassword = ref(false)
@@ -243,10 +173,12 @@ const showPassword = ref(false)
 // =============================================================================
 
 const isFormValid = computed(() => {
-  return credentials.username.trim().length > 0 &&
-         credentials.password.length > 0 &&
-         !fieldErrors.username &&
-         !fieldErrors.password
+  return (
+    credentials.username.trim().length > 0 &&
+    credentials.password.length > 0 &&
+    !fieldErrors.username &&
+    !fieldErrors.password
+  )
 })
 
 // =============================================================================
@@ -276,7 +208,6 @@ function validateForm() {
 }
 
 function getErrorMessage(error) {
-  // Mapear errores comunes a mensajes traducidos
   if (error.includes('Invalid credentials') || error.includes('401')) {
     return t('pages.login.invalidCredentials')
   }
@@ -297,11 +228,8 @@ async function handleLogin() {
   try {
     await authStore.login(credentials.username.trim(), credentials.password)
 
-
-    router.push("/")
-
+    router.push('/')
   } catch (error) {
-    // Error is already handled by the store
     console.error('Login failed:', error)
 
     // Clear password field on error

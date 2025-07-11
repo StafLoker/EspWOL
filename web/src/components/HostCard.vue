@@ -168,5 +168,4 @@ const handleDelete = () => {
 .action-button i {
   @apply text-lg transition-colors duration-200;
 }
-
 </style>

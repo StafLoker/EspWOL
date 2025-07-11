@@ -17,18 +17,18 @@ export const useSettingsStore = defineStore('settings', () => {
       ip: '',
       networkMask: '',
       gateway: '',
-      dns: ''
+      dns: '',
     },
-    pingPeriod: 60000
+    pingPeriod: 60000,
   })
 
   const about = ref({
     version: '',
-    hostname: ''
+    hostname: '',
   })
 
   const authSettings = ref({
-    username: ''
+    username: '',
   })
 
   const isLoading = ref(false)
@@ -40,7 +40,7 @@ export const useSettingsStore = defineStore('settings', () => {
     savingNetwork: false,
     savingAuth: false,
     savingPing: false,
-    resettingWiFi: false
+    resettingWiFi: false,
   })
 
   // =============================================================================
@@ -59,17 +59,17 @@ export const useSettingsStore = defineStore('settings', () => {
     { value: 10800000, label: '3 hours', seconds: 10800 },
     { value: 21600000, label: '6 hours', seconds: 21600 },
     { value: 43200000, label: '12 hours', seconds: 43200 },
-    { value: 86400000, label: '24 hours', seconds: 86400 }
+    { value: 86400000, label: '24 hours', seconds: 86400 },
   ])
 
   const currentPingPeriodLabel = computed(() => {
-    const period = validPingPeriods.value.find(p => p.value === settings.value.pingPeriod)
+    const period = validPingPeriods.value.find((p) => p.value === settings.value.pingPeriod)
     return period ? period.label : 'Unknown'
   })
 
   const networkConfigFormatted = computed(() => ({
     ...settings.value.networkConfig,
-    statusText: settings.value.networkConfig.enable ? 'Static IP' : 'DHCP'
+    statusText: settings.value.networkConfig.enable ? 'Static IP' : 'DHCP',
   }))
 
   // =============================================================================
@@ -170,7 +170,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
       // Update local state (but don't store password)
       authSettings.value = {
-        username: authConfig.username
+        username: authConfig.username,
       }
 
       return response
@@ -244,22 +244,42 @@ export const useSettingsStore = defineStore('settings', () => {
 
     if (config.enable) {
       // Validate IP
-      if (!config.ip || !/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(config.ip)) {
+      if (
+        !config.ip ||
+        !/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
+          config.ip,
+        )
+      ) {
         errors.push('Valid IP address is required')
       }
 
       // Validate Network Mask
-      if (!config.networkMask || !/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(config.networkMask)) {
+      if (
+        !config.networkMask ||
+        !/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
+          config.networkMask,
+        )
+      ) {
         errors.push('Valid network mask is required')
       }
 
       // Validate Gateway
-      if (!config.gateway || !/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(config.gateway)) {
+      if (
+        !config.gateway ||
+        !/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
+          config.gateway,
+        )
+      ) {
         errors.push('Valid gateway address is required')
       }
 
       // Validate DNS
-      if (!config.dns || !/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(config.dns)) {
+      if (
+        !config.dns ||
+        !/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
+          config.dns,
+        )
+      ) {
         errors.push('Valid DNS address is required')
       }
     }
@@ -323,6 +343,6 @@ export const useSettingsStore = defineStore('settings', () => {
     // Validation
     validateNetworkConfig,
     validateAuthConfig,
-    clearError
+    clearError,
   }
 })

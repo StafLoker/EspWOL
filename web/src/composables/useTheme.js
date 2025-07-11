@@ -7,14 +7,14 @@ export function useTheme() {
     attribute: 'class',
     valueDark: 'dark',
     valueLight: '',
-    storageKey: 'espwol-theme'
+    storageKey: 'espwol-theme',
   })
 
   const toggleTheme = useToggle(isDark)
 
-  const currentTheme = computed(() => isDark.value ? 'dark' : 'light')
-  const themeIcon = computed(() => isDark.value ? 'light_mode' : 'dark_mode')
-  const themeLabel = computed(() => isDark.value ? 'Light' : 'Dark')
+  const currentTheme = computed(() => (isDark.value ? 'dark' : 'light'))
+  const themeIcon = computed(() => (isDark.value ? 'light_mode' : 'dark_mode'))
+  const themeLabel = computed(() => (isDark.value ? 'Light' : 'Dark'))
 
   // Method to set specific theme (para compatibilidad)
   const setTheme = (theme) => {
@@ -27,6 +27,6 @@ export function useTheme() {
     themeIcon,
     themeLabel,
     toggleTheme,
-    setTheme
+    setTheme,
   }
 }

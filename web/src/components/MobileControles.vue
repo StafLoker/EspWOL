@@ -13,11 +13,7 @@
 
     <!-- Mobile Controls Dropdown -->
     <Teleport to="body">
-      <div
-        v-if="isOpen"
-        class="fixed inset-0 z-50 sm:hidden"
-        @click="isOpen = false"
-      >
+      <div v-if="isOpen" class="fixed inset-0 z-50 sm:hidden" @click="isOpen = false">
         <div class="fixed inset-0 bg-black/50 dark:bg-black/70"></div>
         <div
           class="fixed top-20 right-3 bg-stone-50 dark:bg-zinc-800 rounded-2xl shadow-2xl border border-stone-200 dark:border-zinc-700 p-4 min-w-[200px]"
@@ -40,7 +36,10 @@
                 <span class="text-warm-gray-800 dark:text-stone-200">
                   {{ getLanguageName(lang.code) }}
                 </span>
-                <i v-if="currentLocale === lang.code" class="material-symbols-outlined text-sm ml-auto text-slate-600 dark:text-slate-400">
+                <i
+                  v-if="currentLocale === lang.code"
+                  class="material-symbols-outlined text-sm ml-auto text-slate-600 dark:text-slate-400"
+                >
                   check
                 </i>
               </button>
@@ -77,12 +76,7 @@ import { useLanguage } from '@/composables/useLanguage'
 
 // Composables
 const { isDark, toggleTheme } = useTheme()
-const {
-  currentLocale,
-  availableLanguages,
-  changeLanguage,
-  getLanguageName
-} = useLanguage()
+const { currentLocale, availableLanguages, changeLanguage, getLanguageName } = useLanguage()
 
 // State
 const isOpen = ref(false)

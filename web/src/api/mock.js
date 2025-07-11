@@ -1,11 +1,7 @@
-// =============================================================================
-// MIRAGE MOCK SERVER - Configuración para simular el backend ESP8266 v3.0.0
-// =============================================================================
-
 import { createServer, Model, Factory, Response } from 'miragejs'
 
 // =============================================================================
-// CONSTANTES DEL ESP8266
+// CONST OF BACK-END
 // =============================================================================
 
 const MAX_HOST_NAME_LENGTH = 32
@@ -16,7 +12,7 @@ const HARD_MAX_HOSTS = 50
 const VALID_PING_PERIODS = [0, 60, 300, 600, 900, 1800, 2700, 3600, 10800, 21600, 43200, 86400]
 
 // =============================================================================
-// DATOS MOCK INICIALES
+// MOCK DATA
 // =============================================================================
 
 let currentHostId = 4
@@ -43,7 +39,7 @@ const mockMemoryInfo = {
 }
 
 // =============================================================================
-// CONFIGURACIÓN DEL SERVIDOR MIRAGE
+// Mirage Server Setup
 // =============================================================================
 
 export function setupMirageServer() {
@@ -106,13 +102,6 @@ export function setupMirageServer() {
     },
 
     routes() {
-      // MirageJS intercepta automáticamente las peticiones en desarrollo
-      // No necesitamos namespace específico
-
-      // =============================================================================
-      // AUTHENTICATION
-      // =============================================================================
-
       this.post('/login', (schema, request) => {
         const { username, password } = JSON.parse(request.requestBody)
 
@@ -149,7 +138,6 @@ export function setupMirageServer() {
       this.get('/hosts', (schema) => {
         const hosts = schema.hosts.all().models
 
-        // Actualizar metadata
         mockMemoryInfo.hosts.count = hosts.length
         mockMemoryInfo.hosts.remaining = mockMemoryInfo.hosts.maxAllowed - hosts.length
         mockMemoryInfo.canAddMoreHosts = hosts.length < mockMemoryInfo.hosts.maxAllowed
@@ -165,7 +153,6 @@ export function setupMirageServer() {
       this.post('/hosts', (schema, request) => {
         const hostData = JSON.parse(request.requestBody)
 
-        // Validaciones de límites de caracteres
         if (hostData.name && hostData.name.length > MAX_HOST_NAME_LENGTH) {
           return new Response(
             400,
@@ -177,7 +164,6 @@ export function setupMirageServer() {
           )
         }
 
-        // Verificar límite de hosts
         const currentCount = schema.hosts.all().length
         if (currentCount >= mockMemoryInfo.hosts.maxAllowed) {
           return new Response(
@@ -190,7 +176,6 @@ export function setupMirageServer() {
           )
         }
 
-        // Verificar duplicados por MAC
         const existingHost = schema.hosts.findBy({ mac: hostData.mac })
         if (existingHost) {
           return new Response(
@@ -206,7 +191,7 @@ export function setupMirageServer() {
         const newHost = schema.hosts.create({
           id: currentHostId++,
           ...hostData,
-          status: false, // Los nuevos hosts empiezan offline
+          status: false,
         })
 
         return {
@@ -374,7 +359,6 @@ export function setupMirageServer() {
           )
         }
 
-        // Simular WOL exitoso
         host.update({ status: true })
 
         return {
@@ -398,7 +382,6 @@ export function setupMirageServer() {
           )
         }
 
-        // Simular ping con resultado aleatorio
         const isOnline = Math.random() > 0.3
         host.update({ status: isOnline })
 
@@ -466,7 +449,6 @@ export function setupMirageServer() {
       this.put('/settings/auth', (schema, request) => {
         const { username, password } = JSON.parse(request.requestBody)
 
-        // Validaciones
         if (username && username.length > MAX_USERNAME_LENGTH) {
           return new Response(
             400,
@@ -543,11 +525,6 @@ export function setupMirageServer() {
           message: 'WiFi reset successful',
         }
       })
-
-      // En producción, permitir que las peticiones pasen al servidor real
-      if (import.meta.env.MODE === 'production') {
-        this.passthrough()
-      }
     },
   })
 }

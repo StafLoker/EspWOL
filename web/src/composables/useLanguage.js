@@ -13,23 +13,23 @@ export function useLanguage() {
     {
       code: 'en',
       name: 'English',
-      nativeName: 'English'
+      nativeName: 'English',
     },
     {
       code: 'es',
       name: 'Español',
-      nativeName: 'Español'
+      nativeName: 'Español',
     },
     {
       code: 'ru',
       name: 'Русский',
-      nativeName: 'Русский'
-    }
+      nativeName: 'Русский',
+    },
   ]
 
   // Computed properties
   const currentLanguage = computed(() => {
-    return availableLanguages.find(lang => lang.code === currentLocale.value)
+    return availableLanguages.find((lang) => lang.code === currentLocale.value)
   })
 
   const currentLanguageName = computed(() => {
@@ -38,7 +38,7 @@ export function useLanguage() {
 
   // Methods
   const changeLanguage = (newLocale) => {
-    if (availableLanguages.some(lang => lang.code === newLocale)) {
+    if (availableLanguages.some((lang) => lang.code === newLocale)) {
       currentLocale.value = newLocale
       locale.value = newLocale
     }
@@ -61,7 +61,7 @@ export function useLanguage() {
   // Detect browser language on first visit
   const detectBrowserLanguage = () => {
     const browserLang = navigator.language.split('-')[0]
-    const supportedLang = availableLanguages.find(lang => lang.code === browserLang)
+    const supportedLang = availableLanguages.find((lang) => lang.code === browserLang)
 
     if (supportedLang && !localStorage.getItem('espwol-locale')) {
       changeLanguage(supportedLang.code)
@@ -75,6 +75,6 @@ export function useLanguage() {
     availableLanguages,
     changeLanguage,
     getLanguageName,
-    detectBrowserLanguage
+    detectBrowserLanguage,
   }
 }

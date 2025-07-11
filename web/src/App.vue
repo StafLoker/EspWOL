@@ -3,16 +3,24 @@
     class="h-screen flex flex-col bg-gradient-to-br from-white to-stone-100 dark:from-zinc-900 dark:to-zinc-950 relative overflow-hidden"
   >
     <!-- Animated Background -->
-    <div class="absolute inset-0 opacity-30 dark:opacity-20">
-      <svg class="w-full h-full" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
-        <defs>
-          <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.1" />
-            <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.05" />
-          </linearGradient>
-        </defs>
-        <g fill="url(#waveGradient)" stroke="none">
-          <path d="M-200,300 Q200,250 400,300 T800,300 T1200,300 T1600,300">
+    <div class="fixed inset-0 opacity-25 pointer-events-none">
+      <svg class="w-full h-full" viewBox="0 0 1400 800" xmlns="http://www.w3.org/2000/svg">
+        <g
+          stroke="currentColor"
+          stroke-width="0.8"
+          fill="none"
+          class="text-warm-gray-400 dark:text-zinc-600"
+        >
+          <path d="M-200,100 Q100,80 400,100 T1000,100 T1600,100">
+            <animateTransform
+              attributeName="transform"
+              type="translateX"
+              values="0; -400; 0"
+              dur="20s"
+              repeatCount="indefinite"
+            />
+          </path>
+          <path d="M-200,150 Q150,170 450,150 T1050,150 T1650,150">
             <animateTransform
               attributeName="transform"
               type="translateX"
@@ -21,12 +29,30 @@
               repeatCount="indefinite"
             />
           </path>
-          <path d="M-200,400 Q300,380 500,400 T900,400 T1300,400 T1700,400">
+          <path d="M-200,200 Q200,180 500,200 T1100,200 T1700,200">
             <animateTransform
               attributeName="transform"
               type="translateX"
               values="0; -400; 0"
               dur="30s"
+              repeatCount="indefinite"
+            />
+          </path>
+          <path d="M-200,300 Q250,320 550,300 T1150,300 T1750,300">
+            <animateTransform
+              attributeName="transform"
+              type="translateX"
+              values="0; -400; 0"
+              dur="22s"
+              repeatCount="indefinite"
+            />
+          </path>
+          <path d="M-200,400 Q300,380 600,400 T1200,400 T1800,400">
+            <animateTransform
+              attributeName="transform"
+              type="translateX"
+              values="0; -400; 0"
+              dur="28s"
               repeatCount="indefinite"
             />
           </path>
@@ -113,16 +139,7 @@
           </SelectRoot>
         </div>
 
-        <!-- Theme Toggle -->
-        <button
-          @click="toggleTheme"
-          class="nav-pill cursor-pointer flex items-center"
-          :title="isDark ? $t('theme.switchToLight') : $t('theme.switchToDark')"
-        >
-          <i class="material-symbols-outlined text-lg">
-            {{ isDark ? 'light_mode' : 'dark_mode' }}
-          </i>
-        </button>
+        <ThemeToggle />
 
         <!-- User Menu -->
         <DropdownMenuRoot v-model:open="dropdownOpen">
