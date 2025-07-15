@@ -1,5 +1,7 @@
 <template>
-  <div class="host-card">
+  <div
+    class="bg-stone-50 dark:bg-zinc-800 rounded-2xl p-6 shadow-sm border border-stone-200 dark:border-zinc-700 hover:shadow-md transition-all duration-200"
+  >
     <!-- Host Name -->
     <h3 class="text-xl font-semibold text-warm-gray-800 dark:text-stone-100 mb-4">{{ name }}</h3>
 
@@ -120,11 +122,6 @@ const handleDelete = () => {
 
 .status-offline .status-icon:hover {
   @apply animate-bounce;
-}
-
-.host-card {
-  @apply bg-stone-50 dark:bg-zinc-800 rounded-2xl p-6 shadow-sm border border-stone-200 dark:border-zinc-700;
-  @apply hover:shadow-md transition-all duration-200;
 }
 
 .status-online {

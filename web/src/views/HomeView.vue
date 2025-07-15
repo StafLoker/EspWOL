@@ -55,20 +55,7 @@
       v-if="hostsStore.isLoading"
       class="grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4"
     >
-      <div v-for="n in 6" :key="n" class="host-card animate-pulse">
-        <div class="h-6 bg-stone-300 dark:bg-zinc-600 rounded mb-4"></div>
-        <div class="flex items-center mb-4 bg-zinc-200 dark:bg-zinc-700 rounded-2xl px-2 py-3">
-          <div class="w-12 h-12 bg-stone-300 dark:bg-zinc-600 rounded-full mr-4"></div>
-          <div class="flex-1">
-            <div class="h-4 bg-stone-300 dark:bg-zinc-600 rounded mb-2"></div>
-            <div class="h-3 bg-stone-300 dark:bg-zinc-600 rounded w-3/4"></div>
-          </div>
-        </div>
-        <div class="flex items-center gap-3 justify-end">
-          <div class="w-10 h-10 bg-stone-300 dark:bg-zinc-600 rounded-lg"></div>
-          <div class="w-10 h-10 bg-stone-300 dark:bg-zinc-600 rounded-lg"></div>
-        </div>
-      </div>
+      <HostCardPlaceholder v-for="n in 6" :key="n" />
     </div>
 
     <!-- Hosts Grid -->
@@ -86,7 +73,7 @@
           @delete="handleDeleteHost"
         />
       </div>
-      <div class="pill text-center mt-6">Host left</div>
+      <div class="pill text-center mt-6">Host left</div> <!-- To finish -->
     </div>
 
     <!-- No results state (when searching) -->
@@ -246,6 +233,7 @@ import {
 } from 'reka-ui'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useHostsStore } from '@/stores/hostsStore'
+import HostCardPlaceholder from '@/components/HostCardPlaceholder.vue'
 
 const hostsStore = useHostsStore()
 
