@@ -69,5 +69,3 @@ export function setupMirageServer() {
     },
   })
 }
-
-export { mockUser } from './data.js'

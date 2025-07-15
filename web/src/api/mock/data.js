@@ -1,6 +1,5 @@
 export const HARD_MAX_HOSTS = 50
 
-export let currentHostId = 4
 export const sessionToken = 'abc123def456ghij789klmno012pqrs'
 
 export const mockUser = {

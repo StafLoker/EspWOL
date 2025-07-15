@@ -1,7 +1,10 @@
 import { Response } from 'miragejs'
-import { currentHostId, mockMemoryInfo } from '../data.js'
+import { mockMemoryInfo } from '../data.js'
+import { MAX_HOST_NAME_LENGTH } from '@/util/constants.js'
 
 export function hostsRoutes() {
+  let currentHostId = 4
+
   this.get('/hosts', (schema) => {
     const hosts = schema.hosts.all().models
 
