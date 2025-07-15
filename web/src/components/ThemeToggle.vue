@@ -1,7 +1,7 @@
 <template>
   <button
     @click="toggleTheme"
-    class="nav-pill flex items-center"
+    class="pill-button flex items-center"
     :aria-label="$t('theme.toggle')"
     :title="$t(toggleLabel)"
   >

@@ -1,4 +1,12 @@
 /* PILL BUTTONS (rounded-full) */
+.pill-button {
+  @apply rounded-full px-6 py-2 text-sm font-medium transition-all duration-200 border shadow-sm;
+  @apply bg-stone-50 border-stone-200 text-warm-gray-700 hover:bg-stone-100 hover:shadow-md;
+  @apply dark:bg-zinc-800 dark:border-zinc-700 dark:text-stone-200 dark:hover:bg-zinc-700 dark:shadow-zinc-900/50;
+  @apply hover:transform hover:-translate-y-0.5
+}
+
+
 .pill-button-apply {
   @apply rounded-full px-6 py-2 text-sm font-medium transition-all duration-200 border shadow-sm;
   @apply bg-stone-50 border-stone-200 text-warm-gray-700 hover:bg-green-500 hover:border-green-500 hover:text-white hover:shadow-md;

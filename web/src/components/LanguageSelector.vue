@@ -1,7 +1,7 @@
 <template>
   <div class="relative">
     <SelectRoot v-model="currentLocale" @update:model-value="changeLanguage">
-      <SelectTrigger class="nav-pill flex items-center min-w-[120px]">
+      <SelectTrigger class="pill-button flex items-center min-w-[120px]">
         <div class="flex items-center">
           <i class="material-symbols-outlined text-lg mr-2">language</i>
           <SelectValue :placeholder="currentLanguageName" />
