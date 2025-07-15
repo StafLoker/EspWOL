@@ -125,6 +125,54 @@
         </form>
       </div>
 
+      <!-- Development Credentials Card -->
+      <div v-if="!isProduction" class="mt-6">
+        <div class="card bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+          <div class="flex items-center mb-3">
+            <i class="material-symbols-outlined text-blue-600 dark:text-blue-400 mr-2 text-lg">
+              developer_mode
+            </i>
+            <h3 class="text-sm font-semibold text-blue-800 dark:text-blue-200">
+              Development Mode
+            </h3>
+          </div>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-blue-700 dark:text-blue-300">Username:</span>
+              <button
+                @click="fillUsername"
+                class="text-xs font-mono bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-700 transition-colors"
+              >
+                {{ mockUser.username }}
+              </button>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-blue-700 dark:text-blue-300">Password:</span>
+              <button
+                @click="fillPassword"
+                class="text-xs font-mono bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-700 transition-colors"
+              >
+                {{ showDevPassword ? mockUser.password : '••••••••••••' }}
+              </button>
+            </div>
+            <div class="flex items-center justify-between mt-3 pt-2 border-t border-blue-200 dark:border-blue-700">
+              <button
+                @click="toggleDevPassword"
+                class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors"
+              >
+                {{ showDevPassword ? 'Hide' : 'Show' }} Password
+              </button>
+              <button
+                @click="fillBothCredentials"
+                class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition-colors"
+              >
+                Fill Both
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Language and Theme Controls -->
       <div class="flex items-center justify-center space-x-4 mt-6">
         <LanguageSelector />
@@ -148,6 +196,15 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 // =============================================================================
+// DEVELOPMENT CONSTANTS
+// =============================================================================
+
+const mockUser = {
+  username: 'glavniy',
+  password: 'Lep#Chick43',
+}
+
+// =============================================================================
 // STATE
 // =============================================================================
 
@@ -162,6 +219,7 @@ const fieldErrors = reactive({
 })
 
 const showPassword = ref(false)
+const showDevPassword = ref(false)
 
 // =============================================================================
 // COMPUTED
@@ -174,6 +232,10 @@ const isFormValid = computed(() => {
     !fieldErrors.username &&
     !fieldErrors.password
   )
+})
+
+const isProduction = computed(() => {
+  return import.meta.env.PROD || process.env.NODE_ENV === 'production'
 })
 
 // =============================================================================
@@ -210,6 +272,28 @@ function getErrorMessage(error) {
     return t('pages.login.networkError')
   }
   return error
+}
+
+// Development helper functions
+function fillUsername() {
+  credentials.username = mockUser.username
+  fieldErrors.username = ''
+}
+
+function fillPassword() {
+  credentials.password = mockUser.password
+  fieldErrors.password = ''
+}
+
+function fillBothCredentials() {
+  credentials.username = mockUser.username
+  credentials.password = mockUser.password
+  fieldErrors.username = ''
+  fieldErrors.password = ''
+}
+
+function toggleDevPassword() {
+  showDevPassword.value = !showDevPassword.value
 }
 
 async function handleLogin() {
