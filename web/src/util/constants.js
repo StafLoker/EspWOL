@@ -1,0 +1,8 @@
+export const MAX_HOST_NAME_LENGTH = 32
+
+export const VALID_PING_PERIODS = [
+  0, 60, 300, 600, 900, 1800, 2700, 3600, 10800, 21600, 43200, 86400,
+]
+
+export const MAX_USERNAME_LENGTH = 20
+export const MAX_PASSWORD_LENGTH = 32

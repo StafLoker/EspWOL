@@ -1,10 +1,4 @@
-import {
-  MAX_HOST_NAME_LENGTH,
-  MAX_USERNAME_LENGTH,
-  MAX_PASSWORD_LENGTH,
-  HARD_MAX_HOSTS,
-  VALID_PING_PERIODS
-} from '../utils/constants.js'
+export const HARD_MAX_HOSTS = 50
 
 export let currentHostId = 4
 export const sessionToken = 'abc123def456ghij789klmno012pqrs'
@@ -32,12 +26,4 @@ export const mockMemoryInfo = {
   },
   hasEnoughMemory: true,
   canAddMoreHosts: true,
-}
-
-export const mockConstants = {
-  MAX_HOST_NAME_LENGTH,
-  MAX_USERNAME_LENGTH,
-  MAX_PASSWORD_LENGTH,
-  HARD_MAX_HOSTS,
-  VALID_PING_PERIODS
 }

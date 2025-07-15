@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { apiClient } from '@/api/services'
+import { apiClient } from '@/api'
+import { isValidIPv4 } from '@/util/validation'
+import { MAX_USERNAME_LENGTH, MAX_PASSWORD_LENGTH } from '@/util/constants'
 
 export const useSettingsStore = defineStore('settings', () => {
   // =============================================================================
@@ -30,7 +32,6 @@ export const useSettingsStore = defineStore('settings', () => {
   const isLoading = ref(false)
   const error = ref(null)
 
-  // Estados de operaciones específicas
   const operations = ref({
     loadingAbout: false,
     savingNetwork: false,
@@ -43,6 +44,7 @@ export const useSettingsStore = defineStore('settings', () => {
   // GETTERS
   // =============================================================================
 
+  // TODO: read VALID_PING_PERIODS constatns and cuplate and add minite, disable o hours with i18n
   const validPingPeriods = computed(() => [
     { value: 0, label: 'Disabled', seconds: 0 },
     { value: 60000, label: '1 minute', seconds: 60 },
@@ -63,6 +65,7 @@ export const useSettingsStore = defineStore('settings', () => {
     return period ? period.label : 'Unknown'
   })
 
+  // Return i18n text
   const networkConfigFormatted = computed(() => ({
     ...settings.value.networkConfig,
     statusText: settings.value.networkConfig.enable ? 'Static IP' : 'DHCP',
@@ -164,7 +167,6 @@ export const useSettingsStore = defineStore('settings', () => {
     try {
       const response = await apiClient.settings.updateAuthSettings(authConfig)
 
-      // Update local state (but don't store password)
       authSettings.value = {
         username: authConfig.username,
       }
@@ -235,48 +237,27 @@ export const useSettingsStore = defineStore('settings', () => {
   // VALIDATION HELPERS
   // =============================================================================
 
-  // TODO Duplated regex
   function validateNetworkConfig(config) {
     const errors = []
 
     if (config.enable) {
       // Validate IP
-      if (
-        !config.ip ||
-        !/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
-          config.ip,
-        )
-      ) {
+      if (!config.ip || !isValidIPv4(config.ip)) {
         errors.push('Valid IP address is required')
       }
 
       // Validate Network Mask
-      if (
-        !config.networkMask ||
-        !/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
-          config.networkMask,
-        )
-      ) {
+      if (!config.networkMask || !isValidIPv4(config.networkMask)) {
         errors.push('Valid network mask is required')
       }
 
       // Validate Gateway
-      if (
-        !config.gateway ||
-        !/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
-          config.gateway,
-        )
-      ) {
+      if (!config.gateway || !isValidIPv4(config.gateway)) {
         errors.push('Valid gateway address is required')
       }
 
       // Validate DNS
-      if (
-        !config.dns ||
-        !/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
-          config.dns,
-        )
-      ) {
+      if (!config.dns || !isValidIPv4(config.dns)) {
         errors.push('Valid DNS address is required')
       }
     }
@@ -290,14 +271,15 @@ export const useSettingsStore = defineStore('settings', () => {
     // Validate username
     if (!config.username || config.username.trim().length === 0) {
       errors.push('Username is required')
-    } else if (config.username.length > 20) {
+    } else if (config.username.length > MAX_USERNAME_LENGTH) {
       errors.push('Username cannot exceed 20 characters')
     }
 
     // Validate password
+    // TODO: Add check complety of password
     if (!config.password || config.password.length === 0) {
       errors.push('Password is required')
-    } else if (config.password.length > 32) {
+    } else if (config.password.length > MAX_PASSWORD_LENGTH) {
       errors.push('Password cannot exceed 32 characters')
     }
 

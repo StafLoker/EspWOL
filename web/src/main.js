@@ -6,9 +6,8 @@ import App from './App.vue'
 import router from './router'
 import { i18n } from './i18n'
 
-// Configurar Mirage para desarrollo/demo
 if (import.meta.env.MODE === 'development' || import.meta.env.MODE === 'demo') {
-  const { setupMirageServer } = await import('./api/mock')
+  const { setupMirageServer } = await import('@/api/mock')
   setupMirageServer()
 }
 

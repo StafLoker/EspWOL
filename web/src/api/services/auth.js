@@ -18,9 +18,4 @@ class AuthService extends ApiService {
     localStorage.removeItem('username')
     return response
   }
-
-  // TODO: Use VueUse
-  getStoredUsername() {
-    return localStorage.getItem('username')
-  }
 }

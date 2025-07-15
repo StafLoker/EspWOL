@@ -2,7 +2,9 @@
   <DialogRoot :open="open" @update:open="$emit('update:open', $event)">
     <DialogPortal>
       <DialogOverlay class="fixed inset-0 bg-black/50 dark:bg-black/70 z-[100]" />
-      <DialogContent class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-2xl border border-stone-200 dark:border-zinc-700 max-w-[500px] w-[90vw] z-[101] max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-2xl border border-stone-200 dark:border-zinc-700 max-w-[500px] w-[90vw] z-[101] max-h-[90vh] overflow-y-auto"
+      >
         <DialogTitle class="text-lg font-semibold text-warm-gray-800 dark:text-stone-100 mb-2">
           {{
             isEdit ? $t('components.hostDialog.editTitle') : $t('components.hostDialog.addTitle')
@@ -33,13 +35,14 @@
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <!-- Name Field -->
           <div class="field">
-            <label class="label">
+            <label class="label" for="name">
               {{ $t('components.hostDialog.name') }}
               <span class="text-red-500">*</span>
             </label>
             <input
               v-model="formData.name"
               type="text"
+              name="name"
               :placeholder="$t('components.hostDialog.namePlaceholder')"
               class="input"
               :class="{ 'border-red-500 dark:border-red-400': errors.name }"
@@ -58,13 +61,14 @@
 
           <!-- MAC Address Field -->
           <div class="field">
-            <label class="label">
+            <label class="label" for="mac">
               {{ $t('components.hostDialog.mac') }}
               <span class="text-red-500">*</span>
             </label>
             <input
               v-model="formData.mac"
               type="text"
+              name="mac"
               :placeholder="$t('components.hostDialog.macPlaceholder')"
               class="input"
               :class="{ 'border-red-500 dark:border-red-400': errors.mac }"
@@ -84,12 +88,13 @@
 
           <!-- IP Address Field -->
           <div class="field">
-            <label class="label">
+            <label class="label" for="ip">
               {{ $t('components.hostDialog.ip') }}
               <span class="text-red-500">*</span>
             </label>
             <input
               v-model="formData.ip"
+              name="ip"
               type="text"
               :placeholder="$t('components.hostDialog.ipPlaceholder')"
               class="input"
@@ -110,15 +115,21 @@
             class="flex items-center justify-between p-3 bg-stone-50 dark:bg-zinc-800 rounded-lg"
           >
             <div class="flex-1">
-              <label class="font-medium text-warm-gray-900 dark:text-stone-100">
+              <label class="font-medium text-warm-gray-900 dark:text-stone-100" for="auto-wake">
                 {{ $t('components.hostDialog.autoWake') }}
               </label>
               <p class="text-sm text-warm-gray-600 dark:text-stone-400 mt-1">
                 {{ $t('components.hostDialog.autoWakeDescription') }}
               </p>
             </div>
-            <SwitchRoot v-model:checked="formData.autoWake" class="relative h-[25px] w-[42px] cursor-default rounded-full bg-stone-300 outline-none data-[state=checked]:bg-green-500 dark:bg-zinc-600 dark:data-[state=checked]:bg-green-600">
-              <SwitchThumb class="block h-[21px] w-[21px] translate-x-0.5 rounded-full bg-white shadow-lg transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[19px]" />
+            <SwitchRoot
+              id="auto-wake"
+              v-model:checked="formData.autoWake"
+              class="relative h-[25px] w-[42px] cursor-default rounded-full bg-stone-300 outline-none data-[state=checked]:bg-green-500 dark:bg-zinc-600 dark:data-[state=checked]:bg-green-600"
+            >
+              <SwitchThumb
+                class="block h-[21px] w-[21px] translate-x-0.5 rounded-full bg-white shadow-lg transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[19px]"
+              />
             </SwitchRoot>
           </div>
 
@@ -181,7 +192,10 @@
           </button>
         </div>
 
-        <DialogClose class="absolute top-4 right-4 inline-flex h-[25px] w-[25px] appearance-none items-center justify-center rounded-full hover:bg-stone-100 dark:hover:bg-zinc-700 focus:shadow-md focus:outline-none" aria-label="Close">
+        <DialogClose
+          class="absolute top-4 right-4 inline-flex h-[25px] w-[25px] appearance-none items-center justify-center rounded-full hover:bg-stone-100 dark:hover:bg-zinc-700 focus:shadow-md focus:outline-none"
+          aria-label="Close"
+        >
           <i class="material-symbols-outlined text-lg">close</i>
         </DialogClose>
       </DialogContent>
@@ -203,6 +217,8 @@ import {
 } from 'reka-ui'
 import { ref, watch, computed, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { MAX_HOST_NAME_LENGTH } from '@/util/constants'
+import { isValidIPv4, isValidMACAddress } from '@/util/validation'
 
 const { t } = useI18n()
 
@@ -256,7 +272,7 @@ const isEdit = computed(() => !!(props.host && props.host.id))
 const isValid = computed(() => {
   return (
     formData.name.trim().length > 0 &&
-    formData.name.length <= 32 &&
+    formData.name.length <= MAX_HOST_NAME_LENGTH &&
     isValidMACAddress(formData.mac) &&
     (formData.ip === '' || isValidIPv4(formData.ip)) &&
     !errors.name &&
@@ -264,21 +280,6 @@ const isValid = computed(() => {
     !errors.ip
   )
 })
-
-// =============================================================================
-// VALIDATION FUNCTIONS
-// =============================================================================
-
-function isValidMACAddress(mac) {
-  const macRegex = /^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/
-  return macRegex.test(mac)
-}
-
-function isValidIPv4(ip) {
-  const ipRegex =
-    /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
-  return ipRegex.test(ip)
-}
 
 function validateForm() {
   // Reset errors

@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { apiClient } from '@/api/services'
+import { apiClient } from '@/api'
+import { MAX_HOST_NAME_LENGTH } from '@/util/constants'
+import { isValidIPv4, isValidMACAddress } from '@/util/validation'
 
 export const useHostsStore = defineStore('hosts', () => {
   // =============================================================================
@@ -292,14 +294,6 @@ export const useHostsStore = defineStore('hosts', () => {
     }
   }
 
-  async function pingAllHosts() {
-    const pingPromises = hosts.value.map((host) =>
-      pingHost(host.id).catch((err) => console.warn(`Ping failed for ${host.name}:`, err)),
-    )
-
-    await Promise.allSettled(pingPromises)
-  }
-
   // =============================================================================
   // VALIDATION HELPERS
   // =============================================================================
@@ -310,20 +304,15 @@ export const useHostsStore = defineStore('hosts', () => {
 
     if (!hostData.name || hostData.name.trim().length === 0) {
       errors.push('Host name is required')
-    } else if (hostData.name.length > 32) {
+    } else if (hostData.name.length > MAX_HOST_NAME_LENGTH) {
       errors.push('Host name exceeds maximum length of 32 characters')
     }
 
-    if (!hostData.mac || !/^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/.test(hostData.mac)) {
+    if (!hostData.mac || !isValidMACAddress(hostData.mac)) {
       errors.push('Valid MAC address is required')
     }
 
-    if (
-      hostData.ip &&
-      !/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
-        hostData.ip,
-      )
-    ) {
+    if (hostData.ip && !isValidIPv4(hostData.ip)) {
       errors.push('Invalid IP address format')
     }
 
@@ -374,11 +363,8 @@ export const useHostsStore = defineStore('hosts', () => {
     updateHost,
     deleteHost,
     importHosts,
-
-    // Network operations
     wakeHost,
     pingHost,
-    pingAllHosts,
 
     // Validation
     validateHostData,

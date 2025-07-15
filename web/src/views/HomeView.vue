@@ -158,8 +158,12 @@
     <AlertDialogRoot :open="deleteDialogOpen" @update:open="deleteDialogOpen = $event">
       <AlertDialogPortal>
         <AlertDialogOverlay class="fixed inset-0 bg-black/50 dark:bg-black/70 z-[100]" />
-        <AlertDialogContent class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-2xl border border-stone-200 dark:border-zinc-700 max-w-[450px] w-[90vw] z-[101]">
-          <AlertDialogTitle class="text-lg font-semibold text-warm-gray-800 dark:text-stone-100 mb-2">
+        <AlertDialogContent
+          class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-2xl border border-stone-200 dark:border-zinc-700 max-w-[450px] w-[90vw] z-[101]"
+        >
+          <AlertDialogTitle
+            class="text-lg font-semibold text-warm-gray-800 dark:text-stone-100 mb-2"
+          >
             {{ $t('pages.home.deleteHost.title') }}
           </AlertDialogTitle>
           <AlertDialogDescription class="text-sm text-warm-gray-600 dark:text-stone-400 mb-6">
@@ -172,11 +176,7 @@
           </AlertDialogDescription>
           <div class="flex justify-end space-x-3">
             <AlertDialogCancel as-child>
-              <button
-                type="button"
-                class="pill-button-cancel"
-                @click="deleteDialogOpen = false"
-              >
+              <button type="button" class="pill-button-cancel" @click="deleteDialogOpen = false">
                 {{ $t('pages.home.deleteHost.cancel') }}
               </button>
             </AlertDialogCancel>

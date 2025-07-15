@@ -1,16 +1,15 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import { apiClient } from '@/api/services'
 import { useStorage } from '@vueuse/core'
+import { apiClient } from '@/api/mock'
 
 export const useAuthStore = defineStore('auth', () => {
   // =============================================================================
   // STATE
   // =============================================================================
 
-  // Reactive localStorage with useStorage
-  const storedToken = useStorage('sessionToken', null)
   const storedUsername = useStorage('username', null)
+  const storedToken = useStorage('sessionToken', null)
 
   const user = ref({
     username: storedUsername.value,

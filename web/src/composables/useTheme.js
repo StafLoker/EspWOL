@@ -10,9 +10,13 @@ export function useTheme() {
 
   const themeIcon = computed(() => (isDark.value ? 'light_mode' : 'dark_mode'))
 
-  const themeLabel = computed(() => (isDark.value ? 'components.themeToggle.light' : 'components.themeToggle.dark'))
+  const themeLabel = computed(() =>
+    isDark.value ? 'components.themeToggle.light' : 'components.themeToggle.dark',
+  )
 
-  const toggleLabel = computed(() => (isDark.value ? 'components.themeToggle.switchToLight' : 'components.themeToggle.switchToDark'))
+  const toggleLabel = computed(() =>
+    isDark.value ? 'components.themeToggle.switchToLight' : 'components.themeToggle.switchToDark',
+  )
 
   return {
     isDark,
