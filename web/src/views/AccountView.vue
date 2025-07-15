@@ -43,8 +43,8 @@
 
         <form @submit.prevent="updateAuthSettings" class="space-y-4">
           <!-- Username Field -->
-          <div class="form-field">
-            <label class="form-label">
+          <div class="field">
+            <label class="label">
               {{ $t('pages.account.auth.username') }}
               <span class="text-red-500">*</span>
             </label>
@@ -52,7 +52,7 @@
               v-model="localAuthSettings.username"
               type="text"
               :placeholder="$t('pages.account.auth.usernamePlaceholder')"
-              class="form-input"
+              class="input"
               :class="{ 'border-red-500': authErrors.username }"
               maxlength="20"
               required
@@ -69,7 +69,7 @@
 
           <!-- Current Password Field (for existing users) -->
           <div v-if="isEditingExistingAuth" class="form-field">
-            <label class="form-label">
+            <label class="label">
               {{ $t('pages.account.auth.currentPassword') }}
               <span class="text-red-500">*</span>
             </label>
@@ -77,7 +77,7 @@
               v-model="currentPassword"
               type="password"
               :placeholder="$t('pages.account.auth.currentPasswordPlaceholder')"
-              class="form-input"
+              class="input"
               :class="{ 'border-red-500': authErrors.currentPassword }"
               required
             />
@@ -90,8 +90,8 @@
           </div>
 
           <!-- New Password Field -->
-          <div class="form-field">
-            <label class="form-label">
+          <div class="field">
+            <label class="label">
               {{
                 isEditingExistingAuth
                   ? $t('pages.account.auth.newPassword')
@@ -119,8 +119,8 @@
           </div>
 
           <!-- Confirm Password Field -->
-          <div class="form-field">
-            <label class="form-label">
+          <div class="field">
+            <label class="label">
               {{ $t('pages.account.auth.confirmPassword') }}
               <span class="text-red-500">*</span>
             </label>
@@ -196,79 +196,6 @@
             </button>
           </div>
         </form>
-      </div>
-
-      <!-- Session Management Card -->
-      <div class="card">
-        <h3 class="text-xl font-semibold text-warm-gray-800 dark:text-stone-100 mb-4">
-          {{ $t('pages.account.session.title') }}
-        </h3>
-
-        <div class="space-y-4">
-          <div
-            class="flex items-center justify-between p-3 bg-stone-100 dark:bg-zinc-700 rounded-lg"
-          >
-            <div>
-              <p class="font-medium text-warm-gray-900 dark:text-stone-100">
-                {{ $t('pages.account.session.currentSession') }}
-              </p>
-              <p class="text-sm text-warm-gray-600 dark:text-stone-400">
-                {{ $t('pages.account.session.sessionActive') }}
-              </p>
-            </div>
-            <div class="flex items-center">
-              <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-              <span class="text-sm text-green-700 dark:text-green-400 font-medium">
-                {{ $t('pages.account.session.active') }}
-              </span>
-            </div>
-          </div>
-
-          <div
-            class="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
-          >
-            <p class="text-blue-800 dark:text-blue-200 text-sm">
-              <i class="material-symbols-outlined text-sm mr-1">info</i>
-              {{ $t('pages.account.session.timeoutInfo') }}
-            </p>
-          </div>
-
-          <div class="flex justify-end">
-            <button
-              @click="handleLogout"
-              class="pill-button-deny-solid"
-              :disabled="authStore.isLoading"
-            >
-              <span v-if="authStore.isLoading" class="flex items-center">
-                <svg
-                  class="animate-spin -ml-1 mr-2 h-4 w-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    class="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    stroke-width="4"
-                  ></circle>
-                  <path
-                    class="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                {{ $t('pages.account.session.loggingOut') }}
-              </span>
-              <span v-else class="flex items-center">
-                <i class="material-symbols-outlined text-sm mr-1">logout</i>
-                {{ $t('pages.account.session.logout') }}
-              </span>
-            </button>
-          </div>
-        </div>
       </div>
 
       <!-- Error Display -->

@@ -139,7 +139,6 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/authStore'
-import { useLanguage } from '@/composables/useLanguage'
 import EspWol from '@/assets/icons/espwol.svg'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import LanguageSelector from '@/components/LanguageSelector.vue'
@@ -147,10 +146,6 @@ import LanguageSelector from '@/components/LanguageSelector.vue'
 const { t } = useI18n()
 const router = useRouter()
 const authStore = useAuthStore()
-
-// Composables
-
-const { detectBrowserLanguage } = useLanguage()
 
 // =============================================================================
 // STATE
@@ -244,9 +239,6 @@ async function handleLogin() {
 onMounted(() => {
   // Clear any previous auth errors
   authStore.clearError()
-
-  // Detect browser language
-  detectBrowserLanguage()
 
   // Focus username field
   const usernameInput = document.querySelector('input[type="text"]')

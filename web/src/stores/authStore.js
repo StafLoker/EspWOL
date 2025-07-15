@@ -1,7 +1,3 @@
-// =============================================================================
-// AUTH STORE - Store de autenticación con Pinia actualizado para ESP8266 v3.0.0
-// =============================================================================
-
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { apiClient } from '@/api'
@@ -35,7 +31,6 @@ export const useAuthStore = defineStore('auth', () => {
     const name = user.value.username
     if (!name) return 'U'
 
-    // Si tiene espacios, tomar iniciales
     if (name.includes(' ')) {
       return name
         .split(' ')
@@ -44,7 +39,6 @@ export const useAuthStore = defineStore('auth', () => {
         .join('')
     }
 
-    // Si no tiene espacios, tomar primeras 2 letras
     return name.substring(0, 2).toUpperCase()
   })
 
@@ -85,9 +79,7 @@ export const useAuthStore = defineStore('auth', () => {
       await apiClient.logout()
     } catch (err) {
       console.warn('Logout request failed:', err)
-      // Continue with local logout even if server request fails
     } finally {
-      // Always clear local state
       user.value = {
         username: null,
         token: null,
@@ -119,7 +111,6 @@ export const useAuthStore = defineStore('auth', () => {
   // INITIALIZATION
   // =============================================================================
 
-  // Initialize from localStorage on store creation
   initializeFromStorage()
 
   // =============================================================================

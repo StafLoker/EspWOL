@@ -1,6 +1,5 @@
 <template>
   <div class="h-full">
-    <!-- Header con información de hosts y búsqueda -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
       <div class="flex flex-col sm:flex-row sm:items-center gap-4">
         <p class="text-2xl font-medium text">
@@ -9,29 +8,10 @@
             ({{ hostsStore.hostsCount }} {{ hostsStore.hostsCount === 1 ? 'host' : 'hosts' }})
           </span>
         </p>
-
-        <!-- Indicador de límites -->
-        <div class="flex items-center gap-2 text-sm">
-          <div class="px-2 py-1 rounded-lg bg-stone-100 dark:bg-zinc-800">
-            <span class="text-warm-gray-600 dark:text-stone-400">
-              {{ hostsStore.hostLimits.remaining }} slots restantes
-            </span>
-          </div>
-          <div
-            class="px-2 py-1 rounded-lg"
-            :class="
-              hostsStore.onlineHosts.length > 0
-                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-            "
-          >
-            {{ hostsStore.onlineHosts.length }} online
-          </div>
-        </div>
       </div>
 
       <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-        <!-- Barra de búsqueda -->
+        <!-- Search -->
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <i class="material-symbols-outlined text-warm-gray-400 dark:text-stone-500 text-lg"
@@ -55,7 +35,7 @@
           </button>
         </div>
 
-        <!-- Botón añadir host -->
+        <!-- Add host -->
         <button
           class="button-apply flex items-center justify-center whitespace-nowrap"
           @click="handleAddHost"
@@ -92,21 +72,21 @@
     </div>
 
     <!-- Hosts Grid -->
-    <div
-      v-else-if="filteredHosts.length > 0"
-      class="grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4"
-    >
-      <HostCard
-        v-for="host in filteredHosts"
-        :key="host.id"
-        :host="host"
-        :is-waking="hostsStore.isHostOperationInProgress(host.id, 'waking')"
-        :is-pinging="hostsStore.isHostOperationInProgress(host.id, 'pinging')"
-        @toggle-power="handleTogglePower"
-        @edit="handleEditHost"
-        @delete="handleDeleteHost"
-        @ping="handlePingHost"
-      />
+    <div v-else-if="filteredHosts.length > 0">
+      <div class="grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+        <HostCard
+          v-for="host in filteredHosts"
+          :key="host.id"
+          :name="host.name"
+          :ip="host.ip"
+          :mac="host.mac"
+          :is-wake="host.isWake"
+          @toggle-power="handleTogglePower"
+          @edit="handleEditHost"
+          @delete="handleDeleteHost"
+        />
+      </div>
+      <div class="pill text-center mt-6">Host left</div>
     </div>
 
     <!-- No results state (when searching) -->
@@ -152,7 +132,6 @@
         {{ $t('pages.home.addFirstHost') }}
       </button>
 
-      <!-- Mensaje de límite alcanzado -->
       <div
         v-if="!hostsStore.hostLimits.canAddMore"
         class="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg max-w-md mx-auto"
@@ -266,10 +245,8 @@ import {
   AlertDialogAction,
 } from 'reka-ui'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { useHostsStore } from '@/stores/hostsStore'
 
-const { t } = useI18n()
 const hostsStore = useHostsStore()
 
 // =============================================================================

@@ -4,10 +4,11 @@
       <SelectTrigger class="nav-pill flex items-center min-w-[120px]">
         <div class="flex items-center">
           <i class="material-symbols-outlined text-lg mr-2">language</i>
-          <SelectValue :placeholder="getLanguageName(currentLocale)" />
+          <SelectValue :placeholder="currentLanguageName" />
         </div>
         <i class="material-symbols-outlined text-sm ml-1">expand_more</i>
       </SelectTrigger>
+
       <SelectPortal>
         <SelectContent
           class="select-content bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-lg shadow-lg z-[200] min-w-[120px]"
@@ -17,14 +18,17 @@
               v-for="lang in availableLanguages"
               :key="lang.code"
               :value="lang.code"
-              class="select-item px-3 py-2 rounded-md hover:bg-stone-200 dark:hover:bg-zinc-700 cursor-pointer text-warm-gray-800 dark:text-stone-200 transition-colors duration-150 focus:outline-none focus:bg-stone-200 dark:focus:bg-zinc-700"
+              class="select-item px-3 py-2 rounded-md hover:bg-stone-200 dark:hover:bg-zinc-700 cursor-pointer text-warm-gray-800 dark:text-stone-200 transition-colors duration-150 focus:outline-none focus:bg-stone-200 dark:focus:bg-zinc-700 relative"
               :class="{
                 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100':
                   currentLocale === lang.code,
               }"
             >
-              <SelectItemText class="flex items-center">
-                {{ getLanguageName(lang.code) }}
+              <SelectItemIndicator class="absolute left-1 w-[20px] inline-flex items-center justify-center">
+                <i class="material-symbols-outlined text-sm">check</i>
+              </SelectItemIndicator>
+              <SelectItemText class="pl-6">
+                {{ lang.name }}
               </SelectItemText>
             </SelectItem>
           </SelectViewport>
@@ -44,11 +48,13 @@ import {
   SelectViewport,
   SelectItem,
   SelectItemText,
+  SelectItemIndicator, // Añadido
 } from 'reka-ui'
 import { useLanguage } from '@/composables/useLanguage'
 
 const {
   currentLocale,
+  currentLanguageName, // Usar esto en lugar de currentLocale para el placeholder
   availableLanguages,
   changeLanguage,
   getLanguageName

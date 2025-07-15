@@ -1,7 +1,3 @@
-// =============================================================================
-// HOSTS STORE - Store de hosts con Pinia actualizado para ESP8266 v3.0.0
-// =============================================================================
-
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { apiClient } from '@/api'
@@ -36,7 +32,6 @@ export const useHostsStore = defineStore('hosts', () => {
   const isRefreshing = ref(false)
   const error = ref(null)
 
-  // Estados de operaciones individuales
   const operations = ref({
     adding: false,
     updating: false,
@@ -77,7 +72,6 @@ export const useHostsStore = defineStore('hosts', () => {
     canAddMore: metadata.value.canAddMoreHosts || false,
   }))
 
-  // Búsqueda en el store (sin hacer petición a la API)
   const searchHosts = computed(() => {
     return (searchTerm) => {
       if (!searchTerm) return hosts.value
@@ -116,7 +110,7 @@ export const useHostsStore = defineStore('hosts', () => {
   }
 
   // =============================================================================
-  // ACTIONS - Gestión de hosts
+  // Getters
   // =============================================================================
 
   async function fetchHosts() {
@@ -153,7 +147,6 @@ export const useHostsStore = defineStore('hosts', () => {
   }
 
   async function addHost(hostData) {
-    // Verificar límites antes de intentar añadir
     if (!metadata.value.canAddMoreHosts) {
       throw new Error(`Maximum number of hosts reached (${metadata.value.hosts.maxAllowed})`)
     }
@@ -164,7 +157,6 @@ export const useHostsStore = defineStore('hosts', () => {
     try {
       const response = await apiClient.hosts.addHost(hostData)
 
-      // Recargar la lista para obtener datos actualizados
       await fetchHosts()
 
       return response
@@ -183,7 +175,6 @@ export const useHostsStore = defineStore('hosts', () => {
     try {
       const response = await apiClient.hosts.updateHost(id, hostData)
 
-      // Actualizar el host en el store local
       const index = getHostIndex(id)
       if (index !== -1) {
         hosts.value[index] = { ...hosts.value[index], ...hostData }
@@ -205,13 +196,11 @@ export const useHostsStore = defineStore('hosts', () => {
     try {
       await apiClient.hosts.deleteHost(id)
 
-      // Remover del store local
       const index = getHostIndex(id)
       if (index !== -1) {
         hosts.value.splice(index, 1)
       }
 
-      // Actualizar metadata
       if (metadata.value.hosts) {
         metadata.value.hosts.count = hosts.value.length
         metadata.value.hosts.remaining = metadata.value.hosts.maxAllowed - hosts.value.length
@@ -233,21 +222,17 @@ export const useHostsStore = defineStore('hosts', () => {
       const response = await apiClient.hosts.importHosts(hosts)
 
       if (response.success) {
-        // Actualizar la lista de hosts después de la importación exitosa
         await fetchHosts()
 
-        // Actualizar metadatos si están disponibles
         if (response.metadata) {
           metadata.value = response.metadata
         }
       }
 
-      // Devolver respuesta tal como viene del backend
       return response
     } catch (err) {
       error.value = err.message || 'Error importing hosts'
 
-      // Devolver resultado de error en formato esperado
       return {
         success: false,
         message: err.message || 'Error importing hosts',
@@ -262,7 +247,7 @@ export const useHostsStore = defineStore('hosts', () => {
   }
 
   // =============================================================================
-  // ACTIONS - Operaciones de red
+  // Networks
   // =============================================================================
 
   async function wakeHost(id) {
@@ -272,7 +257,6 @@ export const useHostsStore = defineStore('hosts', () => {
     try {
       const response = await apiClient.network.wakeHost(id)
 
-      // Actualizar estado optimísticamente
       const index = getHostIndex(id)
       if (index !== -1) {
         hosts.value[index].status = true
@@ -294,7 +278,6 @@ export const useHostsStore = defineStore('hosts', () => {
     try {
       const response = await apiClient.network.pingHost(id)
 
-      // Actualizar estado según respuesta
       const index = getHostIndex(id)
       if (index !== -1) {
         hosts.value[index].status = response.success
@@ -321,22 +304,21 @@ export const useHostsStore = defineStore('hosts', () => {
   // VALIDATION HELPERS
   // =============================================================================
 
+
+  // TODO - is duplicated ? HostDialog
   function validateHostData(hostData) {
     const errors = []
 
-    // Validar nombre
     if (!hostData.name || hostData.name.trim().length === 0) {
       errors.push('Host name is required')
     } else if (hostData.name.length > 32) {
       errors.push('Host name exceeds maximum length of 32 characters')
     }
 
-    // Validar MAC
     if (!hostData.mac || !/^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/.test(hostData.mac)) {
       errors.push('Valid MAC address is required')
     }
 
-    // Validar IP (opcional)
     if (
       hostData.ip &&
       !/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(

@@ -1,7 +1,3 @@
-// =============================================================================
-// SETTINGS STORE - Store de configuración con Pinia para ESP8266 v3.0.0
-// =============================================================================
-
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { apiClient } from '@/api'
@@ -239,6 +235,7 @@ export const useSettingsStore = defineStore('settings', () => {
   // VALIDATION HELPERS
   // =============================================================================
 
+  // TODO Duplated regex
   function validateNetworkConfig(config) {
     const errors = []
 

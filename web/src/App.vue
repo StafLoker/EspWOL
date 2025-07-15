@@ -1,6 +1,6 @@
 <template>
   <div
-    class="h-screen flex flex-col bg-gradient-to-br from-white to-stone-100 dark:from-zinc-900 dark:to-zinc-950 relative overflow-hidden"
+    class="h-screen flex flex-col px-3 py-4 bg-stone-100 dark:bg-zinc-950 relative overflow-hidden"
   >
     <!-- Animated Background -->
     <div class="fixed inset-0 opacity-25 pointer-events-none">
@@ -11,24 +11,6 @@
           fill="none"
           class="text-warm-gray-400 dark:text-zinc-600"
         >
-          <path d="M-200,100 Q100,80 400,100 T1000,100 T1600,100">
-            <animateTransform
-              attributeName="transform"
-              type="translateX"
-              values="0; -400; 0"
-              dur="20s"
-              repeatCount="indefinite"
-            />
-          </path>
-          <path d="M-200,150 Q150,170 450,150 T1050,150 T1650,150">
-            <animateTransform
-              attributeName="transform"
-              type="translateX"
-              values="0; -400; 0"
-              dur="25s"
-              repeatCount="indefinite"
-            />
-          </path>
           <path d="M-200,200 Q200,180 500,200 T1100,200 T1700,200">
             <animateTransform
               attributeName="transform"
@@ -110,75 +92,45 @@
       </div>
 
       <div class="flex items-center space-x-3">
-        <!-- Language Selector -->
-        <div class="relative">
-          <SelectRoot v-model="currentLocale">
-            <SelectTrigger class="nav-pill cursor-pointer">
-              <SelectValue>
-                <div class="flex items-center">
-                  <i class="material-symbols-outlined text-lg mr-2">language</i>
-                  {{ getLanguageName(currentLocale) }}
-                </div>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectPortal>
-              <SelectContent class="select-content">
-                <SelectViewport>
-                  <SelectItem
-                    v-for="lang in availableLanguages"
-                    :key="lang.code"
-                    :value="lang.code"
-                    class="select-item"
-                    @click="changeLanguage(lang.code)"
-                  >
-                    <SelectItemText>{{ lang.name }}</SelectItemText>
-                  </SelectItem>
-                </SelectViewport>
-              </SelectContent>
-            </SelectPortal>
-          </SelectRoot>
-        </div>
-
+        <LanguageSelector />
         <ThemeToggle />
 
         <!-- User Menu -->
         <DropdownMenuRoot v-model:open="dropdownOpen">
-          <DropdownMenuTrigger class="nav-pill cursor-pointer outline-none">
-            <AvatarRoot class="size-8">
-              <AvatarFallback
-                class="size-8 bg-blue-600 text-white text-sm font-medium flex items-center justify-center rounded-full"
-              >
+          <DropdownMenuTrigger class="avatar-link">
+            <AvatarRoot
+              class="avatar-root"
+              :class="{ 'avatar-active': $route.path === '/account' || dropdownOpen }"
+            >
+              <AvatarFallback class="avatar-fallback">
                 {{ authStore.shortUsername }}
               </AvatarFallback>
             </AvatarRoot>
           </DropdownMenuTrigger>
-          <DropdownMenuPortal>
-            <DropdownMenuContent class="dropdown-content" align="end">
-              <div class="px-3 py-2 border-b border-stone-200 dark:border-zinc-700">
-                <p class="text-sm font-medium text-warm-gray-900 dark:text-stone-100">
-                  {{ authStore.username }}
-                </p>
-                <p class="text-xs text-warm-gray-500 dark:text-stone-400">
-                  {{ $t('pages.account.session.loggedIn') }}
-                </p>
-              </div>
 
+          <DropdownMenuPortal>
+            <DropdownMenuContent
+              class="min-w-[180px] outline-none bg-stone-50 dark:bg-zinc-800 rounded-xl p-2 shadow-xl border border-stone-200 dark:border-zinc-700 z-[200]"
+              :side-offset="8"
+              align="end"
+            >
               <DropdownMenuItem
-                class="text-warm-gray-700 dark:text-stone-200 rounded-lg flex items-center h-10 px-3 relative select-none outline-none data-[disabled]:text-warm-gray-400 data-[disabled]:pointer-events-none data-[highlighted]:bg-stone-100 dark:data-[highlighted]:bg-zinc-700 transition-colors duration-150 cursor-pointer"
+                class="group text-sm leading-none text-warm-gray-800 dark:text-stone-200 rounded-lg flex items-center h-10 px-3 relative select-none outline-none data-[disabled]:text-warm-gray-400 data-[disabled]:pointer-events-none data-[highlighted]:bg-stone-200 dark:data-[highlighted]:bg-zinc-700 transition-colors duration-150 cursor-pointer"
                 @click="handleGoToAccount"
               >
                 <i class="material-symbols-outlined text-lg mr-3">person</i>
-                {{ $t('pages.account.title') }}
+                {{ $t('header.account') }}
               </DropdownMenuItem>
 
-              <DropdownMenuSeparator class="h-px bg-stone-200 dark:bg-zinc-700 my-1" />
+              <DropdownMenuSeparator class="h-px bg-stone-200 dark:bg-zinc-700 my-2" />
 
               <DropdownMenuItem
-                class="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 border-stone-200 rounded-lg flex items-center h-10 px-3 relative select-none outline-none data-[disabled]:text-warm-gray-400 data-[disabled]:pointer-events-none data-[highlighted]:bg-red-100 dark:data-[highlighted]:bg-red-900/30 transition-colors duration-150 cursor-pointer"
+                class="group text-sm leading-none text-warm-gray-800 dark:text-stone-200 rounded-lg flex items-center h-10 px-3 relative select-none outline-none data-[disabled]:text-warm-gray-400 data-[disabled]:pointer-events-none data-[highlighted]:bg-red-100 dark:data-[highlighted]:bg-red-900/30 transition-colors duration-150 cursor-pointer"
                 @click="handleLogout"
-                :disabled="authStore.isLoading"
+                :disabled="logoutLoading"
               >
-                <span v-if="authStore.isLoading" class="flex items-center">
+              <!-- Make loading animation reusefull -->
+                <span v-if="logoutLoading" class="flex items-center">
                   <svg
                     class="animate-spin mr-3 h-4 w-4"
                     xmlns="http://www.w3.org/2000/svg"
@@ -225,14 +177,6 @@ import { RouterView, RouterLink, useRouter } from 'vue-router'
 import {
   AvatarRoot,
   AvatarFallback,
-  SelectRoot,
-  SelectTrigger,
-  SelectValue,
-  SelectPortal,
-  SelectContent,
-  SelectViewport,
-  SelectItem,
-  SelectItemText,
   DropdownMenuRoot,
   DropdownMenuTrigger,
   DropdownMenuPortal,
@@ -241,24 +185,17 @@ import {
   DropdownMenuSeparator,
 } from 'reka-ui'
 import { ref, onMounted } from 'vue'
-import { useTheme } from '@/composables/useTheme'
 import { useLanguage } from '@/composables/useLanguage'
 import { useAuthStore } from '@/stores/authStore'
 import EspWol from '@/assets/icons/espwol.svg'
+import ThemeToggle from '@/components/ThemeToggle.vue'
+import LanguageSelector from '@/components/LanguageSelector.vue'
 
 // Router & Stores
 const router = useRouter()
 const authStore = useAuthStore()
 
-// Composables
-const { isDark, toggleTheme } = useTheme()
-const {
-  currentLocale,
-  availableLanguages,
-  changeLanguage,
-  getLanguageName,
-  detectBrowserLanguage,
-} = useLanguage()
+const { detectBrowserLanguage } = useLanguage()
 
 // Reactive data
 const dropdownOpen = ref(false)

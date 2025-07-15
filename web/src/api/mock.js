@@ -18,6 +18,11 @@ const VALID_PING_PERIODS = [0, 60, 300, 600, 900, 1800, 2700, 3600, 10800, 21600
 let currentHostId = 4
 const sessionToken = 'abc123def456ghij789klmno012pqrs'
 
+const mockUser = {
+  username: 'glavniy',
+  password: 'Lep#Chick43',
+}
+
 const mockMemoryInfo = {
   memory: {
     freeHeap: 45632,
@@ -77,7 +82,7 @@ export function setupMirageServer() {
     seeds(server) {
       server.create('host', {
         id: 1,
-        name: 'PC Gaming',
+        name: 'PC',
         mac: 'AA:BB:CC:DD:EE:FF',
         ip: '192.168.1.100',
         autoWake: true,
@@ -85,7 +90,7 @@ export function setupMirageServer() {
       })
       server.create('host', {
         id: 2,
-        name: 'Servidor NAS',
+        name: 'NAS Service',
         mac: '11:22:33:44:55:66',
         ip: '192.168.1.101',
         autoWake: false,
@@ -93,7 +98,7 @@ export function setupMirageServer() {
       })
       server.create('host', {
         id: 3,
-        name: 'Laptop Trabajo',
+        name: 'Laptop',
         mac: '77:88:99:AA:BB:CC',
         ip: '192.168.1.102',
         autoWake: true,
@@ -105,11 +110,11 @@ export function setupMirageServer() {
       this.post('/login', (schema, request) => {
         const { username, password } = JSON.parse(request.requestBody)
 
-        if (username === 'glavniy' && password === 'Lep#Chick43') {
+        if (username === mockUser.username && password === mockUser.password) {
           return {
             success: true,
             message: 'Login successful',
-            username: 'glavniy',
+            username: mockUser.username,
             token: sessionToken,
           }
         }
@@ -205,7 +210,6 @@ export function setupMirageServer() {
         const { id } = request.queryParams
         const hostData = JSON.parse(request.requestBody)
 
-        // Validaciones
         if (hostData.name && hostData.name.length > MAX_HOST_NAME_LENGTH) {
           return new Response(
             400,
@@ -229,7 +233,6 @@ export function setupMirageServer() {
           )
         }
 
-        // Verificar duplicados por MAC (excluyendo el host actual)
         if (hostData.mac && hostData.mac !== host.mac) {
           const existingHost = schema.hosts.findBy({ mac: hostData.mac })
           if (existingHost) {

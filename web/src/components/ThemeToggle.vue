@@ -1,17 +1,21 @@
 <template>
-  <button @click="toggleTheme" class="nav-pill flex items-center" :title="$t('theme.toggle')">
+  <button
+    @click="toggleTheme"
+    class="nav-pill flex items-center"
+    :aria-label="$t('theme.toggle')"
+    :title="$t(toggleLabel)"
+  >
     <i class="material-symbols-outlined text-lg mr-2">
-      {{ isDark ? 'light_mode' : 'dark_mode' }}
+      {{ themeIcon }}
     </i>
     <span class="hidden sm:inline">
-      {{ isDark ? $t('theme.light') : $t('theme.dark') }}
+      {{ $t(themeLabel) }}
     </span>
   </button>
 </template>
 
 <script setup>
 import { useTheme } from '@/composables/useTheme'
-const { isDark, toggleTheme } = useTheme()
-</script>
 
-<style scoped></style>
+const { themeIcon, themeLabel, toggleLabel, toggleTheme } = useTheme()
+</script>

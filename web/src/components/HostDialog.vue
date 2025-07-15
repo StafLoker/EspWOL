@@ -187,7 +187,6 @@
       </DialogContent>
     </DialogPortal>
   </DialogRoot>
-  >
 </template>
 
 <script setup>
@@ -204,10 +203,8 @@ import {
 } from 'reka-ui'
 import { ref, watch, computed, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useHostsStore } from '@/stores/hostsStore'
 
 const { t } = useI18n()
-const hostsStore = useHostsStore()
 
 // =============================================================================
 // PROPS & EMITS
