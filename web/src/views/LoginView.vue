@@ -192,7 +192,7 @@ import { useAuthStore } from '@/stores/authStore'
 import EspWol from '@/assets/icons/espwol.svg'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import LanguageSelector from '@/components/LanguageSelector.vue'
-import { mockUser } from '@/api/mock'
+import { mockUser } from '@/api/mock/data'
 
 const { t } = useI18n()
 const router = useRouter()

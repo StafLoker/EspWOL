@@ -1,6 +1,6 @@
 import { ApiService } from '../client/base.js'
 
-class HostService extends ApiService {
+export class HostService extends ApiService {
   async getAllHosts() {
     const response = await this.get('/hosts')
     return {

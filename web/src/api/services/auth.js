@@ -1,6 +1,6 @@
 import { ApiService } from '../client/base.js'
 
-class AuthService extends ApiService {
+export class AuthService extends ApiService {
   async login(username, password) {
     const response = await this.post('/login', { username, password })
 

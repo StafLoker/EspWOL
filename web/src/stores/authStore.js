@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { useStorage } from '@vueuse/core'
-import { apiClient } from '@/api/mock'
+import { apiClient } from '@/api'
 
 export const useAuthStore = defineStore('auth', () => {
   // =============================================================================

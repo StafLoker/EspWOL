@@ -1,6 +1,6 @@
 import { ApiService } from '../client/base.js'
 
-class SettingsService extends ApiService {
+export class SettingsService extends ApiService {
   async getAllSettings() {
     const response = await this.get('/settings')
     return response.data
