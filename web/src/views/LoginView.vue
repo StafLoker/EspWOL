@@ -127,14 +127,14 @@
 
       <!-- Development Credentials Card -->
       <div v-if="!isProduction" class="mt-6">
-        <div class="card bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+        <div
+          class="card bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+        >
           <div class="flex items-center mb-3">
             <i class="material-symbols-outlined text-blue-600 dark:text-blue-400 mr-2 text-lg">
               developer_mode
             </i>
-            <h3 class="text-sm font-semibold text-blue-800 dark:text-blue-200">
-              Development Mode
-            </h3>
+            <h3 class="text-sm font-semibold text-blue-800 dark:text-blue-200">Development Mode</h3>
           </div>
           <div class="space-y-2">
             <div class="flex items-center justify-between">
@@ -155,7 +155,9 @@
                 {{ showDevPassword ? mockUser.password : '••••••••••••' }}
               </button>
             </div>
-            <div class="flex items-center justify-between mt-3 pt-2 border-t border-blue-200 dark:border-blue-700">
+            <div
+              class="flex items-center justify-between mt-3 pt-2 border-t border-blue-200 dark:border-blue-700"
+            >
               <button
                 @click="toggleDevPassword"
                 class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors"

@@ -20,6 +20,6 @@ export function useTheme() {
     themeIcon,
     themeLabel,
     toggleLabel,
-    toggleTheme
+    toggleTheme,
   }
 }

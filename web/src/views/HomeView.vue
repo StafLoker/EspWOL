@@ -73,7 +73,15 @@
           @delete="handleDeleteHost"
         />
       </div>
-      <div class="pill text-center mt-6">Host left</div> <!-- To finish -->
+      <div class="flex justify-center">
+        <div
+          class="pill text-center mt-6 bg-stone-50 border-stone-200 text-warm-gray-700 dark:bg-zinc-800 dark:border-zinc-700 dark:text-stone-200 border shadow-sm"
+        >
+          Host left
+        </div>
+      </div>
+
+      <!-- To finish -->
     </div>
 
     <!-- No results state (when searching) -->

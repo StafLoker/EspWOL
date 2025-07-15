@@ -1,7 +1,6 @@
 @import 'tailwindcss';
 
 @import './base/form.css';
-@import './base/header.css';
 @import './base/buttons.css';
 
 @theme {

@@ -24,7 +24,9 @@
                   currentLocale === lang.code,
               }"
             >
-              <SelectItemIndicator class="absolute left-1 w-[20px] inline-flex items-center justify-center">
+              <SelectItemIndicator
+                class="absolute left-1 w-[20px] inline-flex items-center justify-center"
+              >
                 <i class="material-symbols-outlined text-sm">check</i>
               </SelectItemIndicator>
               <SelectItemText class="pl-6">
@@ -48,15 +50,9 @@ import {
   SelectViewport,
   SelectItem,
   SelectItemText,
-  SelectItemIndicator, // Añadido
+  SelectItemIndicator,
 } from 'reka-ui'
 import { useLanguage } from '@/composables/useLanguage'
 
-const {
-  currentLocale,
-  currentLanguageName, // Usar esto en lugar de currentLocale para el placeholder
-  availableLanguages,
-  changeLanguage,
-  getLanguageName
-} = useLanguage()
+const { currentLocale, currentLanguageName, availableLanguages, changeLanguage } = useLanguage()
 </script>

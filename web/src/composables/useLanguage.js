@@ -11,8 +11,8 @@ export function useLanguage() {
     {
       code: 'en',
       name: 'English',
-      nativeName: 'English'
-    }
+      nativeName: 'English',
+    },
   ]
 
   // Computed properties

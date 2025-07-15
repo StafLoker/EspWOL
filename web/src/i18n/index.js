@@ -295,6 +295,6 @@ export const i18n = createI18n({
           pinging: 'Pinging...',
         },
       },
-    }
+    },
   },
 })

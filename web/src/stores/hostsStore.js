@@ -304,7 +304,6 @@ export const useHostsStore = defineStore('hosts', () => {
   // VALIDATION HELPERS
   // =============================================================================
 
-
   // TODO - is duplicated ? HostDialog
   function validateHostData(hostData) {
     const errors = []
