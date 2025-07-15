@@ -32,8 +32,8 @@
 
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <!-- Name Field -->
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-warm-gray-700 dark:text-stone-200">
+          <div class="field">
+            <label class="label">
               {{ $t('components.hostDialog.name') }}
               <span class="text-red-500">*</span>
             </label>
@@ -41,7 +41,7 @@
               v-model="formData.name"
               type="text"
               :placeholder="$t('components.hostDialog.namePlaceholder')"
-              class="w-full rounded-lg border border-stone-300 bg-stone-100 px-4 py-2 text-warm-gray-800 shadow-sm placeholder:text-warm-gray-400 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:border-zinc-600 dark:bg-zinc-700 dark:text-stone-100 dark:placeholder:text-zinc-400 dark:focus:border-slate-400 dark:focus:ring-slate-800"
+              class="input"
               :class="{ 'border-red-500 dark:border-red-400': errors.name }"
               maxlength="32"
               required
@@ -57,8 +57,8 @@
           </div>
 
           <!-- MAC Address Field -->
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-warm-gray-700 dark:text-stone-200">
+          <div class="field">
+            <label class="label">
               {{ $t('components.hostDialog.mac') }}
               <span class="text-red-500">*</span>
             </label>
@@ -66,7 +66,7 @@
               v-model="formData.mac"
               type="text"
               :placeholder="$t('components.hostDialog.macPlaceholder')"
-              class="w-full rounded-lg border border-stone-300 bg-stone-100 px-4 py-2 text-warm-gray-800 shadow-sm placeholder:text-warm-gray-400 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:border-zinc-600 dark:bg-zinc-700 dark:text-stone-100 dark:placeholder:text-zinc-400 dark:focus:border-slate-400 dark:focus:ring-slate-800 font-mono"
+              class="input"
               :class="{ 'border-red-500 dark:border-red-400': errors.mac }"
               @input="formatMacAddress"
               maxlength="17"
@@ -83,15 +83,16 @@
           </div>
 
           <!-- IP Address Field -->
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-warm-gray-700 dark:text-stone-200">
+          <div class="field">
+            <label class="label">
               {{ $t('components.hostDialog.ip') }}
+              <span class="text-red-500">*</span>
             </label>
             <input
               v-model="formData.ip"
               type="text"
               :placeholder="$t('components.hostDialog.ipPlaceholder')"
-              class="w-full rounded-lg border border-stone-300 bg-stone-100 px-4 py-2 text-warm-gray-800 shadow-sm placeholder:text-warm-gray-400 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:border-zinc-600 dark:bg-zinc-700 dark:text-stone-100 dark:placeholder:text-zinc-400 dark:focus:border-slate-400 dark:focus:ring-slate-800 font-mono"
+              class="input"
               :class="{ 'border-red-500 dark:border-red-400': errors.ip }"
             />
             <div class="flex justify-between text-xs">
@@ -99,7 +100,7 @@
                 {{ errors.ip }}
               </span>
               <span v-else class="text-warm-gray-500 dark:text-stone-400">
-                {{ $t('components.hostDialog.ipOptional') }}
+                {{ $t('components.hostDialog.ipFormat') }}
               </span>
             </div>
           </div>
@@ -299,8 +300,10 @@ function validateForm() {
     errors.mac = t('components.hostDialog.validation.macInvalid')
   }
 
-  // Validate IP address (optional)
-  if (formData.ip && !isValidIPv4(formData.ip)) {
+  // Validate IP address
+  if (formData.ip) {
+    errors.ip = t('components.hostDialog.validation.ipRequired')
+  } else if (!isValidIPv4(formData.ip)) {
     errors.ip = t('components.hostDialog.validation.ipInvalid')
   }
 

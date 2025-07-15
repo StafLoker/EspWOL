@@ -20,7 +20,7 @@
         <form @submit.prevent="handleLogin" class="space-y-6">
           <!-- Username Field -->
           <div class="field">
-            <label for="username">
+            <label for="username" class="label">
               {{ $t('pages.login.username') }}
             </label>
             <input
@@ -41,7 +41,7 @@
 
           <!-- Password Field -->
           <div class="field">
-            <label for="password">
+            <label for="password" class="label">
               {{ $t('pages.login.password') }}
             </label>
             <div class="relative">
@@ -192,19 +192,11 @@ import { useAuthStore } from '@/stores/authStore'
 import EspWol from '@/assets/icons/espwol.svg'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import LanguageSelector from '@/components/LanguageSelector.vue'
+import { mockUser } from '@/api/mock'
 
 const { t } = useI18n()
 const router = useRouter()
 const authStore = useAuthStore()
-
-// =============================================================================
-// DEVELOPMENT CONSTANTS
-// =============================================================================
-
-const mockUser = {
-  username: 'glavniy',
-  password: 'Lep#Chick43',
-}
 
 // =============================================================================
 // STATE

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { apiClient } from '@/api'
+import { apiClient } from '@/api/services'
 
 export const useHostsStore = defineStore('hosts', () => {
   // =============================================================================
