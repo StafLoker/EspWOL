@@ -130,7 +130,7 @@
               >
                 <span class="flex items-center">
                   <i class="material-symbols-outlined text-lg mr-3">logout</i>
-                  {{ $t('pages.account.session.logout') }}
+                  {{ $t('header.logout') }}
                 </span>
               </DropdownMenuItem>
             </DropdownMenuContent>

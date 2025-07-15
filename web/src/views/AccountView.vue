@@ -38,20 +38,21 @@
       <!-- Change Authentication Settings Card -->
       <div class="card">
         <h3 class="text-xl font-semibold text-warm-gray-800 dark:text-stone-100 mb-4">
-          {{ $t('pages.account.auth.title') }}
+          {{ $t('pages.account.authentication.title') }}
         </h3>
 
         <form @submit.prevent="updateAuthSettings" class="space-y-4">
           <!-- Username Field -->
           <div class="field">
-            <label class="label">
-              {{ $t('pages.account.auth.username') }}
+            <label class="label" for="username">
+              {{ $t('pages.account.authentication.username') }}
               <span class="text-red-500">*</span>
             </label>
             <input
               v-model="localAuthSettings.username"
               type="text"
-              :placeholder="$t('pages.account.auth.usernamePlaceholder')"
+              name="username"
+              :placeholder="$t('pages.account.authentication.usernamePlaceholder')"
               class="input"
               :class="{ 'border-red-500': authErrors.username }"
               maxlength="20"
@@ -69,14 +70,15 @@
 
           <!-- Current Password Field (for existing users) -->
           <div v-if="isEditingExistingAuth" class="form-field">
-            <label class="label">
-              {{ $t('pages.account.auth.currentPassword') }}
+            <label class="label" for="current-password">
+              {{ $t('pages.account.authentication.currentPassword') }}
               <span class="text-red-500">*</span>
             </label>
             <input
               v-model="currentPassword"
+              name="current-password"
               type="password"
-              :placeholder="$t('pages.account.auth.currentPasswordPlaceholder')"
+              :placeholder="$t('pages.account.authentication.currentPasswordPlaceholder')"
               class="input"
               :class="{ 'border-red-500': authErrors.currentPassword }"
               required
@@ -91,18 +93,19 @@
 
           <!-- New Password Field -->
           <div class="field">
-            <label class="label">
+            <label class="label" for="password">
               {{
                 isEditingExistingAuth
-                  ? $t('pages.account.auth.newPassword')
-                  : $t('pages.account.auth.password')
+                  ? $t('pages.account.authentication.newPassword')
+                  : $t('pages.account.authentication.password')
               }}
               <span class="text-red-500">*</span>
             </label>
             <input
               v-model="localAuthSettings.password"
+              name="password"
               type="password"
-              :placeholder="$t('pages.account.auth.passwordPlaceholder')"
+              :placeholder="$t('pages.account.authentication.passwordPlaceholder')"
               class="form-input"
               :class="{ 'border-red-500': authErrors.password }"
               maxlength="32"
@@ -120,14 +123,15 @@
 
           <!-- Confirm Password Field -->
           <div class="field">
-            <label class="label">
-              {{ $t('pages.account.auth.confirmPassword') }}
+            <label class="label" for="confirm-password">
+              {{ $t('pages.account.authentication.confirmPassword') }}
               <span class="text-red-500">*</span>
             </label>
             <input
               v-model="confirmPassword"
+              name="confirm-password"
               type="password"
-              :placeholder="$t('pages.account.auth.confirmPasswordPlaceholder')"
+              :placeholder="$t('pages.account.authentication.confirmPasswordPlaceholder')"
               class="form-input"
               :class="{ 'border-red-500': authErrors.confirmPassword }"
               required
@@ -151,10 +155,10 @@
               >
               <div>
                 <p class="text-amber-800 dark:text-amber-200 text-sm font-medium">
-                  {{ $t('pages.account.auth.securityNote') }}
+                  {{ $t('pages.account.authentication.securityNote') }}
                 </p>
                 <p class="text-amber-700 dark:text-amber-300 text-xs mt-1">
-                  {{ $t('pages.account.auth.securityDescription') }}
+                  {{ $t('pages.account.authentication.securityDescription') }}
                 </p>
               </div>
             </div>
@@ -187,11 +191,11 @@
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                {{ $t('pages.account.auth.saving') }}
+                {{ $t('pages.account.authentication.saving') }}
               </span>
               <span v-else class="flex items-center">
                 <i class="material-symbols-outlined text-sm mr-1">save</i>
-                {{ $t('pages.account.auth.save') }}
+                {{ $t('pages.account.authentication.save') }}
               </span>
             </button>
           </div>
@@ -287,31 +291,33 @@ function validateAuthForm() {
 
   // Validate username
   if (!localAuthSettings.username.trim()) {
-    authErrors.username = t('pages.account.auth.validation.usernameRequired')
+    authErrors.username = t('pages.account.authentication.validation.usernameRequired')
     isValid = false
   } else if (localAuthSettings.username.length > 20) {
-    authErrors.username = t('pages.account.auth.validation.usernameMaxLength')
+    authErrors.username = t('pages.account.authentication.validation.usernameMaxLength')
     isValid = false
   }
 
   // Validate password
   if (!localAuthSettings.password) {
-    authErrors.password = t('pages.account.auth.validation.passwordRequired')
+    authErrors.password = t('pages.account.authentication.validation.passwordRequired')
     isValid = false
   } else if (localAuthSettings.password.length > 32) {
-    authErrors.password = t('pages.account.auth.validation.passwordMaxLength')
+    authErrors.password = t('pages.account.authentication.validation.passwordMaxLength')
     isValid = false
   }
 
   // Validate password confirmation
   if (localAuthSettings.password !== confirmPassword.value) {
-    authErrors.confirmPassword = t('pages.account.auth.validation.passwordMismatch')
+    authErrors.confirmPassword = t('pages.account.authentication.validation.passwordMismatch')
     isValid = false
   }
 
   // Validate current password (for existing users)
   if (isEditingExistingAuth.value && !currentPassword.value) {
-    authErrors.currentPassword = t('pages.account.auth.validation.currentPasswordRequired')
+    authErrors.currentPassword = t(
+      'pages.account.authentication.validation.currentPasswordRequired',
+    )
     isValid = false
   }
 

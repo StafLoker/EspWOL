@@ -1,5 +1,5 @@
 import { Response } from 'miragejs'
-import { MAX_USERNAME_LENGTH, MAX_PASSWORD_LENGTH, VALID_PING_PERIODS} from '@/util/constants.js'
+import { MAX_USERNAME_LENGTH, MAX_PASSWORD_LENGTH, VALID_PING_PERIODS } from '@/util/constants.js'
 
 export function settingsRoutes() {
   // =============================================================================
