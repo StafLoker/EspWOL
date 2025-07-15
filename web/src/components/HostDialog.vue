@@ -1,14 +1,14 @@
 <template>
-  <DialogRoot v-model:open="open">
+  <DialogRoot :open="open" @update:open="$emit('update:open', $event)">
     <DialogPortal>
-      <DialogOverlay class="dialog-overlay" />
-      <DialogContent class="dialog-content max-w-[500px]">
-        <DialogTitle class="dialog-title">
+      <DialogOverlay class="fixed inset-0 bg-black/50 dark:bg-black/70 z-[100]" />
+      <DialogContent class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-2xl border border-stone-200 dark:border-zinc-700 max-w-[500px] w-[90vw] z-[101] max-h-[90vh] overflow-y-auto">
+        <DialogTitle class="text-lg font-semibold text-warm-gray-800 dark:text-stone-100 mb-2">
           {{
             isEdit ? $t('components.hostDialog.editTitle') : $t('components.hostDialog.addTitle')
           }}
         </DialogTitle>
-        <DialogDescription class="dialog-description">
+        <DialogDescription class="text-sm text-warm-gray-600 dark:text-stone-400 mb-6">
           {{
             isEdit
               ? $t('components.hostDialog.editDescription')
@@ -16,7 +16,6 @@
           }}
         </DialogDescription>
 
-        <!-- Advertencia de límite de hosts -->
         <div
           v-if="!isEdit && !canAddMore"
           class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
@@ -34,7 +33,7 @@
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <!-- Name Field -->
           <div class="space-y-2">
-            <label class="label-input">
+            <label class="block text-sm font-medium text-warm-gray-700 dark:text-stone-200">
               {{ $t('components.hostDialog.name') }}
               <span class="text-red-500">*</span>
             </label>
@@ -42,7 +41,7 @@
               v-model="formData.name"
               type="text"
               :placeholder="$t('components.hostDialog.namePlaceholder')"
-              class="input-field"
+              class="w-full rounded-lg border border-stone-300 bg-stone-100 px-4 py-2 text-warm-gray-800 shadow-sm placeholder:text-warm-gray-400 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:border-zinc-600 dark:bg-zinc-700 dark:text-stone-100 dark:placeholder:text-zinc-400 dark:focus:border-slate-400 dark:focus:ring-slate-800"
               :class="{ 'border-red-500 dark:border-red-400': errors.name }"
               maxlength="32"
               required
@@ -59,7 +58,7 @@
 
           <!-- MAC Address Field -->
           <div class="space-y-2">
-            <label class="label-input">
+            <label class="block text-sm font-medium text-warm-gray-700 dark:text-stone-200">
               {{ $t('components.hostDialog.mac') }}
               <span class="text-red-500">*</span>
             </label>
@@ -67,7 +66,7 @@
               v-model="formData.mac"
               type="text"
               :placeholder="$t('components.hostDialog.macPlaceholder')"
-              class="input-field font-mono"
+              class="w-full rounded-lg border border-stone-300 bg-stone-100 px-4 py-2 text-warm-gray-800 shadow-sm placeholder:text-warm-gray-400 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:border-zinc-600 dark:bg-zinc-700 dark:text-stone-100 dark:placeholder:text-zinc-400 dark:focus:border-slate-400 dark:focus:ring-slate-800 font-mono"
               :class="{ 'border-red-500 dark:border-red-400': errors.mac }"
               @input="formatMacAddress"
               maxlength="17"
@@ -85,14 +84,14 @@
 
           <!-- IP Address Field -->
           <div class="space-y-2">
-            <label class="label-input">
+            <label class="block text-sm font-medium text-warm-gray-700 dark:text-stone-200">
               {{ $t('components.hostDialog.ip') }}
             </label>
             <input
               v-model="formData.ip"
               type="text"
               :placeholder="$t('components.hostDialog.ipPlaceholder')"
-              class="input-field font-mono"
+              class="w-full rounded-lg border border-stone-300 bg-stone-100 px-4 py-2 text-warm-gray-800 shadow-sm placeholder:text-warm-gray-400 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:border-zinc-600 dark:bg-zinc-700 dark:text-stone-100 dark:placeholder:text-zinc-400 dark:focus:border-slate-400 dark:focus:ring-slate-800 font-mono"
               :class="{ 'border-red-500 dark:border-red-400': errors.ip }"
             />
             <div class="flex justify-between text-xs">
@@ -117,8 +116,8 @@
                 {{ $t('components.hostDialog.autoWakeDescription') }}
               </p>
             </div>
-            <SwitchRoot v-model:checked="formData.autoWake" class="switch-root">
-              <SwitchThumb class="switch-thumb" />
+            <SwitchRoot v-model:checked="formData.autoWake" class="relative h-[25px] w-[42px] cursor-default rounded-full bg-stone-300 outline-none data-[state=checked]:bg-green-500 dark:bg-zinc-600 dark:data-[state=checked]:bg-green-600">
+              <SwitchThumb class="block h-[21px] w-[21px] translate-x-0.5 rounded-full bg-white shadow-lg transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[19px]" />
             </SwitchRoot>
           </div>
 
@@ -136,7 +135,7 @@
           </div>
         </form>
 
-        <div class="dialog-actions">
+        <div class="flex justify-end space-x-3 mt-6">
           <button
             type="button"
             @click="handleCancel"
@@ -181,7 +180,7 @@
           </button>
         </div>
 
-        <DialogClose class="dialog-close">
+        <DialogClose class="absolute top-4 right-4 inline-flex h-[25px] w-[25px] appearance-none items-center justify-center rounded-full hover:bg-stone-100 dark:hover:bg-zinc-700 focus:shadow-md focus:outline-none" aria-label="Close">
           <i class="material-symbols-outlined text-lg">close</i>
         </DialogClose>
       </DialogContent>
@@ -250,11 +249,6 @@ const submitError = ref('')
 // =============================================================================
 // COMPUTED
 // =============================================================================
-
-const open = computed({
-  get: () => props.open,
-  set: (value) => emit('update:open', value),
-})
 
 const isEdit = computed(() => !!(props.host && props.host.id))
 
@@ -357,7 +351,7 @@ function loadHostData() {
 }
 
 function handleCancel() {
-  open.value = false
+  emit('update:open', false)
 }
 
 async function handleSubmit() {

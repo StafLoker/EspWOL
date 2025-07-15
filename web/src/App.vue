@@ -127,33 +127,8 @@
               <DropdownMenuItem
                 class="group text-sm leading-none text-warm-gray-800 dark:text-stone-200 rounded-lg flex items-center h-10 px-3 relative select-none outline-none data-[disabled]:text-warm-gray-400 data-[disabled]:pointer-events-none data-[highlighted]:bg-red-100 dark:data-[highlighted]:bg-red-900/30 transition-colors duration-150 cursor-pointer"
                 @click="handleLogout"
-                :disabled="logoutLoading"
               >
-                <!-- Make loading animation reusefull -->
-                <span v-if="logoutLoading" class="flex items-center">
-                  <svg
-                    class="animate-spin mr-3 h-4 w-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      class="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      stroke-width="4"
-                    ></circle>
-                    <path
-                      class="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  {{ $t('pages.account.session.loggingOut') }}
-                </span>
-                <span v-else class="flex items-center">
+                <span class="flex items-center">
                   <i class="material-symbols-outlined text-lg mr-3">logout</i>
                   {{ $t('pages.account.session.logout') }}
                 </span>
@@ -191,16 +166,13 @@ import EspWol from '@/assets/icons/espwol.svg'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import LanguageSelector from '@/components/LanguageSelector.vue'
 
-// Router & Stores
 const router = useRouter()
 const authStore = useAuthStore()
 
 const { detectBrowserLanguage } = useLanguage()
 
-// Reactive data
 const dropdownOpen = ref(false)
 
-// Methods
 function handleGoToAccount() {
   dropdownOpen.value = false
   router.push('/account')
@@ -210,19 +182,11 @@ async function handleLogout() {
   try {
     await authStore.logout()
 
-    // Close dropdown
     dropdownOpen.value = false
-
-    // Redirect to login page
     router.push('/login')
-
-    // Small delay then reload to clear any cached data
-    setTimeout(() => {
-      location.reload()
-    }, 100)
+    location.reload()
   } catch (error) {
     console.error('Error during logout:', error)
-    // Even if logout fails on server, we still redirect
     dropdownOpen.value = false
     router.push('/login')
   }
@@ -245,19 +209,13 @@ onMounted(() => {
   @apply rounded-full px-6 py-2 text-sm font-medium transition-all duration-200 border shadow-sm;
   @apply bg-stone-50 border-stone-200 text-warm-gray-700 hover:bg-stone-100 hover:shadow-md;
   @apply dark:bg-zinc-800 dark:border-zinc-700 dark:text-stone-200 dark:hover:bg-zinc-700 dark:shadow-zinc-900/50;
+  @apply hover:transform hover:-translate-y-0.5;
 }
 
 .nav-pill-active {
   @apply bg-slate-600 border-slate-600 text-white shadow-md;
   @apply dark:bg-slate-700 dark:border-slate-700;
-}
-
-.nav-pill:hover {
-  @apply transform -translate-y-0.5;
-}
-
-.nav-pill-active:hover {
-  @apply bg-slate-700 dark:bg-slate-600;
+  @apply hover:bg-slate-700 hover:dark:bg-slate-600;
 }
 
 /* Avatar */

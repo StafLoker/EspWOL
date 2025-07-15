@@ -1,12 +1,10 @@
 <template>
   <div class="h-full">
+    <!-- Buttons -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
       <div class="flex flex-col sm:flex-row sm:items-center gap-4">
         <p class="text-2xl font-medium text">
           {{ $t('pages.home.hosts') }}
-          <span class="text-lg text-warm-gray-600 dark:text-stone-400 ml-2">
-            ({{ hostsStore.hostsCount }} {{ hostsStore.hostsCount === 1 ? 'host' : 'hosts' }})
-          </span>
         </p>
       </div>
 
@@ -48,7 +46,7 @@
       </div>
     </div>
 
-    <Separator class="separator-bold mb-6" />
+    <Separator class="separator-bold" />
 
     <!-- Loading State -->
     <div
@@ -67,21 +65,19 @@
           :name="host.name"
           :ip="host.ip"
           :mac="host.mac"
-          :is-wake="host.isWake"
-          @toggle-power="handleTogglePower"
-          @edit="handleEditHost"
-          @delete="handleDeleteHost"
+          :is-wake="host.status || false"
+          @toggle-power="handleTogglePower(host)"
+          @edit="handleEditHost(host)"
+          @delete="handleDeleteHost(host)"
         />
       </div>
       <div class="flex justify-center">
         <div
           class="pill text-center mt-6 bg-stone-50 border-stone-200 text-warm-gray-700 dark:bg-zinc-800 dark:border-zinc-700 dark:text-stone-200 border shadow-sm"
         >
-          Host left
+          {{ hostsStore.hostLimits.current }} / {{ hostsStore.hostLimits.max }}
         </div>
       </div>
-
-      <!-- To finish -->
     </div>
 
     <!-- No results state (when searching) -->
@@ -159,14 +155,14 @@
     </div>
 
     <!-- Delete Confirmation Dialog -->
-    <AlertDialogRoot v-model:open="deleteDialogOpen">
+    <AlertDialogRoot :open="deleteDialogOpen" @update:open="deleteDialogOpen = $event">
       <AlertDialogPortal>
-        <AlertDialogOverlay class="dialog-overlay" />
-        <AlertDialogContent class="dialog-content max-w-[450px]">
-          <AlertDialogTitle class="dialog-title">
+        <AlertDialogOverlay class="fixed inset-0 bg-black/50 dark:bg-black/70 z-[100]" />
+        <AlertDialogContent class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-2xl border border-stone-200 dark:border-zinc-700 max-w-[450px] w-[90vw] z-[101]">
+          <AlertDialogTitle class="text-lg font-semibold text-warm-gray-800 dark:text-stone-100 mb-2">
             {{ $t('pages.home.deleteHost.title') }}
           </AlertDialogTitle>
-          <AlertDialogDescription class="dialog-description">
+          <AlertDialogDescription class="text-sm text-warm-gray-600 dark:text-stone-400 mb-6">
             {{
               $t('pages.home.deleteHost.description', {
                 hostName: hostToDelete?.name,
@@ -174,41 +170,50 @@
               })
             }}
           </AlertDialogDescription>
-          <div class="dialog-actions">
-            <AlertDialogCancel class="pill-button-cancel">
-              {{ $t('pages.home.deleteHost.cancel') }}
+          <div class="flex justify-end space-x-3">
+            <AlertDialogCancel as-child>
+              <button
+                type="button"
+                class="pill-button-cancel"
+                @click="deleteDialogOpen = false"
+              >
+                {{ $t('pages.home.deleteHost.cancel') }}
+              </button>
             </AlertDialogCancel>
-            <AlertDialogAction
-              class="pill-button-deny-solid"
-              @click="confirmDeleteHost"
-              :disabled="hostsStore.operations.deleting"
-            >
-              <span v-if="hostsStore.operations.deleting" class="flex items-center">
-                <svg
-                  class="animate-spin -ml-1 mr-2 h-4 w-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    class="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    stroke-width="4"
-                  ></circle>
-                  <path
-                    class="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                {{ $t('pages.home.deleteHost.deleting') }}
-              </span>
-              <span v-else>
-                {{ $t('pages.home.deleteHost.confirm') }}
-              </span>
+            <AlertDialogAction as-child>
+              <button
+                type="button"
+                @click="confirmDeleteHost"
+                class="pill-button-deny-solid"
+                :disabled="hostsStore.operations.deleting"
+              >
+                <span v-if="hostsStore.operations.deleting" class="flex items-center">
+                  <svg
+                    class="animate-spin -ml-1 mr-2 h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    ></circle>
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  {{ $t('pages.home.deleteHost.deleting') }}
+                </span>
+                <span v-else>
+                  {{ $t('pages.home.deleteHost.confirm') }}
+                </span>
+              </button>
             </AlertDialogAction>
           </div>
         </AlertDialogContent>
@@ -217,7 +222,8 @@
 
     <!-- Host Dialog -->
     <HostDialog
-      v-model:open="hostDialogOpen"
+      :open="hostDialogOpen"
+      @update:open="hostDialogOpen = $event"
       :host="hostToEdit"
       :can-add-more="hostsStore.hostLimits.canAddMore"
       @save="handleSaveHost"
@@ -228,6 +234,7 @@
 <script setup>
 import HostCard from '@/components/HostCard.vue'
 import HostDialog from '@/components/HostDialog.vue'
+import HostCardPlaceholder from '@/components/HostCardPlaceholder.vue'
 import {
   Separator,
   AlertDialogRoot,
@@ -241,7 +248,10 @@ import {
 } from 'reka-ui'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useHostsStore } from '@/stores/hostsStore'
-import HostCardPlaceholder from '@/components/HostCardPlaceholder.vue'
+
+// =============================================================================
+// STORE
+// =============================================================================
 
 const hostsStore = useHostsStore()
 
@@ -280,22 +290,32 @@ function handleAddHost() {
 }
 
 function handleEditHost(host) {
+  if (!host || !host.id) {
+    return
+  }
+
   hostToEdit.value = { ...host }
   hostDialogOpen.value = true
 }
 
 function handleDeleteHost(host) {
+  if (!host || !host.id) {
+    return
+  }
+
   hostToDelete.value = host
   deleteDialogOpen.value = true
 }
 
 async function confirmDeleteHost() {
-  if (!hostToDelete.value) return
+  if (!hostToDelete.value || !hostToDelete.value.id) {
+    return
+  }
 
   try {
     await hostsStore.deleteHost(hostToDelete.value.id)
   } catch (error) {
-    console.error('Error deleting host:', error)
+    // Error is handled by the store and shown in the UI
   } finally {
     deleteDialogOpen.value = false
     hostToDelete.value = null
@@ -303,6 +323,10 @@ async function confirmDeleteHost() {
 }
 
 async function handleSaveHost(hostData) {
+  if (!hostData) {
+    return
+  }
+
   try {
     if (hostToEdit.value && hostToEdit.value.id) {
       // Edit mode
@@ -315,29 +339,24 @@ async function handleSaveHost(hostData) {
     hostDialogOpen.value = false
     hostToEdit.value = null
   } catch (error) {
-    console.error('Error saving host:', error)
-    // El error se mostrará en el diálogo
+    // Error is handled by the store/dialog and shown in the UI
+    // Don't close the dialog on error so user can retry
   }
 }
 
 async function handleTogglePower(host) {
+  if (!host || !host.id) {
+    return
+  }
+
   try {
     if (host.status) {
       // TODO: Implementar shutdown si la API lo soporta
-      console.log(`Shutdown not implemented for ${host.name}`)
     } else {
       await hostsStore.wakeHost(host.id)
     }
   } catch (error) {
-    console.error('Error toggling power:', error)
-  }
-}
-
-async function handlePingHost(host) {
-  try {
-    await hostsStore.pingHost(host.id)
-  } catch (error) {
-    console.error('Error pinging host:', error)
+    // Error is handled by the store and shown in the UI
   }
 }
 
@@ -353,7 +372,7 @@ function startAutoRefresh() {
       try {
         await hostsStore.refreshHosts()
       } catch (err) {
-        console.warn('Auto-refresh failed:', err)
+        // Silent fail for auto-refresh
       }
     }
   }, interval)
@@ -375,7 +394,7 @@ onMounted(async () => {
     await hostsStore.fetchHosts()
     startAutoRefresh()
   } catch (error) {
-    console.error('Error loading hosts:', error)
+    // Error is handled by the store and shown in the UI
   }
 })
 

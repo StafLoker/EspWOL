@@ -237,7 +237,7 @@ const isFormValid = computed(() => {
 })
 
 const isProduction = computed(() => {
-  return import.meta.env.PROD || process.env.NODE_ENV === 'production'
+  return import.meta.env.PROD
 })
 
 // =============================================================================

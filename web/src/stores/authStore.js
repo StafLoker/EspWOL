@@ -1,19 +1,64 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { apiClient } from '@/api'
+import { useStorage } from '@vueuse/core'
 
 export const useAuthStore = defineStore('auth', () => {
   // =============================================================================
   // STATE
   // =============================================================================
 
+  // Reactive localStorage with useStorage
+  const storedToken = useStorage('sessionToken', null)
+  const storedUsername = useStorage('username', null)
+
   const user = ref({
-    username: null,
-    token: null,
+    username: storedUsername.value,
+    token: storedToken.value,
   })
 
   const isLoading = ref(false)
   const error = ref(null)
+
+  // =============================================================================
+  // WATCHERS - Sync user object with storage
+  // =============================================================================
+
+  // Watch storage changes and sync with user object
+  watch(
+    storedToken,
+    (newToken) => {
+      user.value.token = newToken
+      // Ensure API client has the token when it changes
+      if (newToken) {
+        apiClient.setSessionToken(newToken)
+      }
+    },
+    { immediate: true },
+  )
+
+  watch(
+    storedUsername,
+    (newUsername) => {
+      user.value.username = newUsername
+    },
+    { immediate: true },
+  )
+
+  // Watch user object changes and sync with storage
+  watch(
+    () => user.value.token,
+    (newToken) => {
+      storedToken.value = newToken
+    },
+  )
+
+  watch(
+    () => user.value.username,
+    (newUsername) => {
+      storedUsername.value = newUsername
+    },
+  )
 
   // =============================================================================
   // GETTERS
@@ -30,7 +75,6 @@ export const useAuthStore = defineStore('auth', () => {
   const shortUsername = computed(() => {
     const name = user.value.username
     if (!name) return 'U'
-
     if (name.includes(' ')) {
       return name
         .split(' ')
@@ -38,7 +82,6 @@ export const useAuthStore = defineStore('auth', () => {
         .slice(0, 2)
         .join('')
     }
-
     return name.substring(0, 2).toUpperCase()
   })
 
@@ -52,13 +95,12 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const response = await apiClient.login(username, password)
-
       if (response.success) {
+        // Update user object (will automatically sync with storage via watchers)
         user.value = {
           username: response.username,
           token: response.token,
         }
-
         return response
       } else {
         throw new Error(response.message || 'Login failed')
@@ -80,26 +122,12 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (err) {
       console.warn('Logout request failed:', err)
     } finally {
+      // Clear user data (will automatically sync with storage via watchers)
       user.value = {
         username: null,
         token: null,
       }
       isLoading.value = false
-    }
-  }
-
-  function initializeFromStorage() {
-    const storedToken = localStorage.getItem('sessionToken')
-    const storedUsername = localStorage.getItem('username')
-
-    if (storedToken && storedUsername) {
-      user.value = {
-        username: storedUsername,
-        token: storedToken,
-      }
-
-      // Ensure API client has the token
-      apiClient.setSessionToken(storedToken)
     }
   }
 
@@ -111,7 +139,10 @@ export const useAuthStore = defineStore('auth', () => {
   // INITIALIZATION
   // =============================================================================
 
-  initializeFromStorage()
+  // Initialize API client with stored token if available
+  if (storedToken.value) {
+    apiClient.setSessionToken(storedToken.value)
+  }
 
   // =============================================================================
   // RETURN STORE INTERFACE
@@ -122,16 +153,13 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     isLoading,
     error,
-
     // Getters
     isAuthenticated,
     username,
     shortUsername,
-
     // Actions
     login,
     logout,
-    initializeFromStorage,
     clearError,
   }
 })
