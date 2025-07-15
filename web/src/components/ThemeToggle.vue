@@ -2,7 +2,7 @@
   <button
     @click="toggleTheme"
     class="pill-button flex items-center"
-    :aria-label="$t('theme.toggle')"
+    :aria-label="$t('components.themeToggle.toggle')"
     :title="$t(toggleLabel)"
   >
     <i class="material-symbols-outlined text-lg mr-2">
