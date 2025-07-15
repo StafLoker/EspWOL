@@ -9,8 +9,7 @@
       </div>
     </div>
     <div class="flex items-center gap-3 justify-end">
-      <div class="w-10 h-10 bg-stone-300 dark:bg-zinc-600 rounded-lg" />
-      <div class="w-10 h-10 bg-stone-300 dark:bg-zinc-600 rounded-lg" />
+      <div v-for="i in 3" :key="i" class="w-10 h-10 bg-stone-300 dark:bg-zinc-600 rounded-lg" />
     </div>
   </div>
 </template>

@@ -31,6 +31,16 @@
       <!-- Edit Button -->
       <button
         class="action-button action-button-edit"
+        @click="handlePing"
+        @keydown.enter="handlePing"
+        @keydown.space.prevent="handlePing"
+      >
+        <i class="material-symbols-outlined">network_ping</i>
+      </button>
+
+      <!-- Edit Button -->
+      <button
+        class="action-button action-button-edit"
         @click="handleEdit"
         @keydown.enter="handleEdit"
         @keydown.space.prevent="handleEdit"
@@ -72,7 +82,7 @@ defineProps({
 })
 
 // Emits
-const emit = defineEmits(['togglePower', 'edit', 'delete'])
+const emit = defineEmits(['toggle-power', 'ping', 'edit', 'delete'])
 
 // Methods
 const handlePowerAction = () => {
@@ -85,6 +95,10 @@ const handleEdit = () => {
 
 const handleDelete = () => {
   emit('delete')
+}
+
+const handlePing = () => {
+  emit('ping')
 }
 </script>
 
