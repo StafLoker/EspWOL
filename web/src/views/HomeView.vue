@@ -67,6 +67,7 @@
           :mac="host.mac"
           :is-wake="host.status || false"
           @toggle-power="handleTogglePower(host)"
+          @ping="handlePing(host)"
           @edit="handleEditHost(host)"
           @delete="handleDeleteHost(host)"
         />
@@ -341,6 +342,18 @@ async function handleSaveHost(hostData) {
   } catch (error) {
     // Error is handled by the store/dialog and shown in the UI
     // Don't close the dialog on error so user can retry
+  }
+}
+
+async function handlePing(host) {
+  if (!host || !host.id) {
+    return
+  }
+
+  try {
+    await hostsStore.pingHost(host.id)
+  } catch (error) {
+    
   }
 }
 

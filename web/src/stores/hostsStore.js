@@ -278,7 +278,7 @@ export const useHostsStore = defineStore('hosts', () => {
     error.value = null
 
     try {
-      const response = await apiClient.network.pingHost(id)
+      const response = await apiClient.hosts.pingHost(id)
 
       const index = getHostIndex(id)
       if (index !== -1) {
@@ -298,7 +298,6 @@ export const useHostsStore = defineStore('hosts', () => {
   // VALIDATION HELPERS
   // =============================================================================
 
-  // TODO - is duplicated ? HostDialog
   function validateHostData(hostData) {
     const errors = []
 
