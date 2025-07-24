@@ -302,7 +302,7 @@ function validateForm() {
   }
 
   // Validate IP address
-  if (formData.ip) {
+  if (!formData.ip) {
     errors.ip = t('components.hostDialog.validation.ipRequired')
   } else if (!isValidIPv4(formData.ip)) {
     errors.ip = t('components.hostDialog.validation.ipInvalid')

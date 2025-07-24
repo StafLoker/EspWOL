@@ -352,9 +352,7 @@ async function handlePing(host) {
 
   try {
     await hostsStore.pingHost(host.id)
-  } catch (error) {
-    
-  }
+  } catch (error) {}
 }
 
 async function handleTogglePower(host) {

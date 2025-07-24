@@ -226,6 +226,7 @@ export const i18n = createI18n({
             nameMaxLength: 'Name cannot exceed 32 characters',
             macRequired: 'MAC address is required',
             macInvalid: 'Invalid MAC format (XX:XX:XX:XX:XX:XX)',
+            ipRequired: 'IP address is required',
             ipInvalid: 'Invalid IP format',
             hostLimitReached: 'Maximum host limit reached',
             generalError: 'Error saving host',
