@@ -12,26 +12,26 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.1.10",
-    "@vueuse/core": "^13.3.0",
+    "@tailwindcss/vite": "^4.1.11",
+    "@vueuse/core": "^13.5.0",
     "pinia": "^3.0.3",
-    "reka-ui": "^2.3.1",
-    "tailwindcss": "^4.1.10",
-    "vue": "^3.5.13",
-    "vue-i18n": "^11.1.5",
-    "vue-router": "^4.5.0"
+    "reka-ui": "^2.4.0",
+    "tailwindcss": "^4.1.11",
+    "vue": "^3.5.18",
+    "vue-i18n": "^11.1.11",
+    "vue-router": "^4.5.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.22.0",
-    "@vitejs/plugin-vue": "^5.2.3",
+    "@eslint/js": "^9.31.0",
+    "@vitejs/plugin-vue": "^6.0.0",
     "@vue/eslint-config-prettier": "^10.2.0",
-    "eslint": "^9.22.0",
-    "eslint-plugin-vue": "~10.0.0",
-    "globals": "^16.0.0",
+    "eslint": "^9.31.0",
+    "eslint-plugin-vue": "~10.3.0",
+    "globals": "^16.3.0",
     "miragejs": "^0.1.48",
-    "prettier": "3.5.3",
-    "vite": "^6.2.4",
+    "prettier": "3.6.2",
+    "vite": "^7.0.6",
     "vite-plugin-svg-sprite": "^0.6.2",
-    "vite-plugin-vue-devtools": "^7.7.2"
+    "vite-plugin-vue-devtools": "^7.7.7"
   }
 }
