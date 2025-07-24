@@ -66,6 +66,8 @@
           :ip="host.ip"
           :mac="host.mac"
           :is-wake="host.status || false"
+          :is-pinging="getHostPingState(host.id).isPinging"
+          :ping-result="getHostPingState(host.id).result"
           @toggle-power="handleTogglePower(host)"
           @ping="handlePing(host)"
           @edit="handleEditHost(host)"
@@ -266,6 +268,8 @@ const deleteDialogOpen = ref(false)
 const hostToDelete = ref(null)
 const hostToEdit = ref(null)
 
+const hostPingStates = ref(new Map()) // Map<hostId, { isPinging: boolean, result: boolean | null }>
+
 // Auto-refresh interval
 let refreshInterval = null
 
@@ -276,6 +280,10 @@ let refreshInterval = null
 const filteredHosts = computed(() => {
   return hostsStore.searchHosts(searchTerm.value)
 })
+
+function getHostPingState(hostId) {
+  return hostPingStates.value.get(hostId) || { isPinging: false, result: null }
+}
 
 // =============================================================================
 // METHODS
@@ -350,9 +358,54 @@ async function handlePing(host) {
     return
   }
 
+  // Establecer estado de "pinging" para este host específico
+  hostPingStates.value.set(host.id, {
+    isPinging: true,
+    result: null,
+  })
+
   try {
+    // Llamar al store para hacer ping
     await hostsStore.pingHost(host.id)
-  } catch (error) {}
+
+    // Obtener el host actualizado del store para ver el nuevo status
+    const updatedHost = hostsStore.getHostById(host.id)
+    const pingSuccess = updatedHost ? updatedHost.status : false
+
+    // Actualizar estado con el resultado del ping
+    hostPingStates.value.set(host.id, {
+      isPinging: false,
+      result: pingSuccess,
+    })
+
+    // Limpiar el resultado después de 3.5 segundos (un poco más que la animación)
+    setTimeout(() => {
+      const currentState = hostPingStates.value.get(host.id)
+      if (currentState && !currentState.isPinging) {
+        hostPingStates.value.set(host.id, {
+          isPinging: false,
+          result: null,
+        })
+      }
+    }, 3500)
+  } catch {
+    // En caso de error, marcar como fallo
+    hostPingStates.value.set(host.id, {
+      isPinging: false,
+      result: false,
+    })
+
+    // Limpiar el resultado después de 3.5 segundos
+    setTimeout(() => {
+      const currentState = hostPingStates.value.get(host.id)
+      if (currentState && !currentState.isPinging) {
+        hostPingStates.value.set(host.id, {
+          isPinging: false,
+          result: null,
+        })
+      }
+    }, 3500)
+  }
 }
 
 async function handleTogglePower(host) {
@@ -411,5 +464,6 @@ onMounted(async () => {
 
 onUnmounted(() => {
   stopAutoRefresh()
+  hostPingStates.value.clear()
 })
 </script>
