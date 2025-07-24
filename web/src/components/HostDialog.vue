@@ -46,7 +46,7 @@
               :placeholder="$t('components.hostDialog.namePlaceholder')"
               class="input"
               :class="{ 'border-red-500 dark:border-red-400': errors.name }"
-              maxlength="32"
+              :maxlength="MAX_HOST_NAME_LENGTH"
               required
             />
             <div class="flex justify-between text-xs">
@@ -54,7 +54,7 @@
                 {{ errors.name }}
               </span>
               <span class="text-warm-gray-500 dark:text-stone-400 ml-auto">
-                {{ formData.name.length }}/32
+                {{ formData.name.length }}/{{ MAX_HOST_NAME_LENGTH }}
               </span>
             </div>
           </div>
@@ -290,7 +290,7 @@ function validateForm() {
   // Validate name
   if (!formData.name.trim()) {
     errors.name = t('components.hostDialog.validation.nameRequired')
-  } else if (formData.name.length > 32) {
+  } else if (formData.name.length > MAX_HOST_NAME_LENGTH) {
     errors.name = t('components.hostDialog.validation.nameMaxLength')
   }
 
@@ -415,7 +415,7 @@ watch(
     if (errors.name) {
       if (!formData.name.trim()) {
         errors.name = t('components.hostDialog.validation.nameRequired')
-      } else if (formData.name.length > 32) {
+      } else if (formData.name.length > MAX_HOST_NAME_LENGTH) {
         errors.name = t('components.hostDialog.validation.nameMaxLength')
       } else {
         errors.name = ''

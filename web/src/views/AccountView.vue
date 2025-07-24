@@ -55,7 +55,7 @@
               :placeholder="$t('pages.account.authentication.usernamePlaceholder')"
               class="input"
               :class="{ 'border-red-500': authErrors.username }"
-              maxlength="20"
+              :maxlength="MAX_USERNAME_LENGTH"
               required
             />
             <div class="flex justify-between text-xs mt-1">
@@ -63,7 +63,7 @@
                 {{ authErrors.username }}
               </span>
               <span class="text-warm-gray-500 dark:text-stone-400 ml-auto">
-                {{ localAuthSettings.username.length }}/20
+                {{ localAuthSettings.username.length }}/{{ MAX_USERNAME_LENGTH }}
               </span>
             </div>
           </div>
@@ -108,7 +108,7 @@
               :placeholder="$t('pages.account.authentication.passwordPlaceholder')"
               class="form-input"
               :class="{ 'border-red-500': authErrors.password }"
-              maxlength="32"
+              :maxlength="MAX_PASSWORD_LENGTH"
               required
             />
             <div class="flex justify-between text-xs mt-1">
@@ -116,7 +116,7 @@
                 {{ authErrors.password }}
               </span>
               <span class="text-warm-gray-500 dark:text-stone-400 ml-auto">
-                {{ localAuthSettings.password.length }}/32
+                {{ localAuthSettings.password.length }}/{{ MAX_PASSWORD_LENGTH }}
               </span>
             </div>
           </div>
@@ -231,6 +231,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/authStore'
 import { useSettingsStore } from '@/stores/settingsStore'
+import { MAX_USERNAME_LENGTH, MAX_PASSWORD_LENGTH } from '@/util/constants'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -264,9 +265,9 @@ const authErrors = reactive({
 const isAuthFormValid = computed(() => {
   return (
     localAuthSettings.username.trim().length > 0 &&
-    localAuthSettings.username.length <= 20 &&
+    localAuthSettings.username.length <= MAX_USERNAME_LENGTH &&
     localAuthSettings.password.length > 0 &&
-    localAuthSettings.password.length <= 32 &&
+    localAuthSettings.password.length <= MAX_PASSWORD_LENGTH &&
     localAuthSettings.password === confirmPassword.value &&
     (!isEditingExistingAuth.value || currentPassword.value.length > 0) &&
     !authErrors.username &&
@@ -293,7 +294,7 @@ function validateAuthForm() {
   if (!localAuthSettings.username.trim()) {
     authErrors.username = t('pages.account.authentication.validation.usernameRequired')
     isValid = false
-  } else if (localAuthSettings.username.length > 20) {
+  } else if (localAuthSettings.username.length > MAX_USERNAME_LENGTH) {
     authErrors.username = t('pages.account.authentication.validation.usernameMaxLength')
     isValid = false
   }
@@ -302,7 +303,7 @@ function validateAuthForm() {
   if (!localAuthSettings.password) {
     authErrors.password = t('pages.account.authentication.validation.passwordRequired')
     isValid = false
-  } else if (localAuthSettings.password.length > 32) {
+  } else if (localAuthSettings.password.length > MAX_PASSWORD_LENGTH) {
     authErrors.password = t('pages.account.authentication.validation.passwordMaxLength')
     isValid = false
   }
