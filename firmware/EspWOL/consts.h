@@ -7,9 +7,6 @@ const char VERSION[] PROGMEM = "3.0.0";
 
 #define ENABLE_mDNS 1  // Values: 1 to enable, != 1 to disable
 
-// TODO OTA has bugs, chip hace infinite reload.
-#define ENABLE_OTA 0  // Values: 1 to enable, != 1 to disable
-
 /* Repository */
 const char HOSTS_FILE_PATH[] PROGMEM = "/hosts.json";
 const char USER_FILE_PATH[] PROGMEM = "/user.json";
@@ -19,14 +16,11 @@ const char SETTINS_FILE_PATH[] PROGMEM = "/settings.json";
 const char HOSTNAME[] PROGMEM = "wol";
 const char* SSID = "WOL-ESP8266";
 
-/* OTA */
-const char OTA_PASSWORD[] PROGMEM = "ber#912NerYi";
-
-/* Initial user */
+/* Initial user (HTTP Basic Auth realm credentials until changed via /settings/auth) */
 const char INIT_USER_USERNAME[] PROGMEM = "glavniy";
 const char INIT_USER_PASSWORD[] PROGMEM = "Lep#Chick43";
 
-#define SESSION_TIMEOUT 900000  // 30 min in ms
+const char AUTH_REALM[] PROGMEM = "EspWOL";
 
 /* Field Length Limits */
 #define MAX_HOST_NAME_LENGTH 32
@@ -45,9 +39,6 @@ const char INIT_USER_PASSWORD[] PROGMEM = "Lep#Chick43";
 const char CONTENT_TYPE_JSON[] PROGMEM = "application/json";
 const char CONTENT_TYPE_HTML[] PROGMEM = "text/html";
 
-/* Common HTTP Headers */
-const char HEADER_SESSION_TOKEN[] PROGMEM = "X-Session-Token";
-
 /* Common Messages */
 const char MSG_MISSING_BODY[] PROGMEM = "Missing body";
 const char MSG_INVALID_JSON[] PROGMEM = "Invalid JSON";
@@ -61,8 +52,6 @@ const char MSG_DUPLICATE_HOST[] PROGMEM = "Duplicate host";
 const char MSG_MAX_HOSTS_REACHED[] PROGMEM = "Maximum number of hosts reached";
 
 /* Server Routes */
-const char ROUTE_LOGIN[] PROGMEM = "/login";
-const char ROUTE_LOGOUT[] PROGMEM = "/logout";
 const char ROUTE_HOSTS[] PROGMEM = "/hosts";
 const char ROUTE_HOSTS_IMPORT[] PROGMEM = "/hosts/import";
 const char ROUTE_HOSTS_WAKE[] PROGMEM = "/hosts/wake";
@@ -74,6 +63,7 @@ const char ROUTE_SETTINGS_ABOUT[] PROGMEM = "/settings/about";
 const char ROUTE_SETTINGS_PING[] PROGMEM = "/settings/ping_period";
 const char ROUTE_SETTINGS_RESET_WIFI[] PROGMEM = "/settings/reset_wifi";
 const char ROUTE_ROOT[] PROGMEM = "/";
+const char ROUTE_UPDATE[] PROGMEM = "/update";
 
 /* Server Arguments */
 const char ARG_PLAIN[] PROGMEM = "plain";

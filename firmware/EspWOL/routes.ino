@@ -30,29 +30,19 @@ void sendJsonResponse(int statusCode, bool success, const String &message, const
 }
 
 bool isAuthenticated() {
-  bool valid = false;
+  User user = loadUser();
 
-  if (server.hasHeader(FPSTR(HEADER_SESSION_TOKEN))) {
-    String sessionToken = server.header(FPSTR(HEADER_SESSION_TOKEN));
-    valid = isSessionValid(sessionToken);
+  if (server.authenticate(user.username.c_str(), user.password.c_str())) {
+    return true;
   }
 
-  if (!valid) {
-    sendJsonResponse(401, false, FPSTR(MSG_AUTH_REQUIRED));
-  }
-
-  return valid;
-}
-
-void setupHeaders() {
-  const char *headerKeys[] = { "X-Session-Token" };
-  const size_t headerCount = sizeof(headerKeys) / sizeof(char *);
-  server.collectHeaders(headerKeys, headerCount);
+  server.requestAuthentication(BASIC_AUTH, String(FPSTR(AUTH_REALM)).c_str(), String(FPSTR(MSG_AUTH_REQUIRED)));
+  return false;
 }
 
 void setupRoutes() {
-  setupAuthRoutes();
   setupHostRoutes();
   setupSettingsRoutes();
+  setupOtaRoutes();
   setupWebRoutes();
 }

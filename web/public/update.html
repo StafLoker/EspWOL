@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#18181b" />
+    <title>Firmware update — EspWOL</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        background: #18181b;
+        color: #e4e4e7;
+        font-family:
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        width: min(100%, 24rem);
+        background: #212124;
+        border: 1px solid #2e2e32;
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+      }
+      h1 {
+        font-size: 1rem;
+        font-weight: 500;
+        margin: 0 0 0.375rem;
+      }
+      .hint {
+        font-size: 0.8125rem;
+        color: #8b8b93;
+        margin: 0 0 1.25rem;
+        line-height: 1.6;
+      }
+      input[type='file'] {
+        width: 100%;
+        font-size: 0.875rem;
+        color: #a1a1aa;
+        margin-bottom: 1rem;
+      }
+      input[type='file']::file-selector-button {
+        margin-right: 0.75rem;
+        padding: 0.4rem 0.875rem;
+        border: 1px solid #3f3f46;
+        border-radius: 0.5rem;
+        background: none;
+        color: #a1a1aa;
+        font-size: 0.875rem;
+        font-family: inherit;
+        cursor: pointer;
+      }
+      input[type='file']::file-selector-button:hover {
+        background: #26262a;
+        border-color: #52525b;
+      }
+      button {
+        width: 100%;
+        padding: 0.5rem 1rem;
+        border: 0;
+        border-radius: 0.5rem;
+        background: #e4e4e7;
+        color: #18181b;
+        font-size: 0.875rem;
+        font-weight: 500;
+        font-family: inherit;
+        cursor: pointer;
+      }
+      button:hover:not(:disabled) {
+        background: #fff;
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      :focus-visible {
+        outline: 2px solid #e4e4e7;
+        outline-offset: 2px;
+      }
+      progress {
+        width: 100%;
+        height: 0.25rem;
+        margin-top: 1rem;
+        display: none;
+        accent-color: #e4e4e7;
+        border: 0;
+      }
+      .msg {
+        margin-top: 1rem;
+        font-size: 0.8125rem;
+        color: #a1a1aa;
+        line-height: 1.6;
+      }
+      .msg.err {
+        color: #f87171;
+      }
+      .msg.ok {
+        color: #4ade80;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Firmware update</h1>
+      <p class="hint">Upload a .bin built for this device. It reboots when done.</p>
+      <form id="f">
+        <input
+          type="file"
+          name="firmware"
+          accept=".bin"
+          required
+          aria-label="Firmware file"
+        />
+        <button type="submit" id="b">Upload and flash</button>
+        <progress id="p" max="100" value="0" aria-label="Upload progress"></progress>
+        <p class="msg" id="m" role="status" aria-live="polite"></p>
+      </form>
+    </main>
+    <script>
+      const f = document.getElementById('f')
+      const b = document.getElementById('b')
+      const p = document.getElementById('p')
+      const m = document.getElementById('m')
+
+      f.addEventListener('submit', (e) => {
+        e.preventDefault()
+        const x = new XMLHttpRequest()
+        x.open('POST', '/update')
+        p.style.display = 'block'
+        b.disabled = true
+        m.className = 'msg'
+        m.textContent = 'Uploading…'
+
+        x.upload.onprogress = (ev) => {
+          if (ev.lengthComputable) p.value = (ev.loaded / ev.total) * 100
+        }
+        x.onload = () => {
+          if (x.status === 200) {
+            m.className = 'msg ok'
+            m.textContent = 'Done. Rebooting — this page stops responding for about 15s.'
+          } else {
+            m.className = 'msg err'
+            m.textContent = 'Failed: ' + x.responseText
+            b.disabled = false
+          }
+        }
+        x.onerror = () => {
+          m.className = 'msg err'
+          m.textContent = 'Upload error.'
+          b.disabled = false
+        }
+        x.send(new FormData(f))
+      })
+    </script>
+  </body>
+</html>
