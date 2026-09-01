@@ -200,9 +200,6 @@ void updateUser() {
   User user = { username, password };
   saveUser(user);
 
-  // Invalidate all sessions
-  activeSessions.clear();
-
   JsonDocument responseDoc;
   responseDoc[F("username")] = username;
   sendJsonResponse(200, true, "User updated", responseDoc);

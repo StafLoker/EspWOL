@@ -198,7 +198,7 @@ void deleteHost(int id) {
   if (hosts.find(id) != hosts.end()) {
     hosts.erase(id);
     saveHosts();
-    sendJsonResponse(204, true, "Host deleted", true);
+    sendJsonResponse(200, true, "Host deleted", true);
   } else {
     sendJsonResponse(400, false, FPSTR(MSG_HOST_NOT_FOUND));
   }

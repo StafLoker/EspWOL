@@ -14,9 +14,12 @@ void setupWebRoutes() {
 // =============================================================================
 
 void handleRoot() {
-  server.send_P(200, CONTENT_TYPE_HTML, indexHtmlPage);
+  if (!isAuthenticated()) return;
+  server.sendHeader(F("Content-Encoding"), F("gzip"));
+  server.send_P(200, CONTENT_TYPE_HTML, (const char *)indexHtmlPage, indexHtmlPageLen);
 }
 
 void handleNotFound() {
-  server.send_P(404, CONTENT_TYPE_HTML, notFoundHtmlPage);
+  server.sendHeader(F("Content-Encoding"), F("gzip"));
+  server.send_P(404, CONTENT_TYPE_HTML, (const char *)notFoundHtmlPage, notFoundHtmlPageLen);
 }
