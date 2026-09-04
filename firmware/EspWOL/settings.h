@@ -3,9 +3,6 @@
 
 #include <unordered_set>
 
-#define MAX_USERNAME_LENGTH 20
-#define MAX_PASSWORD_LENGTH 32
-
 #define PING_COUNT_QUICK 2  // status probe on add/edit and the periodic sweep
 #define PING_COUNT_CHECK 3  // explicit "ping this host" from the UI
 
@@ -19,8 +16,8 @@ const char ROUTE_SETTINGS_PING[] PROGMEM = "/api/settings/ping_period";
 const char ROUTE_SETTINGS_RESET_WIFI[] PROGMEM = "/api/settings/reset_wifi";
 
 const std::unordered_set<unsigned long> VALID_PING_VALUES = {
-  0, 60, 300, 600, 900, 1800, 2700, 3600, 10800, 21600, 43200, 86400
-};  // in sec
+  0, 60000, 300000, 600000, 900000, 1800000, 2700000, 3600000, 10800000, 21600000, 43200000, 86400000
+};  // in ms
 
 
 struct NetworkConfig {

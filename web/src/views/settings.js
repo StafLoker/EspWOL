@@ -3,7 +3,7 @@ import { esc, isValidIp, icon, setFieldError, validateFields } from '../util.js'
 import { toast } from '../components/toast'
 import { openModal } from '../components/modal'
 
-// value is milliseconds (what /settings reports); the API takes seconds on write.
+// value is milliseconds
 const PING_PERIODS = [
   { value: 0, label: 'Disabled' },
   { value: 60000, label: '1 minute' },
@@ -360,8 +360,8 @@ function exportHosts() {
 async function savePing() {
   const ms = Number(document.getElementById('ping-period').value)
   try {
-    await api.updatePingPeriod(ms / 1000)
-    s.pingPeriod = ms
+    const res = await api.updatePingPeriod(ms)
+    s.pingPeriod = res.data?.pingPeriod ?? ms
     toast('Ping interval saved')
   } catch (e) {
     toast(e.message, false)

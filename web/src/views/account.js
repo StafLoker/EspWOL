@@ -5,14 +5,14 @@ import { toast } from '../components/toast'
 const MAX_USERNAME_LENGTH = 20
 const MAX_PASSWORD_LENGTH = 32
 
-// Mirrors isValidPassword() in firmware/EspWOL/validation.ino: digits do not
-// count as the special character there (isPunct), so keep this in sync.
+// Mirrors is_valid_password() in firmware/EspWOL/settings.ino: an uppercase, a
+// lowercase, and one character that is neither. Keep the two in sync.
 const strongPassword = (p) =>
   p.length >= 8 &&
   p.length <= MAX_PASSWORD_LENGTH &&
   /[A-Z]/.test(p) &&
   /[a-z]/.test(p) &&
-  /[!-/:-@[-`{-~]/.test(p)
+  /[0-9!-/:-@[-`{-~]/.test(p)
 
 let username = ''
 
@@ -42,7 +42,7 @@ export function renderAccount() {
           <input id="a-pass" name="password" type="password" class="input"
             maxlength="${MAX_PASSWORD_LENGTH}" required autocomplete="new-password"
             aria-describedby="a-pass-hint e-password" />
-          <p id="a-pass-hint" class="hint">8–32 characters, with an uppercase, a lowercase and a punctuation character.</p>
+          <p id="a-pass-hint" class="hint">8–32 characters, with an uppercase, a lowercase and a digit or punctuation character.</p>
           <p id="e-password" class="error field-error" role="alert"></p>
         </div>
         <div class="field">

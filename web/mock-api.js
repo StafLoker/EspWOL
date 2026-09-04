@@ -197,13 +197,13 @@ const routes = {
   ],
 
   'PUT /api/settings/ping_period': (_q, body) => {
-    settings.pingPeriod = (body.pingPeriod ?? 0) * 1000
+    settings.pingPeriod = body.pingPeriod ?? 0
     return [
       200,
       {
         success: true,
         message: 'Ping period updated',
-        data: { pingPeriod: body.pingPeriod },
+        data: { pingPeriod: settings.pingPeriod },
       },
     ]
   },

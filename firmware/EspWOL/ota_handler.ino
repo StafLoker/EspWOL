@@ -6,6 +6,7 @@ static bool ota_should_reboot = false;
 static unsigned long ota_reboot_at = 0;
 
 static bool ota_upload_started = false;
+static bool ota_auth_failed = false;
 
 static void ota_handle_page() {
   if (!auth_ok()) return;
@@ -16,20 +17,24 @@ static void ota_handle_page() {
 static void ota_handle_upload() {
   HTTPUpload &upload = server.upload();
   uint32_t max_sketch_space;
-  User user;
 
   switch (upload.status) {
     case UPLOAD_FILE_START:
-      user = auth_load_user();
-      if (!server.authenticate(user.username.c_str(), user.password.c_str())) return;
+      ota_auth_failed = false;
 
-      ota_upload_started = true;
+      if (!server.authenticate(user.username.c_str(), user.password.c_str())) {
+        ota_auth_failed = true;
+        return;
+      }
+
       WiFiUDP::stopAll();
+
+      Update.clearError();
+
       max_sketch_space = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
       Update.runAsync(true);
-      // A failed begin() leaves Update in an error state, which
-      // ota_handle_result reports; the writes below are skipped.
-      Update.begin(max_sketch_space, U_FLASH);
+
+      ota_upload_started = Update.begin(max_sketch_space, U_FLASH);
       break;
 
     case UPLOAD_FILE_WRITE:
@@ -38,8 +43,6 @@ static void ota_handle_upload() {
       }
       break;
     case UPLOAD_FILE_END:
-      // end(true) fails when fewer bytes arrived than the firmware header
-      // announced, which is how a truncated upload is caught.
       if (ota_upload_started) {
         Update.end(true);
       }
@@ -55,7 +58,13 @@ static void ota_handle_upload() {
 static void ota_handle_result() {
   StreamString err;
 
-  if (!ota_upload_started) {
+  if (ota_auth_failed) {
+    ota_auth_failed = false;
+    auth_ok();  // sends the 401 challenge
+    return;
+  }
+
+  if (!ota_upload_started && !Update.hasError()) {
     if (!auth_ok()) return;
     server.send(400, F("text/plain"), F("No firmware uploaded"));
     return;

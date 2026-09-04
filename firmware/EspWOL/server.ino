@@ -42,6 +42,8 @@ static void server_handle_root() {
 }
 
 static void server_handle_not_found() {
+  if (!auth_ok()) return;
+
   server.sendHeader(F("Content-Encoding"), F("gzip"));
   server.send_P(404, CONTENT_TYPE_HTML, (const char *)NOT_FOUND_PAGE_HTML, NOT_FOUND_PAGE_HTML_LEN);
 }
@@ -49,6 +51,7 @@ static void server_handle_not_found() {
 void server_setup() {
   hosts_setup_routes();
   settings_setup_routes();
+  auth_setup_routes();
   ota_setup_routes();
 
   server.on(FPSTR(ROUTE_ROOT), HTTP_GET, server_handle_root);

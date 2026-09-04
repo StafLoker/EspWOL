@@ -6,8 +6,8 @@ static String portal_style;
 
 void wifi_setup_portal() {
   wifi_manager.setTitle(F("EspWOL"));
-  wifi_manager.setScanDispPerc(true);         // percentages read better than the icon sprite
-  wifi_manager.setMinimumSignalQuality(20);   // hide APs below ~-90 dBm; they would not associate anyway
+  wifi_manager.setScanDispPerc(true);        // percentages read better than the icon sprite
+  wifi_manager.setMinimumSignalQuality(20);  // hide APs below ~-90 dBm; they would not associate anyway
   wifi_manager.setMenu(PORTAL_MENU, sizeof(PORTAL_MENU) / sizeof(PORTAL_MENU[0]));
 
   wifi_manager.setDebugOutput(false);

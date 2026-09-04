@@ -9,5 +9,5 @@ void wifi_setup_portal();
 
 // Applies the stored network config: static IP via WiFiManager, or DHCP.
 void wifi_apply_ip_config();
- 
+
 #endif

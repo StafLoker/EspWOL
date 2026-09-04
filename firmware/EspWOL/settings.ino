@@ -1,5 +1,4 @@
 #include "settings.h"
-#include "auth.h"  // ROUTE_ACCOUNT, User, auth_ok
 
 // =============================================================================
 // INPUT VALIDATION
@@ -9,31 +8,9 @@ static bool is_valid_ping_period(unsigned long value) {
   return VALID_PING_VALUES.find(value) != VALID_PING_VALUES.end();
 }
 
-// IPv4 check via IPAddress::fromString - four octets 0-255, three dots, nothing else.
 static bool is_valid_network_ip(const String &ip) {
   IPAddress parsed;
   return parsed.fromString(ip);
-}
-
-static bool is_valid_password(const String &password) {
-  if (password.length() < 8 || password.length() > MAX_PASSWORD_LENGTH) {
-    return false;
-  }
-
-  bool has_upper = false, has_lower = false, has_special = false;
-  for (char c : password) {
-    if (isUpperCase(c))
-      has_upper = true;
-    else if (isLowerCase(c))
-      has_lower = true;
-    else if (isPunct(c))
-      has_special = true;
-
-    if (has_upper && has_lower && has_special)
-      return true;
-  }
-
-  return false;
 }
 
 // =============================================================================
@@ -67,7 +44,8 @@ void settings_load() {
       DeserializationError error = deserializeJson(doc, file);
 
       if (!error) {
-        settings.ping_period_ms = doc[F("pingPeriod")].as<unsigned long>();
+        // A truncated file must not read as "sweep disabled" - keep the default.
+        settings.ping_period_ms = doc[F("pingPeriod")] | settings.ping_period_ms;
         settings.network_config.enable = doc[F("enable")];
 
         ip.fromString(doc[F("ip")].as<String>());
@@ -154,12 +132,12 @@ static void settings_update_ping_period() {
     return;
   }
 
-  settings.ping_period_ms = ping_period_ms * 1000;
+  settings.ping_period_ms = ping_period_ms;
   settings_save();
 
   ping_apply_period_config();
 
-  response_doc[F("pingPeriod")] = settings.ping_period_ms / 1000;
+  response_doc[F("pingPeriod")] = settings.ping_period_ms;
   server_send_json(200, true, F("Ping period updated"), response_doc);
 }
 
@@ -230,6 +208,11 @@ static void settings_update_network() {
     settings.network_config.network_mask = network_mask;
     settings.network_config.gateway = gateway;
     settings.network_config.dns = dns;
+  } else {
+    settings.network_config.ip = IPAddress();
+    settings.network_config.network_mask = IPAddress();
+    settings.network_config.gateway = IPAddress();
+    settings.network_config.dns = IPAddress();
   }
 
   settings_save();
@@ -251,52 +234,6 @@ static void settings_update_network() {
   server_send_json(200, true, F("Network settings updated"), response_doc);
   delay(300);
   ESP.restart();
-}
-
-// =============================================================================
-// USER
-// =============================================================================
-
-static void settings_get_user() {
-  User user = auth_load_user();
-  JsonDocument doc;
-
-  doc[F("username")] = user.username;
-  server_send_json(200, true, F("User"), doc);
-}
-
-static void settings_update_user() {
-  JsonDocument doc, response_doc;
-  String username, password;
-
-  if (!server.hasArg(FPSTR(ARG_PLAIN))) {
-    server_send_json(400, false, FPSTR(MSG_MISSING_BODY));
-    return;
-  }
-
-  if (deserializeJson(doc, server.arg(FPSTR(ARG_PLAIN)))) {
-    server_send_json(400, false, FPSTR(MSG_INVALID_JSON));
-    return;
-  }
-
-  if (doc[F("username")].isNull() || doc[F("password")].isNull()) {
-    server_send_json(400, false, FPSTR(MSG_MISSING_FIELDS));
-    return;
-  }
-
-  username = doc[F("username")].as<String>();
-  password = doc[F("password")].as<String>();
-
-  if (username.length() < 3 || username.length() > MAX_USERNAME_LENGTH || !is_valid_password(password)) {
-    server_send_json(400, false, FPSTR(MSG_INVALID_FORMAT));
-    return;
-  }
-
-  User user = { username, password };
-  auth_save_user(user);
-
-  response_doc[F("username")] = username;
-  server_send_json(200, true, F("User updated"), response_doc);
 }
 
 // =============================================================================
@@ -354,18 +291,6 @@ static void settings_handle_network() {
   }
 }
 
-static void settings_handle_user() {
-  if (auth_ok()) {
-    if (server.method() == HTTP_GET) {
-      settings_get_user();
-    } else if (server.method() == HTTP_PUT) {
-      settings_update_user();
-    } else {
-      server_send_json(405, false, FPSTR(MSG_METHOD_NOT_ALLOWED));
-    }
-  }
-}
-
 static void settings_handle_reset_wifi() {
   if (auth_ok()) {
     settings_reset_wifi();
@@ -379,7 +304,6 @@ static void settings_handle_reset_wifi() {
 void settings_setup_routes() {
   server.on(FPSTR(ROUTE_SETTINGS), HTTP_GET, settings_handle_get);
   server.on(FPSTR(ROUTE_SETTINGS_NETWORK), HTTP_ANY, settings_handle_network);
-  server.on(FPSTR(ROUTE_ACCOUNT), HTTP_ANY, settings_handle_user);
   server.on(FPSTR(ROUTE_SETTINGS_ABOUT), HTTP_GET, settings_handle_about);
   server.on(FPSTR(ROUTE_SETTINGS_PING), HTTP_ANY, settings_handle_ping_period);
   server.on(FPSTR(ROUTE_SETTINGS_RESET_WIFI), HTTP_POST, settings_handle_reset_wifi);
