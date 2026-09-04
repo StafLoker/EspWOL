@@ -23,7 +23,7 @@
 
    <p>This project provides a web-based interface for power on hosts using an ESP8266 and Wake On Lan magic packets.</p>
 
-<img src="ui.png" width="824" alt="Screenshot">
+<img src="assets/screenshot_desktop_1.png" width="824" alt="Screenshot">
 </div>
 
 ## Alerts
@@ -166,7 +166,30 @@ Once a device is already running v3, later updates can be uploaded from the brow
 
 ## Screenshots
 
-...
+### Desktop
+
+<div align="center">
+   <img src="assets/screenshot_desktop_1.png" width="824" alt="Desktop screenshot 1">
+   <img src="assets/screenshot_desktop_2.png" width="824" alt="Desktop screenshot 2">
+   <img src="assets/screenshot_desktop_3.png" width="824" alt="Desktop screenshot 3">
+   <img src="assets/screenshot_desktop_4.png" width="824" alt="Desktop screenshot 4">
+</div>
+
+### Mobile
+
+<div align="center">
+   <img src="assets/screenshot_mobile_1.png" width="250" alt="Mobile screenshot 1">
+   <img src="assets/screenshot_mobile_2.png" width="250" alt="Mobile screenshot 2">
+   <img src="assets/screenshot_mobile_3.png" width="250" alt="Mobile screenshot 3">
+   <img src="assets/screenshot_mobile_4.png" width="250" alt="Mobile screenshot 4">
+</div>
+
+### WiFi Portal
+
+<div align="center">
+   <img src="assets/screenshot_wifi_portal_1.png" width="250" alt="WiFi portal screenshot 1">
+   <img src="assets/screenshot_wifi_portal_2.png" width="250" alt="WiFi portal screenshot 2">
+</div>
 
 ## License
 
