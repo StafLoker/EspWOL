@@ -1,4 +1,5 @@
 #include "settings.h"
+#include "auth.h"  // ROUTE_ACCOUNT, User, auth_ok
 
 // =============================================================================
 // INPUT VALIDATION
@@ -378,7 +379,7 @@ static void settings_handle_reset_wifi() {
 void settings_setup_routes() {
   server.on(FPSTR(ROUTE_SETTINGS), HTTP_GET, settings_handle_get);
   server.on(FPSTR(ROUTE_SETTINGS_NETWORK), HTTP_ANY, settings_handle_network);
-  server.on(FPSTR(ROUTE_SETTINGS_AUTH), HTTP_ANY, settings_handle_user);
+  server.on(FPSTR(ROUTE_ACCOUNT), HTTP_ANY, settings_handle_user);
   server.on(FPSTR(ROUTE_SETTINGS_ABOUT), HTTP_GET, settings_handle_about);
   server.on(FPSTR(ROUTE_SETTINGS_PING), HTTP_ANY, settings_handle_ping_period);
   server.on(FPSTR(ROUTE_SETTINGS_RESET_WIFI), HTTP_POST, settings_handle_reset_wifi);

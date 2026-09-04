@@ -3,7 +3,9 @@
 
 const char USER_FILE_PATH[] PROGMEM = "/user.json";
 
-// Default credentials, used until changed via /settings/auth.
+const char ROUTE_ACCOUNT[] PROGMEM = "/account";
+
+// Default credentials, used until changed via /account.
 const char INIT_USER_USERNAME[] PROGMEM = "glavniy";
 const char INIT_USER_PASSWORD[] PROGMEM = "Lep#Chick43";
 

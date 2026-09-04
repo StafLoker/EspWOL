@@ -14,7 +14,6 @@ const char SETTINS_FILE_PATH[] PROGMEM = "/settings.json";
 
 const char ROUTE_SETTINGS[] PROGMEM = "/settings";
 const char ROUTE_SETTINGS_NETWORK[] PROGMEM = "/settings/network";
-const char ROUTE_SETTINGS_AUTH[] PROGMEM = "/settings/auth";
 const char ROUTE_SETTINGS_ABOUT[] PROGMEM = "/settings/about";
 const char ROUTE_SETTINGS_PING[] PROGMEM = "/settings/ping_period";
 const char ROUTE_SETTINGS_RESET_WIFI[] PROGMEM = "/settings/reset_wifi";

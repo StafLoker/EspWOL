@@ -50,8 +50,8 @@ export const api = {
   // settings
   getSettings: () => request('GET', '/settings'),
   updateNetwork: (n) => request('PUT', '/settings/network', n),
-  getAuth: () => request('GET', '/settings/auth'),
-  updateAuth: (a) => request('PUT', '/settings/auth', a),
+  getAuth: () => request('GET', '/account'),
+  updateAuth: (a) => request('PUT', '/account', a),
   getAbout: () => request('GET', '/settings/about'),
   updatePingPeriod: (pingPeriod) =>
     request('PUT', '/settings/ping_period', { pingPeriod }),
