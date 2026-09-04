@@ -44,14 +44,14 @@ void settings_load() {
       DeserializationError error = deserializeJson(doc, file);
 
       if (!error) {
-        // A truncated file must not read as "sweep disabled" - keep the default.
-        settings.ping_period_ms = doc[F("pingPeriod")] | settings.ping_period_ms;
-        settings.network_config.enable = doc[F("enable")];
+        settings.ping_period_ms = doc[F("pingPeriod")].as<unsigned long>();
 
         ip.fromString(doc[F("ip")].as<String>());
         network_mask.fromString(doc[F("networkMask")].as<String>());
         gateway.fromString(doc[F("gateway")].as<String>());
         dns.fromString(doc[F("dns")].as<String>());
+
+        settings.network_config.enable = doc[F("enable")];
         settings.network_config.ip = ip;
         settings.network_config.network_mask = network_mask;
         settings.network_config.gateway = gateway;

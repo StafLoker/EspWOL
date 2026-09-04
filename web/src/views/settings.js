@@ -168,21 +168,35 @@ function networkTab() {
       <div class="field">
         <label class="label" for="net-${k}">${label}</label>
         <input id="net-${k}" data-net="${k}" class="input input-mono" placeholder="${ph}"
-          value="${esc(s.net[k] || '')}" aria-describedby="err-net-${k}" />
+          value="${esc(s.net[k] || '')}" aria-describedby="err-net-${k}"
+          ${s.net.enable ? '' : 'disabled'} />
         <p id="err-net-${k}" class="error field-error" role="alert"></p>
       </div>`,
   ).join('')
 
+  // Radios rather than buttons: grouping and arrow-key navigation come for free.
+  const modes = [
+    ['dhcp', 'DHCP', false],
+    ['static', 'Static', true],
+  ]
+    .map(
+      ([id, label, enable]) => `
+        <input type="radio" name="net-mode" id="net-mode-${id}" class="segment-input"
+          value="${id}" ${s.net.enable === enable ? 'checked' : ''} />
+        <label for="net-mode-${id}" class="segment">${label}</label>`,
+    )
+    .join('')
+
   return `
     <div class="panel divide-rows">
       <div class="row">
-        <label for="net-enable">
-          <span class="row-label">Static IP</span>
-          <span class="hint">Off means DHCP.</span>
-        </label>
-        <input id="net-enable" type="checkbox" class="switch" ${s.net.enable ? 'checked' : ''} />
+        <div>
+          <p class="row-label">Network mode</p>
+          <p class="hint">How the device gets its address.</p>
+        </div>
+        <div class="segmented" role="group" aria-label="Network mode">${modes}</div>
       </div>
-      <div class="net-fields${s.net.enable ? '' : ' hidden'}">
+      <div class="net-fields">
         <div class="field-grid">${fields}</div>
       </div>
     </div>
@@ -286,12 +300,14 @@ function bind() {
   $('ping-period')?.addEventListener('change', savePing)
   $('reset-wifi')?.addEventListener('click', confirmResetWiFi)
 
-  $('net-enable')?.addEventListener('change', (e) => {
-    s.net.enable = e.target.checked
-    for (const i of document.querySelectorAll('[data-net]'))
-      s.net[i.dataset.net] = i.value
-    repaint()
-  })
+  for (const radio of document.querySelectorAll('[name="net-mode"]')) {
+    radio.addEventListener('change', (e) => {
+      s.net.enable = e.target.value === 'static'
+      for (const i of document.querySelectorAll('[data-net]'))
+        s.net[i.dataset.net] = i.value
+      repaint()
+    })
+  }
   $('save-net')?.addEventListener('click', saveNet)
 
   for (const input of document.querySelectorAll('[data-net]')) {
@@ -369,10 +385,15 @@ async function savePing() {
 }
 
 async function saveNet() {
-  const body = { enable: document.getElementById('net-enable').checked }
+  const body = { enable: document.getElementById('net-mode-static').checked }
+
+  // On DHCP the fields only mirror what the device was handed, so send them
+  // empty rather than echoing them back as if they were a static config.
   for (const [k] of NET_FIELDS) body[k] = ''
-  for (const i of document.querySelectorAll('[data-net]'))
-    body[i.dataset.net] = i.value.trim()
+  if (body.enable) {
+    for (const i of document.querySelectorAll('[data-net]'))
+      body[i.dataset.net] = i.value.trim()
+  }
 
   // Flag every bad field at once instead of one generic toast for the lot.
   const ok = validateFields(
