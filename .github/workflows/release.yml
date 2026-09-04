@@ -64,11 +64,5 @@ jobs:
             ## Changelog
 
             ${{ steps.changelog.outputs.notes }}
-
-            ## Install
-
-            Flash `EspWOL-generic-${{ steps.version.outputs.tag }}.bin` with
-            [esptool](https://github.com/espressif/esptool), or upload it from an
-            already-running device at **Settings → Firmware → Open updater**.
           files: bin/*.bin
           fail_on_unmatched_files: true
