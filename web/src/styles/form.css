@@ -45,6 +45,13 @@
   box-shadow: 0 0 0 1px var(--fg-muted);
 }
 
+/* Set on the field that failed validation, and cleared as soon as it is edited */
+.input-invalid,
+.input-invalid:focus {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px var(--danger);
+}
+
 select.input {
   cursor: pointer;
 }
@@ -60,6 +67,11 @@ select.input {
 .error {
   font-size: 0.75rem;
   color: var(--danger);
+}
+
+/* Per-field message under its input; takes no room until it has something to say */
+.field-error:empty {
+  display: none;
 }
 
 /* Search box: the icon sits inside the input's padding */

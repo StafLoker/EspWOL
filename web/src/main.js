@@ -18,11 +18,12 @@ const routes = {
 
 function route() {
   const hash = location.hash.replace(/^#/, '')
-  if (hash && !routes[hash]) {
+
+  if (hash.startsWith('/') && !routes[hash]) {
     location.replace(hash)
     return null
   }
-  return routes[hash || '/']
+  return routes[hash.startsWith('/') ? hash : '/']
 }
 
 function shell(inner, nav) {
@@ -79,5 +80,7 @@ async function render(moveFocus) {
   }
 }
 
-window.addEventListener('hashchange', () => render(true))
+window.addEventListener('hashchange', () => {
+  if (location.hash.startsWith('#/') || location.hash === '') render(true)
+})
 render(false)

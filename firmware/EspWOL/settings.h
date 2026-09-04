@@ -6,7 +6,7 @@
 #define MAX_USERNAME_LENGTH 20
 #define MAX_PASSWORD_LENGTH 32
 
-#define PING_COUNT_QUICK 1  // status probe on add/edit and the periodic sweep
+#define PING_COUNT_QUICK 2  // status probe on add/edit and the periodic sweep
 #define PING_COUNT_CHECK 3  // explicit "ping this host" from the UI
 
 const char VERSION[] PROGMEM = "3.0.0";

@@ -1,5 +1,5 @@
 import { api } from '../api.js'
-import { esc, isValidIp, icon } from '../util.js'
+import { esc, isValidIp, icon, setFieldError, validateFields } from '../util.js'
 import { toast } from '../components/toast'
 import { openModal } from '../components/modal'
 
@@ -35,19 +35,54 @@ const TABS = [
   ['system', 'System'],
 ]
 
-// v3 headers: name,mac,ip,autoWake (autoWake: "true"/"1").
-// v2 export headers: Name, MAC Address, IP Address, Periodic ping (periodic
-// ping is a seconds interval, e.g. "0" or "3600" — non-zero means auto-wake).
+/**
+ * Splits one CSV line into its fields, unquoted and trimmed, honouring quoted
+ * fields. A host name may contain commas and quotes, so a plain split(',')
+ * would shift every later column.
+ */
+function splitCsvLine(line) {
+  const vals = []
+  let field = ''
+  let quoted = false
+  let i = 0
+
+  while (i < line.length) {
+    const c = line[i]
+    if (quoted && c === '"' && line[i + 1] === '"') {
+      field += '"' // an escaped quote inside a quoted field
+      i++
+    } else if (c === '"') {
+      quoted = !quoted
+    } else if (c === ',' && !quoted) {
+      vals.push(field.trim())
+      field = ''
+    } else {
+      field += c
+    }
+    i++
+  }
+  vals.push(field.trim())
+  return vals
+}
+
+/**
+ * Parses an exported host CSV, dropping entries missing a name, MAC or IP.
+ *
+ * v3 headers: name,mac,ip,autoWake (autoWake: "true"/"1").
+ * v2 headers: Name, MAC Address, IP Address, Periodic ping — the last one is a
+ * seconds interval, where any non-zero value means auto-wake was on.
+ */
 function parseCsv(text) {
   const lines = text
     .split('\n')
     .map((l) => l.trim())
     .filter(Boolean)
-  const headers = lines[0].split(',').map((h) => h.trim().toLowerCase())
+  const headers = splitCsvLine(lines[0]).map((h) => h.toLowerCase())
+
   return lines
     .slice(1)
     .map((line) => {
-      const vals = line.split(',').map((v) => v.trim().replace(/^"|"$/g, ''))
+      const vals = splitCsvLine(line)
       const h = {}
       headers.forEach((k, i) => {
         if (k === 'name') h.name = vals[i]
@@ -62,11 +97,18 @@ function parseCsv(text) {
     .filter((h) => h.name && h.mac && h.ip)
 }
 
+/**
+ * Renders hosts as CSV, quoting every text field and doubling any quote inside
+ * it, so the result survives a round trip through parseCsv.
+ */
 function toCsv(hosts) {
+  const quote = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
+
   return [
     'name,mac,ip,autoWake',
     ...hosts.map(
-      (h) => `"${h.name}","${h.mac}","${h.ip}",${h.autoWake ? 'true' : 'false'}`,
+      (h) =>
+        `${quote(h.name)},${quote(h.mac)},${quote(h.ip)},${h.autoWake ? 'true' : 'false'}`,
     ),
   ].join('\n')
 }
@@ -126,7 +168,8 @@ function networkTab() {
       <div class="field">
         <label class="label" for="net-${k}">${label}</label>
         <input id="net-${k}" data-net="${k}" class="input input-mono" placeholder="${ph}"
-          value="${esc(s.net[k] || '')}" />
+          value="${esc(s.net[k] || '')}" aria-describedby="err-net-${k}" />
+        <p id="err-net-${k}" class="error field-error" role="alert"></p>
       </div>`,
   ).join('')
 
@@ -251,6 +294,12 @@ function bind() {
   })
   $('save-net')?.addEventListener('click', saveNet)
 
+  for (const input of document.querySelectorAll('[data-net]')) {
+    input.addEventListener('input', () =>
+      setFieldError(input, `err-net-${input.dataset.net}`, ''),
+    )
+  }
+
   const file = $('file')
   $('pick')?.addEventListener('click', () => file.click())
   file?.addEventListener('change', () => {
@@ -296,11 +345,16 @@ async function importHosts() {
 }
 
 function exportHosts() {
+  const url = URL.createObjectURL(new Blob([toCsv(s.hosts)], { type: 'text/csv' }))
   const a = document.createElement('a')
-  a.href = URL.createObjectURL(new Blob([toCsv(s.hosts)], { type: 'text/csv' }))
+
+  a.href = url
   a.download = `espwol-hosts-${new Date().toISOString().slice(0, 10)}.csv`
   a.click()
-  URL.revokeObjectURL(a.href)
+
+  // Revoking in this same task can tear the blob down before the browser has
+  // started fetching it, so hand the URL back only once the click has settled.
+  setTimeout(() => URL.revokeObjectURL(url), 0)
 }
 
 async function savePing() {
@@ -320,8 +374,17 @@ async function saveNet() {
   for (const i of document.querySelectorAll('[data-net]'))
     body[i.dataset.net] = i.value.trim()
 
-  if (body.enable && !NET_FIELDS.every(([k]) => isValidIp(body[k])))
-    return toast('All network fields must be valid IPv4.', false)
+  // Flag every bad field at once instead of one generic toast for the lot.
+  const ok = validateFields(
+    [...document.querySelectorAll('[data-net]')].map((input) => [
+      input,
+      `err-net-${input.dataset.net}`,
+      body.enable && !isValidIp(body[input.dataset.net])
+        ? 'Must be a valid IPv4 address.'
+        : '',
+    ]),
+  )
+  if (!ok) return
 
   try {
     await api.updateNetwork(body)

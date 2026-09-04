@@ -3,7 +3,7 @@ import './style.css'
 
 export class HostCard extends HTMLElement {
   static get observedAttributes() {
-    return ['name', 'ip', 'mac', 'online', 'pinging', 'waking', 'ping-result']
+    return ['name', 'ip', 'online', 'pinging', 'waking']
   }
 
   connectedCallback() {
@@ -24,14 +24,11 @@ export class HostCard extends HTMLElement {
     const online = this.getAttribute('online') === '1'
     const pinging = this.getAttribute('pinging') === '1'
     const waking = this.getAttribute('waking') === '1'
-    const pr = this.getAttribute('ping-result')
-
-    const glow = pr === 'ok' ? 'ping-success-glow' : pr === 'fail' ? 'ping-fail-glow' : ''
 
     this.innerHTML = `
       <article class="host-card" aria-label="${name}">
         <button type="button" data-act="wake"
-          class="status-indicator ${online ? 'status-online' : 'status-offline'} ${glow} ${waking ? 'is-waking' : ''}"
+          class="status-indicator ${online ? 'status-online' : 'status-offline'} ${waking ? 'is-waking' : ''}"
           title="Wake ${name}" aria-label="Wake ${name}">
           ${icon('power_settings_new')}
         </button>

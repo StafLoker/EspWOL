@@ -5,11 +5,15 @@
   gap: 0.75rem;
 }
 
+/* The circle sets the height of the first row; name and ip sit centred on its
+   axis. */
 .host-card {
+  --dial-size: 4rem;
+
   display: grid;
   grid-template-columns: auto 1fr;
-  grid-template-rows: auto auto;
-  column-gap: 0.75rem;
+  grid-template-rows: var(--dial-size) auto;
+  column-gap: 1rem;
   padding: 1.25rem;
   border: 1px solid var(--border);
   border-radius: 0.75rem;
@@ -25,7 +29,10 @@
   grid-column: 2;
   grid-row: 1;
   min-width: 0;
-  align-self: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.375rem;
 }
 
 .host-card-info h3 {
@@ -35,7 +42,6 @@
 }
 
 .host-ip {
-  margin-top: 0.125rem;
   font-size: 0.875rem;
   font-family: var(--mono);
   color: var(--fg-muted);
@@ -47,27 +53,29 @@
   display: flex;
   justify-content: flex-end;
   gap: 0.25rem;
-  margin-top: 1rem;
+  margin-top: 0.375rem;
 }
 
-/* Wake button: spans both rows, same height as name + ip together. */
+/* Wake button: the circle whose size defines the first row's height. */
 .status-indicator {
   grid-column: 1;
-  grid-row: 1 / span 2;
+  grid-row: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 3.5rem;
-  align-self: stretch;
+  width: var(--dial-size);
+  height: var(--dial-size);
   flex-shrink: 0;
   border: 0;
-  border-radius: 0.65rem;
+  border-radius: 9999px;
   cursor: pointer;
-  transition: background-color 0.15s;
+  transition:
+    background-color 0.15s,
+    opacity 0.15s;
 }
 
 .status-indicator i {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
 }
 
 .status-online {
@@ -106,29 +114,6 @@
   }
   50% {
     opacity: 0.35;
-  }
-}
-
-/* The ring that flashes out of the status dot when a ping resolves */
-.ping-success-glow,
-.ping-fail-glow {
-  animation: pingGlow 2s ease-out;
-}
-
-.ping-success-glow {
-  --glow: 74, 222, 128;
-}
-
-.ping-fail-glow {
-  --glow: 248, 113, 113;
-}
-
-@keyframes pingGlow {
-  0% {
-    box-shadow: 0 0 0 0 rgb(var(--glow) / 0.5);
-  }
-  100% {
-    box-shadow: 0 0 0 14px rgb(var(--glow) / 0);
   }
 }
 

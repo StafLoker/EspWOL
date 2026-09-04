@@ -1,5 +1,5 @@
 import { api } from '../api.js'
-import { esc } from '../util.js'
+import { esc, setFieldError, validateFields } from '../util.js'
 import { toast } from '../components/toast'
 
 const MAX_USERNAME_LENGTH = 20
@@ -33,19 +33,23 @@ export function renderAccount() {
         <div class="field">
           <label class="label" for="a-user">Username</label>
           <input id="a-user" name="username" class="input" maxlength="${MAX_USERNAME_LENGTH}"
-            required autocomplete="username" value="${esc(username)}" />
+            required autocomplete="username" value="${esc(username)}"
+            aria-describedby="e-username" />
+          <p id="e-username" class="error field-error" role="alert"></p>
         </div>
         <div class="field">
           <label class="label" for="a-pass">New password</label>
           <input id="a-pass" name="password" type="password" class="input"
             maxlength="${MAX_PASSWORD_LENGTH}" required autocomplete="new-password"
-            aria-describedby="a-pass-hint" />
+            aria-describedby="a-pass-hint e-password" />
           <p id="a-pass-hint" class="hint">8–32 characters, with an uppercase, a lowercase and a punctuation character.</p>
+          <p id="e-password" class="error field-error" role="alert"></p>
         </div>
         <div class="field">
           <label class="label" for="a-confirm">Confirm password</label>
           <input id="a-confirm" name="confirm" type="password" class="input" required
-            autocomplete="new-password" />
+            autocomplete="new-password" aria-describedby="e-confirm" />
+          <p id="e-confirm" class="error field-error" role="alert"></p>
         </div>
         <p class="err error" role="alert"></p>
         <div class="dialog-actions">
@@ -62,13 +66,24 @@ export function renderAccount() {
 
 async function submit(form) {
   const err = form.querySelector('.err')
+  err.textContent = ''
   const u = form.username.value.trim()
   const p = form.password.value
 
-  if (u.length < 3) return (err.textContent = 'Username must be at least 3 characters.')
-  if (!strongPassword(p))
-    return (err.textContent = 'Password does not meet the requirements.')
-  if (p !== form.confirm.value) return (err.textContent = 'Passwords do not match.')
+  const ok = validateFields([
+    [form.username, 'e-username', u.length >= 3 ? '' : 'Must be at least 3 characters.'],
+    [
+      form.password,
+      'e-password',
+      strongPassword(p) ? '' : 'Does not meet the requirements above.',
+    ],
+    [
+      form.confirm,
+      'e-confirm',
+      p === form.confirm.value ? '' : 'Passwords do not match.',
+    ],
+  ])
+  if (!ok) return
 
   try {
     await api.updateAuth({ username: u, password: p })
@@ -95,6 +110,16 @@ export async function mountAccount() {
 
   const form = document.getElementById('cred')
   form.username.value = username
+
+  // Clear a field's error as soon as it is edited.
+  for (const [field, id] of [
+    [form.username, 'e-username'],
+    [form.password, 'e-password'],
+    [form.confirm, 'e-confirm'],
+  ]) {
+    field.addEventListener('input', () => setFieldError(field, id, ''))
+  }
+
   form.addEventListener('submit', (e) => {
     e.preventDefault()
     submit(form)
