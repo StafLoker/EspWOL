@@ -1,0 +1,17 @@
+:root {
+  color-scheme: dark;
+
+  --bg: #18181b;
+  --surface: #212124;
+  --surface-hover: #26262a;
+  --border: #2e2e32;
+  --border-strong: #3f3f46;
+  --fg: #e4e4e7;
+  --fg-muted: #a1a1aa;
+  /* #71717a would only reach 3.5:1 on --surface; this clears WCAG AA 4.5:1 */
+  --fg-subtle: #8b8b93;
+  --online: #4ade80;
+  --danger: #f87171;
+  --radius: 0.5rem;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}

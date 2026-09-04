@@ -1,135 +1,82 @@
 #include "memory.h"
 
-// Function to load hosts data from a JSON file
-void loadHostsData() {
-  if (LittleFS.begin()) {
-    File file = LittleFS.open(hostsFile, "r");
-    if (file) {
-      JsonDocument doc;
-      DeserializationError error = deserializeJson(doc, file);
-      if (!error) {
-        hosts.clear();  // Clear the existing list before loading new data
-        for (JsonVariant v : doc.as<JsonArray>()) {
-          Host host;
-          host.name = v["name"].as<String>();
-          host.mac = v["mac"].as<String>();
-          host.ip = v["ip"].as<String>();
-          host.periodicPing = v["periodicPing"].as<long>();
-          hosts[hosts.size()] = host;
-        }
-      }
-      file.close();
-    }
-    LittleFS.end();
+static MemoryInfo memory_get_info() {
+  MemoryInfo info;
+  uint32_t available_heap, available_flash;
+  uint32_t max_hosts_ram, max_hosts_flash, max_hosts_calc;
+  FSInfo fs_info;
+
+  // RAM Info
+  info.free_heap = ESP.getFreeHeap();
+  info.total_heap = 81920;  // ESP8266 RAM for user ~80KB de RAM
+  info.heap_usage_percent = ((info.total_heap - info.free_heap) * 100) / info.total_heap;
+
+  // Flash Info.
+  if (LittleFS.info(fs_info) && fs_info.totalBytes > 0) {
+    info.free_flash = fs_info.totalBytes - fs_info.usedBytes;
+    info.total_flash = fs_info.totalBytes;
+    info.flash_usage_percent = (fs_info.usedBytes * 100) / fs_info.totalBytes;
+  } else {
+    info.free_flash = 0;
+    info.total_flash = 0;
+    info.flash_usage_percent = 100;
   }
+
+  // Hosts info actual
+  info.hosts_count = hosts.size();
+
+  available_heap = (info.free_heap > MIN_FREE_HEAP) ? (info.free_heap - MIN_FREE_HEAP) : 0;
+  available_flash = (info.free_flash > MIN_FREE_FLASH) ? (info.free_flash - MIN_FREE_FLASH) : 0;
+
+  available_heap = (available_heap * (100 - SAFETY_MARGIN_PERCENT)) / 100;
+  available_flash = (available_flash * (100 - SAFETY_MARGIN_PERCENT)) / 100;
+
+  max_hosts_ram = available_heap / HOST_RAM_SIZE;
+  max_hosts_flash = available_flash / HOST_FLASH_SIZE;
+
+  max_hosts_calc = (max_hosts_ram < max_hosts_flash) ? max_hosts_ram : max_hosts_flash;
+  if (max_hosts_calc > HARD_MAX_HOSTS) max_hosts_calc = HARD_MAX_HOSTS;
+
+  info.max_hosts = max_hosts_calc;
+
+  info.has_enough_memory = (info.free_heap >= MIN_FREE_HEAP) && (info.free_flash >= MIN_FREE_FLASH);
+
+  return info;
 }
 
-// Function to save hosts data to a JSON file
-void saveHostsData() {
-  if (LittleFS.begin()) {
-    File file = LittleFS.open(hostsFile, "w");
-    if (file) {
-      JsonDocument doc;
-      JsonArray array = doc.to<JsonArray>();
-      for (const auto& pair : hosts) {
-        const Host& host = pair.second;
-        JsonObject obj = array.createNestedObject();
-        obj["name"] = host.name;
-        obj["mac"] = host.mac;
-        obj["ip"] = host.ip;
-        obj["periodicPing"] = host.periodicPing;
-      }
-      serializeJson(doc, file);
-      file.close();
-    }
-    LittleFS.end();
-  }
+bool memory_can_add_host() {
+  MemoryInfo info = memory_get_info();
+
+  return info.has_enough_memory && (info.hosts_count < info.max_hosts);
 }
 
-// Function to save network configuration to a JSON file
-void saveNetworkConfig() {
-  if (LittleFS.begin()) {
-    File file = LittleFS.open(networkConfigFile, "w");
-    if (file) {
-      JsonDocument doc;
-      doc["enable"] = networkConfig.enable;
-      doc["ip"] = networkConfig.ip.toString();
-      doc["networkMask"] = networkConfig.networkMask.toString();
-      doc["gateway"] = networkConfig.gateway.toString();
-      doc["dns"] = networkConfig.dns.toString();
-      serializeJson(doc, file);
-      file.close();
-    }
-    LittleFS.end();
-  }
-}
+JsonObject memory_add_metadata(JsonDocument &doc) {
+  MemoryInfo info = memory_get_info();
+  JsonObject metadata, memory, storage, hosts_info;
 
-// Function to load network configuration from a JSON file
-void loadNetworkConfig() {
-  if (LittleFS.begin()) {
-    if (LittleFS.exists(networkConfigFile)) {
-      File file = LittleFS.open(networkConfigFile, "r");
-      if (file) {
-        JsonDocument doc;
-        DeserializationError error = deserializeJson(doc, file);
-        if (!error) {
-          networkConfig.enable = doc["enable"];
-          IPAddress ip;
-          IPAddress networkMask;
-          IPAddress gateway;
-          IPAddress dns;
-          ip.fromString(doc["ip"].as<String>());
-          networkMask.fromString(doc["networkMask"].as<String>());
-          gateway.fromString(doc["gateway"].as<String>());
-          dns.fromString(doc["dns"].as<String>());
-          networkConfig.ip = ip;
-          networkConfig.networkMask = networkMask;
-          networkConfig.gateway = gateway;
-          networkConfig.dns = dns;
-        }
-        file.close();
-      }
-    } else {
-      saveNetworkConfig();
-    }
-    LittleFS.end();
-  }
-}
+  metadata = doc[F("metadata")].to<JsonObject>();
+  memory = metadata[F("memory")].to<JsonObject>();
+  storage = metadata[F("storage")].to<JsonObject>();
+  hosts_info = metadata[F("hosts")].to<JsonObject>();
 
-// Function to save authentication configuration to a JSON file
-void saveAuthentication() {
-  if (LittleFS.begin()) {
-    File file = LittleFS.open(authenticationFile, "w");
-    if (file) {
-      JsonDocument doc;
-      doc["enable"] = authentication.enable;
-      doc["username"] = authentication.username;
-      doc["password"] = authentication.password;
-      serializeJson(doc, file);
-      file.close();
-    }
-  }
-  LittleFS.end();
-}
+  // RAM Info
+  memory[F("freeHeap")] = info.free_heap;
+  memory[F("totalHeap")] = info.total_heap;
+  memory[F("heapUsagePercent")] = info.heap_usage_percent;
 
-// Function to load authentication configuration from a JSON file
-void loadAuthentication() {
-  if (LittleFS.begin()) {
-    if (LittleFS.exists(authenticationFile)) {
-      File file = LittleFS.open(authenticationFile, "r");
-      if (file) {
-        JsonDocument doc;
-        DeserializationError error = deserializeJson(doc, file);
-        if (!error) {
-          authentication.enable = doc["enable"];
-          authentication.username = doc["username"].as<String>();
-          authentication.password = doc["password"].as<String>();
-        }
-        file.close();
-      }
-    } else {
-      saveAuthentication();
-    }
-    LittleFS.end();
-  }
+  // Flash Info
+  storage[F("freeFlash")] = info.free_flash;
+  storage[F("totalFlash")] = info.total_flash;
+  storage[F("flashUsagePercent")] = info.flash_usage_percent;
+
+  // Hosts info
+  hosts_info[F("count")] = info.hosts_count;
+  hosts_info[F("maxAllowed")] = info.max_hosts;
+  hosts_info[F("remaining")] = (info.max_hosts > info.hosts_count) ? (info.max_hosts - info.hosts_count) : 0;
+
+  // General
+  metadata[F("hasEnoughMemory")] = info.has_enough_memory;
+  metadata[F("canAddMoreHosts")] = memory_can_add_host();
+
+  return metadata;
 }

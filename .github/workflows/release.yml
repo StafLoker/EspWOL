@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  github-release:
+    needs: ci
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Get version from tag
+        id: version
+        run: |
+          echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+          echo "tag=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Extract changelog for version
+        id: changelog
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          NOTES=$(awk "/^## \\[$VERSION\\]/{found=1; next} found && /^## \\[/{exit} found{print}" CHANGELOG.md)
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Download firmware
+        uses: actions/download-artifact@v8
+        with:
+          name: firmware
+          path: bin/
+
+      - name: Name the binary after the tag
+        run: |
+          if [ ! -f bin/EspWOL.ino.bin ]; then
+            echo "::error::bin/EspWOL.ino.bin missing from the CI artifact."
+            exit 1
+          fi
+          mv bin/EspWOL.ino.bin "bin/EspWOL-generic-${{ steps.version.outputs.tag }}.bin"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          generate_release_notes: true
+          body: |
+            # EspWOL ${{ steps.version.outputs.tag }}
+
+            ## Changelog
+
+            ${{ steps.changelog.outputs.notes }}
+
+            ## Install
+
+            Flash `EspWOL-generic-${{ steps.version.outputs.tag }}.bin` with
+            [esptool](https://github.com/espressif/esptool), or upload it from an
+            already-running device at **Settings → Firmware → Open updater**.
+          files: bin/*.bin
+          fail_on_unmatched_files: true

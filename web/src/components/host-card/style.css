@@ -1,0 +1,130 @@
+/* <host-card>: one host, its status dot and its row of actions. */
+
+.host-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+/* The circle sets the height of the first row; name and ip sit centred on its
+   axis. */
+.host-card {
+  --dial-size: 4rem;
+
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: var(--dial-size) auto;
+  column-gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  transition: border-color 0.15s;
+}
+
+.host-card:hover {
+  border-color: var(--border-strong);
+}
+
+.host-card-info {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.375rem;
+}
+
+.host-card-info h3 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.host-ip {
+  font-size: 0.875rem;
+  font-family: var(--mono);
+  color: var(--fg-muted);
+}
+
+.host-card-actions {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  margin-top: 0.375rem;
+}
+
+/* Wake button: the circle whose size defines the first row's height. */
+.status-indicator {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--dial-size);
+  height: var(--dial-size);
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    opacity 0.15s;
+}
+
+.status-indicator i {
+  font-size: 1.75rem;
+}
+
+.status-online {
+  background: rgb(74 222 128 / 0.1);
+  color: var(--online);
+}
+.status-online:hover {
+  background: rgb(74 222 128 / 0.2);
+}
+
+.status-offline {
+  background: var(--surface-hover);
+  color: var(--fg-subtle);
+}
+.status-offline:hover {
+  background: var(--border);
+}
+
+/* Ping in flight: action button blinks yellow */
+.action-button.is-pinging {
+  color: #facc15;
+  animation: blink 0.9s ease-in-out infinite;
+}
+
+/* Wake packet in flight: status dot blinks blue */
+.status-indicator.is-waking {
+  background: rgb(96 165 250 / 0.2);
+  color: #60a5fa;
+  animation: blink 0.9s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (min-width: 640px) {
+  .host-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .host-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

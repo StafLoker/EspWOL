@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: build-firmware-headers
+        name: Regenerate PROGMEM firmware headers
+        entry: bash -c 'cd web && pnpm run build && git add ../firmware/EspWOL/*.h'
+        language: system
+        files: ^web/(src|public|build-firmware\.js)
+        pass_filenames: false

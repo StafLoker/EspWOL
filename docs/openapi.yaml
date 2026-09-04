@@ -1,0 +1,903 @@
+openapi: 3.1.1
+info:
+  title: EspWOL API
+  description: |
+    API for managing network hosts, Wake-on-LAN, ping operations, and system
+    settings.
+  version: 3.0.0
+servers:
+  - url: http://espwol.local
+    description: Server
+security:
+  - basicAuth: []
+tags:
+  - name: Hosts
+    description: Host management operations
+  - name: Network Operations
+    description: Ping and Wake-on-LAN operations
+  - name: Data Management
+    description: Import operations
+  - name: Settings
+    description: Network, ping period and Wi-Fi settings
+  - name: Account
+    description: The credentials used for HTTP Basic Authentication
+  - name: System
+    description: System information and firmware updates
+paths:
+  /api/hosts:
+    get:
+      tags:
+        - Hosts
+      summary: Get all hosts
+      description: Retrieves the list of hosts.
+      responses:
+        "200":
+          description: List of hosts
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Host"
+                      metadata:
+                        $ref: "#/components/schemas/Metadata"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags:
+        - Hosts
+      summary: Add new host
+      description: |
+        Adds a new host. The host is pinged once on creation, so the returned
+        `status` reflects its reachability at that moment.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HostInput"
+      responses:
+        "200":
+          description: Host added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: Duplicate host
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "507":
+          description: Maximum number of hosts reached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+    put:
+      tags:
+        - Hosts
+      summary: Update host
+      description: |
+        Updates the host identified by the `id` query parameter. Requires `id`;
+        without it the request is treated as a collection request and rejected
+        with 405.
+      parameters:
+        - $ref: "#/components/parameters/HostIdRequired"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HostInput"
+      responses:
+        "200":
+          description: Host updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: Duplicate host
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+    delete:
+      tags:
+        - Hosts
+      summary: Delete host
+      description: Deletes the host identified by the `id` query parameter.
+      parameters:
+        - $ref: "#/components/parameters/HostIdRequired"
+      responses:
+        "200":
+          description: Host deleted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      metadata:
+                        $ref: "#/components/schemas/Metadata"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/hosts/ping:
+    post:
+      tags:
+        - Network Operations
+      summary: Ping host
+      description: |
+        Pings the host identified by the `id` query parameter and updates its
+        stored status. `success` is `true` when the host answered.
+      parameters:
+        - $ref: "#/components/parameters/HostIdRequired"
+      responses:
+        "200":
+          description: Ping result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              examples:
+                online:
+                  value:
+                    success: true
+                    message: Host is online
+                offline:
+                  value:
+                    success: false
+                    message: Host is offline
+        "400":
+          description: Host not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "405":
+          $ref: "#/components/responses/MissingId"
+  /api/hosts/wake:
+    post:
+      tags:
+        - Network Operations
+      summary: Wake host
+      description: |
+        Sends a Wake-on-LAN magic packet to the host identified by the `id`
+        query parameter.
+      parameters:
+        - $ref: "#/components/parameters/HostIdRequired"
+      responses:
+        "200":
+          description: Wake result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              examples:
+                sent:
+                  value:
+                    success: true
+                    message: WOL packet sent
+                failed:
+                  value:
+                    success: false
+                    message: Failed to send WOL packet
+        "400":
+          description: Host not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "405":
+          $ref: "#/components/responses/MissingId"
+  /api/hosts/import:
+    post:
+      tags:
+        - Data Management
+      summary: Import host database
+      description: |
+        Imports an array of hosts. Entries that are invalid, duplicated, or that
+        do not fit in the remaining memory are skipped and counted in
+        `ignored_count` rather than failing the request. `success` is `false`
+        when nothing was imported.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/HostImport"
+      responses:
+        "200":
+          description: Import completed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ImportResult"
+                      metadata:
+                        $ref: "#/components/schemas/Metadata"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "507":
+          description: Maximum number of hosts reached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+  /api/settings:
+    get:
+      tags:
+        - Settings
+      summary: Get all settings
+      description: Retrieves the about block, ping period and network settings.
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Settings"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/settings/about:
+    get:
+      tags:
+        - System
+      summary: Get system information
+      description: Retrieves the firmware version and the device hostname.
+      responses:
+        "200":
+          description: System information
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/AboutInfo"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/settings/network:
+    get:
+      tags:
+        - Settings
+      summary: Get network settings
+      description: |
+        Retrieves the network settings. When static addressing is disabled the
+        returned addresses are the ones currently leased over DHCP.
+      responses:
+        "200":
+          description: Network settings
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/NetworkSettings"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      tags:
+        - Settings
+      summary: Update network settings
+      description: |
+        Updates the network settings. All fields are required even when
+        `enable` is `false`, though the addresses are only stored when `enable`
+        is `true`. **The device restarts immediately after responding.**
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NetworkSettings"
+      responses:
+        "200":
+          description: Network settings updated; the device then restarts
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/NetworkSettings"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+  /api/account:
+    get:
+      tags:
+        - Account
+      summary: Get the current user
+      description: Retrieves the configured username. The password is never returned.
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/UserResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      tags:
+        - Account
+      summary: Update the credentials
+      description: |
+        Replaces the HTTP Basic credentials. Subsequent requests must use the
+        new username and password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/UserResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+  /api/settings/ping_period:
+    get:
+      tags:
+        - Settings
+      summary: Get the periodic ping interval
+      description: Retrieves the interval of the periodic ping sweep, in **milliseconds**.
+      responses:
+        "200":
+          description: Ping period
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          pingPeriod:
+                            type: integer
+                            format: int64
+                            description: Interval in milliseconds; 0 when disabled
+                            examples:
+                              - 60000
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      tags:
+        - Settings
+      summary: Update the periodic ping interval
+      description: |
+        Sets the interval of the periodic ping sweep, in **milliseconds**. Only
+        the listed values are accepted; 0 disables the sweep. The response
+        echoes the value back in milliseconds.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pingPeriod:
+                  $ref: "#/components/schemas/PingPeriod"
+              required:
+                - pingPeriod
+      responses:
+        "200":
+          description: Ping period updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          pingPeriod:
+                            $ref: "#/components/schemas/PingPeriod"
+        "400":
+          description: Missing body, invalid JSON, or invalid ping period value
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+  /api/settings/reset_wifi:
+    post:
+      tags:
+        - Settings
+      summary: Reset Wi-Fi settings
+      description: |
+        Clears the stored Wi-Fi credentials. **The device restarts immediately
+        after responding** and comes back up in configuration-portal mode.
+      responses:
+        "200":
+          description: Wi-Fi settings reset; the device then restarts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /update:
+    get:
+      tags:
+        - System
+      summary: Firmware update page
+      description: Serves the HTML page used to upload a new firmware image.
+      responses:
+        "200":
+          description: HTML upload page
+          content:
+            text/html:
+              schema:
+                type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags:
+        - System
+      summary: Upload firmware
+      description: |
+        Uploads a new firmware `.bin` and flashes it. Responses are plain text,
+        not JSON. **The device restarts after a successful update.**
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                firmware:
+                  type: string
+                  format: binary
+                  description: The firmware image to flash
+              required:
+                - firmware
+      responses:
+        "200":
+          description: Update accepted; the device then restarts
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - OK
+        "400":
+          description: No firmware uploaded, or the update failed
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - No firmware uploaded
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: HTTP Basic Authentication, realm `EspWOL`.
+  parameters:
+    HostIdRequired:
+      name: id
+      in: query
+      required: true
+      schema:
+        type: integer
+      description: Host identifier.
+  responses:
+    BadRequest:
+      description: Missing body, invalid JSON, missing fields, or invalid format
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiResponse"
+    Unauthorized:
+      description: Missing or invalid HTTP Basic credentials
+    MethodNotAllowed:
+      description: Method not allowed on this route
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiResponse"
+    MissingId:
+      description: The `id` query parameter is missing
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiResponse"
+  schemas:
+    Host:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Host identifier, assigned by the device
+          examples:
+            - 1
+        name:
+          type: string
+          maxLength: 32
+          examples:
+            - Server
+        mac:
+          type: string
+          pattern: ^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$
+          examples:
+            - e8:e0:5e:97:3d:af
+        ip:
+          type: string
+          format: ipv4
+          examples:
+            - 192.168.2.7
+        autoWake:
+          type: boolean
+          description: |
+            Whether the periodic ping sweep sends a magic packet when this host
+            is found offline.
+          examples:
+            - true
+        status:
+          type: boolean
+          description: Last known reachability, refreshed by ping and by the sweep
+          examples:
+            - true
+      required:
+        - id
+        - name
+        - mac
+        - ip
+        - autoWake
+        - status
+    HostInput:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 32
+          examples:
+            - Server
+        mac:
+          type: string
+          pattern: ^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$
+          examples:
+            - e8:e0:5e:97:3d:af
+        ip:
+          type: string
+          format: ipv4
+          examples:
+            - 192.168.2.7
+        autoWake:
+          type: boolean
+          examples:
+            - true
+      required:
+        - name
+        - mac
+        - ip
+        - autoWake
+    HostImport:
+      type: object
+      description: |
+        An import entry. Unlike `HostInput`, `autoWake` is optional and defaults
+        to `false`.
+      properties:
+        name:
+          type: string
+          maxLength: 32
+          examples:
+            - Server
+        mac:
+          type: string
+          pattern: ^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$
+          examples:
+            - e8:e0:5e:97:3d:af
+        ip:
+          type: string
+          format: ipv4
+          examples:
+            - 192.168.2.7
+        autoWake:
+          type: boolean
+          default: false
+          examples:
+            - true
+      required:
+        - name
+        - mac
+        - ip
+    HostResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/Host"
+            metadata:
+              $ref: "#/components/schemas/Metadata"
+    ImportResult:
+      type: object
+      properties:
+        imported_count:
+          type: integer
+          description: Number of hosts added
+          examples:
+            - 3
+        ignored_count:
+          type: integer
+          description: Entries skipped as invalid, duplicated, or not fitting in memory
+          examples:
+            - 1
+        input_size:
+          type: integer
+          description: Number of entries in the submitted array
+          examples:
+            - 4
+        current_host_count:
+          type: integer
+          description: Total number of hosts after the import
+          examples:
+            - 5
+      required:
+        - imported_count
+        - ignored_count
+        - input_size
+        - current_host_count
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          examples:
+            - true
+        message:
+          type: string
+          examples:
+            - Operation completed successfully
+      required:
+        - success
+        - message
+    Metadata:
+      type: object
+      description: |
+        Device resource usage, returned by the host routes so a client can tell
+        whether another host still fits.
+      properties:
+        memory:
+          type: object
+          properties:
+            freeHeap:
+              type: integer
+              description: Free heap in bytes
+              examples:
+                - 28160
+            totalHeap:
+              type: integer
+              description: Total heap in bytes
+              examples:
+                - 40000
+            heapUsagePercent:
+              type: number
+              examples:
+                - 29.6
+        storage:
+          type: object
+          properties:
+            freeFlash:
+              type: integer
+              description: Free filesystem space in bytes
+              examples:
+                - 45056
+            totalFlash:
+              type: integer
+              description: Total filesystem space in bytes
+              examples:
+                - 65536
+            flashUsagePercent:
+              type: number
+              examples:
+                - 31.25
+        hosts:
+          type: object
+          properties:
+            count:
+              type: integer
+              examples:
+                - 5
+            maxAllowed:
+              type: integer
+              examples:
+                - 20
+            remaining:
+              type: integer
+              examples:
+                - 15
+        hasEnoughMemory:
+          type: boolean
+          examples:
+            - true
+        canAddMoreHosts:
+          type: boolean
+          examples:
+            - true
+    PingPeriod:
+      type: integer
+      format: int64
+      description: Interval in milliseconds; 0 disables the periodic ping sweep.
+      enum:
+        - 0
+        - 60000
+        - 300000
+        - 600000
+        - 900000
+        - 1800000
+        - 2700000
+        - 3600000
+        - 10800000
+        - 21600000
+        - 43200000
+        - 86400000
+      examples:
+        - 60000
+    Settings:
+      type: object
+      properties:
+        about:
+          $ref: "#/components/schemas/AboutInfo"
+        pingPeriod:
+          type: integer
+          format: int64
+          description: Interval in milliseconds; 0 when disabled
+          examples:
+            - 60000
+        network:
+          $ref: "#/components/schemas/NetworkSettings"
+      required:
+        - about
+        - pingPeriod
+        - network
+    AboutInfo:
+      type: object
+      properties:
+        version:
+          type: string
+          examples:
+            - 3.0.0
+        hostname:
+          type: string
+          examples:
+            - espwol
+      required:
+        - version
+        - hostname
+    NetworkSettings:
+      type: object
+      properties:
+        enable:
+          type: boolean
+          description: Whether static addressing is enabled; `false` means DHCP
+          examples:
+            - true
+        ip:
+          type: string
+          format: ipv4
+          examples:
+            - 192.168.1.100
+        networkMask:
+          type: string
+          format: ipv4
+          examples:
+            - 255.255.255.0
+        gateway:
+          type: string
+          format: ipv4
+          examples:
+            - 192.168.1.1
+        dns:
+          type: string
+          format: ipv4
+          examples:
+            - 8.8.8.8
+      required:
+        - enable
+        - ip
+        - networkMask
+        - gateway
+        - dns
+    UserInput:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 20
+          examples:
+            - admin
+        password:
+          type: string
+          format: password
+          maxLength: 32
+          examples:
+            - password123
+      required:
+        - username
+        - password
+    UserResponse:
+      type: object
+      properties:
+        username:
+          type: string
+          examples:
+            - admin
+      required:
+        - username

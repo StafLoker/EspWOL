@@ -3,7 +3,10 @@
 ###########
 
 build/
-dev/node_modules
+
+# Web UI build output
+web/node_modules/
+web/dist/
 
 #########
 # MacOS #
