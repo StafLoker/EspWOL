@@ -1,5 +1,6 @@
 import { api } from '../api.js'
-import { esc, toast } from '../util.js'
+import { esc } from '../util.js'
+import { toast } from '../components/toast'
 
 const MAX_USERNAME_LENGTH = 20
 const MAX_PASSWORD_LENGTH = 32
@@ -17,18 +18,18 @@ let username = ''
 
 export function renderAccount() {
   return `
-    <h1 class="text-xl font-semibold tracking-tight">Account</h1>
+    <h1>Account</h1>
 
-    <div class="mt-8 max-w-md">
+    <div class="narrow">
       <div class="panel divide-rows">
         <div class="row">
-          <p class="text-sm font-medium">Signed in as</p>
+          <p class="row-label">Signed in as</p>
           <span id="whoami" class="badge">…</span>
         </div>
       </div>
 
-      <p class="section-title mt-8">Change credentials</p>
-      <form id="cred" class="panel space-y-4 p-4" novalidate>
+      <h2 class="section-title">Change credentials</h2>
+      <form id="cred" class="panel form-panel" novalidate>
         <div class="field">
           <label class="label" for="a-user">Username</label>
           <input id="a-user" name="username" class="input" maxlength="${MAX_USERNAME_LENGTH}"
@@ -47,12 +48,12 @@ export function renderAccount() {
             autocomplete="new-password" />
         </div>
         <p class="err error" role="alert"></p>
-        <div class="flex justify-end">
+        <div class="dialog-actions">
           <button type="submit" class="btn-primary">Update</button>
         </div>
       </form>
 
-      <p class="hint mt-3">
+      <p class="hint note">
         New credentials apply immediately, but your browser keeps sending the old ones
         until you close every EspWOL tab and open the app again.
       </p>

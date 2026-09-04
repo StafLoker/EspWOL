@@ -1,5 +1,7 @@
 import { api } from '../api.js'
-import { esc, toast, isValidIp, openModal } from '../util.js'
+import { esc, isValidIp } from '../util.js'
+import { toast } from '../components/toast'
+import { openModal } from '../components/modal'
 
 const MAX_HOST_NAME_LENGTH = 32
 
@@ -24,19 +26,19 @@ let refreshTimer = null
 
 export function renderHome() {
   return `
-    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex items-baseline gap-3">
-        <h1 class="text-xl font-semibold tracking-tight">Hosts</h1>
-        <span id="count" class="text-sm text-fg-subtle"></span>
+    <div class="page-head">
+      <div class="page-title">
+        <h1>Hosts</h1>
+        <span id="count"></span>
       </div>
-      <div class="flex gap-2">
-        <div class="relative flex-1 sm:flex-none">
-          <i class="material-symbols-outlined input-icon" aria-hidden="true">search</i>
+      <div class="page-actions">
+        <div class="search">
+          <i class="material-symbols-outlined" aria-hidden="true">search</i>
           <input id="search" type="search" aria-label="Search hosts" placeholder="Search"
-            value="${esc(state.search)}" class="input input-search w-full sm:w-56" />
+            value="${esc(state.search)}" class="input" />
         </div>
-        <button id="add" class="btn-primary shrink-0">
-          <i class="material-symbols-outlined text-lg" aria-hidden="true">add</i> Add
+        <button id="add" class="btn-primary">
+          <i class="material-symbols-outlined" aria-hidden="true">add</i> Add
         </button>
       </div>
     </div>
@@ -45,8 +47,8 @@ export function renderHome() {
 
 function listHtml() {
   if (state.loading)
-    return `<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      ${'<div class="host-card h-[132px] animate-pulse opacity-50"></div>'.repeat(3)}
+    return `<div class="host-grid">
+      ${'<div class="host-card skeleton"></div>'.repeat(3)}
     </div>`
 
   const term = state.search.toLowerCase()
@@ -59,12 +61,12 @@ function listHtml() {
   )
 
   if (hosts.length === 0)
-    return `<p class="panel px-6 py-16 text-center text-sm text-fg-muted">
+    return `<p class="panel empty-state">
       ${state.search ? `No hosts match “${esc(state.search)}”.` : 'No hosts yet.'}
     </p>`
 
   return `
-    <ul class="grid list-none gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <ul class="host-grid">
       ${hosts
         .map((h) => {
           const pr = state.ping[h.id]
@@ -152,7 +154,7 @@ function openDialog(host) {
   const isEdit = !!host
   const { el, close } = openModal(
     isEdit ? 'Edit host' : 'Add host',
-    `<form class="mt-5 space-y-4" novalidate>
+    `<form class="dialog-form" novalidate>
       <div class="field">
         <label class="label" for="f-name">Name</label>
         <input id="f-name" name="name" class="input" maxlength="${MAX_HOST_NAME_LENGTH}" required
@@ -160,23 +162,23 @@ function openDialog(host) {
       </div>
       <div class="field">
         <label class="label" for="f-mac">MAC address</label>
-        <input id="f-mac" name="mac" class="input font-mono" maxlength="17" required
+        <input id="f-mac" name="mac" class="input input-mono" maxlength="17" required
           placeholder="AA:BB:CC:DD:EE:FF" value="${esc(host?.mac ?? '')}" />
       </div>
       <div class="field">
         <label class="label" for="f-ip">IP address</label>
-        <input id="f-ip" name="ip" class="input font-mono" required
+        <input id="f-ip" name="ip" class="input input-mono" required
           placeholder="192.168.1.10" value="${esc(host?.ip ?? '')}" />
       </div>
-      <div class="flex items-center justify-between gap-4">
+      <div class="row-inline">
         <label class="label" for="f-wake">
           Auto wake
-          <span class="mt-0.5 block hint font-normal">Send a magic packet when the host goes offline.</span>
+          <span class="hint">Send a magic packet when the host goes offline.</span>
         </label>
         <input id="f-wake" name="autoWake" type="checkbox" class="switch" ${host?.autoWake ? 'checked' : ''} />
       </div>
       <p class="err error" role="alert"></p>
-      <div class="flex justify-end gap-2 pt-1">
+      <div class="dialog-actions">
         <button type="button" class="btn-ghost" data-close>Cancel</button>
         <button type="submit" class="btn-primary">${isEdit ? 'Save' : 'Add host'}</button>
       </div>
@@ -215,10 +217,10 @@ function confirmDelete(host) {
   if (!host) return
   const { el, close } = openModal(
     'Delete host',
-    `<p class="mt-2 text-sm text-fg-muted">
-      <span class="text-fg">${esc(host.name)}</span> will be removed. This cannot be undone.
+    `<p class="dialog-text">
+      <strong>${esc(host.name)}</strong> will be removed. This cannot be undone.
     </p>
-    <div class="mt-5 flex justify-end gap-2">
+    <div class="dialog-actions">
       <button class="btn-ghost" data-close>Cancel</button>
       <button class="btn-danger" data-yes>Delete</button>
     </div>`,

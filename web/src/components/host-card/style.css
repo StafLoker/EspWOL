@@ -1,0 +1,131 @@
+/* <host-card>: one host, its status dot and its row of actions. */
+
+.host-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.host-card {
+  display: block;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  transition: border-color 0.15s;
+}
+
+.host-card:hover {
+  border-color: var(--border-strong);
+}
+
+.host-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.host-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.host-card-info h3 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.host-ip,
+.host-mac {
+  font-family: var(--mono);
+}
+
+.host-ip {
+  margin-top: 0.125rem;
+  font-size: 0.875rem;
+  color: var(--fg-muted);
+}
+
+.host-mac {
+  font-size: 0.75rem;
+  color: var(--fg-subtle);
+}
+
+.host-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  margin-top: 1rem;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.status-indicator i {
+  font-size: 1.25rem;
+}
+
+.status-online {
+  background: rgb(74 222 128 / 0.1);
+  color: var(--online);
+}
+.status-online:hover {
+  background: rgb(74 222 128 / 0.2);
+}
+
+.status-offline {
+  background: var(--surface-hover);
+  color: var(--fg-subtle);
+}
+.status-offline:hover {
+  background: var(--border);
+}
+
+.is-pinging {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* The ring that flashes out of the status dot when a ping resolves */
+.ping-success-glow,
+.ping-fail-glow {
+  animation: pingGlow 2s ease-out;
+}
+
+.ping-success-glow {
+  --glow: 74, 222, 128;
+}
+
+.ping-fail-glow {
+  --glow: 248, 113, 113;
+}
+
+@keyframes pingGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgb(var(--glow) / 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgb(var(--glow) / 0);
+  }
+}
+
+@media (min-width: 640px) {
+  .host-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .host-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

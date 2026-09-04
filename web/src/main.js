@@ -1,5 +1,5 @@
 import './style.css'
-import './host-card.js'
+import './components/host-card'
 import { renderHome, mountHome, unmountHome } from './views/home.js'
 import { renderSettings, mountSettings, unmountSettings } from './views/settings.js'
 import { renderAccount, mountAccount } from './views/account.js'
@@ -26,26 +26,23 @@ function shell(inner, nav) {
       ${nav === key ? 'aria-current="page"' : ''}>${label}</a>`
 
   return `
-    <a href="#main"
-      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-200
-             focus:rounded-lg focus:border focus:border-border-strong focus:bg-surface
-             focus:px-4 focus:py-2 focus:text-sm focus:font-medium">Skip to content</a>
-    <header class="sticky top-0 z-50 border-b border-border bg-bg/80 backdrop-blur">
-      <div class="mx-auto flex max-w-5xl items-center justify-between px-6">
-        <div class="flex items-center gap-8">
-          <a href="#/" class="text-sm font-semibold tracking-tight">EspWOL</a>
-          <nav class="flex gap-6" aria-label="Main">
+    <a href="#main" class="skip-link">Skip to content</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <div class="brand-nav">
+          <a href="#/" class="brand">EspWOL</a>
+          <nav class="tabs" aria-label="Main">
             ${tab('/', 'Hosts', 'home')}
             ${tab('/settings', 'Settings', 'settings')}
           </nav>
         </div>
         <a href="#/account" class="icon-button ${nav === 'account' ? 'icon-button-active' : ''}"
           aria-label="Account" ${nav === 'account' ? 'aria-current="page"' : ''}>
-          <i class="material-symbols-outlined text-xl" aria-hidden="true">person</i>
+          <i class="material-symbols-outlined" aria-hidden="true">person</i>
         </a>
       </div>
     </header>
-    <main id="main" class="mx-auto max-w-5xl px-6 py-10">${inner}</main>`
+    <main id="main">${inner}</main>`
 }
 
 const app = document.getElementById('app')

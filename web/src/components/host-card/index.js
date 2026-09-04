@@ -1,4 +1,5 @@
-import { esc } from './util.js'
+import { esc } from '../../util.js'
+import './style.css'
 
 export class HostCard extends HTMLElement {
   static get observedAttributes() {
@@ -29,28 +30,28 @@ export class HostCard extends HTMLElement {
 
     this.innerHTML = `
       <article class="host-card" aria-label="${name}">
-        <div class="flex items-start gap-3">
+        <div class="host-card-top">
           <button type="button" data-act="wake"
             class="status-indicator ${online ? 'status-online' : 'status-offline'} ${glow}"
             aria-label="Wake ${name}">
-            <i class="material-symbols-outlined text-xl" aria-hidden="true">power_settings_new</i>
+            <i class="material-symbols-outlined" aria-hidden="true">power_settings_new</i>
           </button>
-          <div class="min-w-0 flex-1">
-            <h3 class="truncate font-medium">${name}</h3>
-            <p class="mt-0.5 font-mono text-sm text-fg-muted">${ip}</p>
-            <p class="font-mono text-xs text-fg-subtle">${mac}</p>
+          <div class="host-card-info">
+            <h3>${name}</h3>
+            <p class="host-ip">${ip}</p>
+            <p class="host-mac">${mac}</p>
             <p class="sr-only">Status: ${online ? 'online' : 'offline'}</p>
           </div>
         </div>
-        <div class="mt-4 flex justify-end gap-1">
+        <div class="host-card-actions">
           <button data-act="ping" class="action-button" aria-label="Ping ${name}" ${pinging ? 'disabled' : ''}>
-            <i class="material-symbols-outlined text-lg ${pinging ? 'animate-pulse' : ''}" aria-hidden="true">network_ping</i>
+            <i class="material-symbols-outlined ${pinging ? 'is-pinging' : ''}" aria-hidden="true">network_ping</i>
           </button>
           <button data-act="edit" class="action-button" aria-label="Edit ${name}">
-            <i class="material-symbols-outlined text-lg" aria-hidden="true">edit</i>
+            <i class="material-symbols-outlined" aria-hidden="true">edit</i>
           </button>
           <button data-act="delete" class="action-button action-button-danger" aria-label="Delete ${name}">
-            <i class="material-symbols-outlined text-lg" aria-hidden="true">delete</i>
+            <i class="material-symbols-outlined" aria-hidden="true">delete</i>
           </button>
         </div>
       </article>`

@@ -1,5 +1,7 @@
 import { api } from '../api.js'
-import { esc, toast, isValidIp, openModal } from '../util.js'
+import { esc, isValidIp } from '../util.js'
+import { toast } from '../components/toast'
+import { openModal } from '../components/modal'
 
 // value is milliseconds (what /settings reports); the API takes seconds on write.
 const PING_PERIODS = [
@@ -23,6 +25,8 @@ const NET_FIELDS = [
   ['gateway', 'Gateway', '192.168.1.1'],
   ['dns', 'DNS', '8.8.8.8'],
 ]
+
+const REPO_URL = 'https://github.com/StafLoker/EspWOL'
 
 const TABS = [
   ['general', 'General'],
@@ -81,10 +85,10 @@ export function renderSettings() {
 
   return `
     <h1 class="sr-only">Settings</h1>
-    <div class="-mt-4 border-b border-border">
-      <nav class="flex gap-6" role="tablist" aria-label="Settings sections">${tabs}</nav>
+    <div class="subtabs">
+      <nav class="tabs" role="tablist" aria-label="Settings sections">${tabs}</nav>
     </div>
-    <div id="s-body" role="tabpanel" class="pt-8"></div>`
+    <div id="s-body" role="tabpanel"></div>`
 }
 
 function generalTab() {
@@ -97,15 +101,15 @@ function generalTab() {
     <div class="panel divide-rows">
       <div class="row">
         <label for="ping-period">
-          <span class="text-sm font-medium">Ping interval</span>
-          <span class="hint mt-0.5 block">How often every host is checked.</span>
+          <span class="row-label">Ping interval</span>
+          <span class="hint">How often every host is checked.</span>
         </label>
-        <select id="ping-period" class="input w-40">${opts}</select>
+        <select id="ping-period" class="input input-narrow">${opts}</select>
       </div>
       <div class="row">
         <div>
-          <p class="text-sm font-medium">Reset Wi-Fi</p>
-          <p class="hint mt-0.5">Reboots into the setup portal.</p>
+          <p class="row-label">Reset Wi-Fi</p>
+          <p class="hint">Reboots into the setup portal.</p>
         </div>
         <button id="reset-wifi" class="btn-secondary">Reset</button>
       </div>
@@ -117,7 +121,7 @@ function networkTab() {
     ([k, label, ph]) => `
       <div class="field">
         <label class="label" for="net-${k}">${label}</label>
-        <input id="net-${k}" data-net="${k}" class="input font-mono" placeholder="${ph}"
+        <input id="net-${k}" data-net="${k}" class="input input-mono" placeholder="${ph}"
           value="${esc(s.net[k] || '')}" />
       </div>`,
   ).join('')
@@ -126,16 +130,16 @@ function networkTab() {
     <div class="panel divide-rows">
       <div class="row">
         <label for="net-enable">
-          <span class="text-sm font-medium">Static IP</span>
-          <span class="hint mt-0.5 block">Off means DHCP.</span>
+          <span class="row-label">Static IP</span>
+          <span class="hint">Off means DHCP.</span>
         </label>
         <input id="net-enable" type="checkbox" class="switch" ${s.net.enable ? 'checked' : ''} />
       </div>
-      <div class="${s.net.enable ? '' : 'hidden'} p-4">
-        <div class="grid gap-4 sm:grid-cols-2">${fields}</div>
+      <div class="net-fields${s.net.enable ? '' : ' hidden'}">
+        <div class="field-grid">${fields}</div>
       </div>
     </div>
-    <div class="mt-4 flex items-center justify-between gap-4">
+    <div class="panel-footer">
       <p class="hint">Saving reboots the device.</p>
       <button id="save-net" class="btn-primary">Save</button>
     </div>`
@@ -144,23 +148,23 @@ function networkTab() {
 function hostsTab() {
   return `
     <div class="panel divide-rows">
-      <div class="row flex-col items-start sm:flex-row sm:items-center">
+      <div class="row row-stack">
         <div>
-          <p class="text-sm font-medium">Import</p>
-          <p class="hint mt-0.5">CSV (name,mac,ip,autoWake) or JSON array.</p>
+          <p class="row-label">Import</p>
+          <p class="hint">CSV (name,mac,ip,autoWake) or JSON array.</p>
         </div>
-        <div class="flex w-full shrink-0 items-center gap-2 sm:w-auto">
+        <div class="row-controls">
           <input id="file" type="file" accept=".csv,.json" class="hidden" />
-          <button id="pick" class="btn-secondary min-w-0 flex-1 sm:flex-none">
-            <span id="pick-label" class="truncate">Choose file</span>
+          <button id="pick" class="btn-secondary btn-file">
+            <span id="pick-label">Choose file</span>
           </button>
-          <button id="import" class="btn-primary shrink-0" disabled>Import</button>
+          <button id="import" class="btn-primary" disabled>Import</button>
         </div>
       </div>
       <div class="row">
         <div>
-          <p class="text-sm font-medium">Export</p>
-          <p class="hint mt-0.5">${s.hosts.length} host${s.hosts.length === 1 ? '' : 's'} as CSV.</p>
+          <p class="row-label">Export</p>
+          <p class="hint">${s.hosts.length} host${s.hosts.length === 1 ? '' : 's'} as CSV.</p>
         </div>
         <button id="export" class="btn-secondary" ${s.hosts.length ? '' : 'disabled'}>Export</button>
       </div>
@@ -171,19 +175,30 @@ function systemTab() {
   return `
     <div class="panel divide-rows">
       <div class="row">
-        <p class="text-sm font-medium">Version</p>
+        <p class="row-label">Version</p>
         <span class="badge">${esc(s.about.version || '—')}</span>
       </div>
       <div class="row">
-        <p class="text-sm font-medium">Hostname</p>
+        <p class="row-label">Hostname</p>
         <span class="badge">${esc(s.about.hostname || '—')}</span>
       </div>
       <div class="row">
         <div>
-          <p class="text-sm font-medium">Firmware update</p>
-          <p class="hint mt-0.5">Upload a new .bin over the air.</p>
+          <p class="row-label">Firmware update</p>
+          <p class="hint">Upload a new .bin over the air.</p>
         </div>
         <a href="/update" class="btn-secondary">Open updater</a>
+      </div>
+      <div class="row">
+        <div>
+          <p class="row-label">Project</p>
+          <p class="hint">Source code, releases and issues.</p>
+        </div>
+        <a href="${REPO_URL}" target="_blank" rel="noopener noreferrer" class="btn-secondary">
+          GitHub
+          <i class="material-symbols-outlined" aria-hidden="true">open_in_new</i>
+          <span class="sr-only">(opens in a new tab)</span>
+        </a>
       </div>
     </div>`
 }
@@ -199,7 +214,7 @@ function repaint() {
   const b = document.getElementById('s-body')
   if (!b) return
   b.innerHTML = s.loading
-    ? `<div class="panel h-40 animate-pulse opacity-50"></div>`
+    ? `<div class="panel skeleton skeleton-tall"></div>`
     : TAB_BODIES[s.tab]()
   if (!s.loading) bind()
 }
@@ -315,10 +330,10 @@ async function saveNet() {
 function confirmResetWiFi() {
   const { el, close } = openModal(
     'Reset Wi-Fi',
-    `<p class="mt-2 text-sm text-fg-muted">
+    `<p class="dialog-text">
       The device reboots into its setup portal and disconnects from this network.
     </p>
-    <div class="mt-5 flex justify-end gap-2">
+    <div class="dialog-actions">
       <button class="btn-ghost" data-close>Cancel</button>
       <button class="btn-danger" data-yes>Reset</button>
     </div>`,

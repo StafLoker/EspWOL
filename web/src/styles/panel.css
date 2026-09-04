@@ -1,0 +1,117 @@
+/* Bordered surface holding a stack of setting rows. */
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+}
+
+.divide-rows > * + * {
+  border-top: 1px solid var(--border);
+}
+
+.row-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.row-inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* An import/export row: stacks on narrow screens, inline once there is room */
+.row-stack {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.row-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.panel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.hint {
+  display: block;
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+  color: var(--fg-subtle);
+}
+
+.note {
+  margin-top: 0.75rem;
+}
+
+.section-title {
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fg-subtle);
+}
+
+.badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  background: var(--surface-hover);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--fg-muted);
+}
+
+.empty-state {
+  padding: 4rem 1.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--fg-muted);
+}
+
+/* Loading placeholders hold the space their content will occupy */
+.skeleton {
+  height: 132px;
+  opacity: 0.5;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.skeleton-tall {
+  height: 10rem;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (min-width: 640px) {
+  .row-stack {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .row-controls {
+    width: auto;
+  }
+}
