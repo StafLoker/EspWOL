@@ -97,18 +97,34 @@ Then, install the latest version of the **ESP8266** board package via the **Boar
    ```
 2. **Open the Project:** Open `firmware/EspWOL/EspWOL.ino` in the **Arduino IDE**.
 3. **Install Required Libraries:** Use the **Library Manager** in the Arduino IDE to install all necessary libraries.
-4. **Upload the Code:** Connect your ESP8266 board and upload the code.
+4. **Set the Flash Size:** Under **Tools → Flash Size**, pick a layout that reserves a filesystem — for example `4MB (FS:2MB OTA:~1019KB)` on a NodeMCU or D1 Mini, or `1MB (FS:64KB OTA:~470KB)` on an ESP-01S. The hosts and settings live in that filesystem, and the layout has to stay the same across updates for them to survive.
+5. **Upload the Code:** Connect your ESP8266 board and upload the code.
 
 ---
 
 ### Method 2: Using Precompiled Binary
 
-1. **Download the Binary File** (`EspWOL.bin`) from the latest release.
-2. **Flash the Firmware:** Use one of the following online tools to flash the binary:
+Each release ships one binary per flash layout. Pick the one matching your board:
+
+| Binary                  | Board                                         | Filesystem | Update slot |
+| ----------------------- | --------------------------------------------- | ---------- | ----------- |
+| `EspWOL-4M2M-<tag>.bin` | 4MB boards: NodeMCU, Wemos D1 Mini, ESP-12E/F | 2MB        | ~1019KB     |
+| `EspWOL-1M64-<tag>.bin` | 1MB boards: ESP-01S, D1 Mini Lite             | 64KB       | ~470KB      |
+
+Steps:
+
+1. **Download the binary** for your board's flash size from the latest release.
+2. **Flash the firmware:** Use one of the following online tools:
    - [ESP Huhn](https://esp.huhn.me)
    - [ESPHome Web](https://web.esphome.io)
 
 Once a device is already running v3, later updates can be uploaded from the browser at `/update` instead of reflashing over USB.
+
+> [!IMPORTANT]
+> **Stay on the same layout.** The layout a binary was built for decides where it
+> looks for the filesystem, so flashing a different one leaves the stored hosts,
+> settings and credentials where the new firmware will not find them. Export your
+> hosts before switching layouts, and re-import them afterwards.
 
 ### Migration from v2.x.x to v3.x.x
 
@@ -163,6 +179,7 @@ Once a device is already running v3, later updates can be uploaded from the brow
 - **Host won't wake**: Verify MAC address, ensure target device supports WoL
 - **mDNS not working**: Some networks don't support mDNS; use IP address instead
 - **Browser keeps old credentials**: Basic Auth is cached by the browser; close the window or clear the site's HTTP auth to log in as someone else
+- **Hosts and settings gone after an update**: the uploaded binary was built for a different flash layout than the device, so it looked for the filesystem elsewhere. Flash the binary matching your board over USB with **"All Flash Contents"** once, then stay on that layout — see [Method 2](#method-2-using-precompiled-binary)
 
 ## Screenshots
 
