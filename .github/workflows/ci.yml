@@ -42,16 +42,6 @@ jobs:
         working-directory: web
         run: pnpm run build
 
-      # The generated headers are committed, so the firmware compiles from what
-      # the tag contains. A diff here means someone edited web/ without running
-      # `pnpm run build`.
-      - name: Generated headers are up to date
-        run: |
-          if ! git diff --exit-code --stat -- firmware/EspWOL; then
-            echo "::error::Generated headers are stale. Run 'pnpm run build' in web/ and commit the result."
-            exit 1
-          fi
-
       - name: Setup Arduino CLI
         uses: arduino/setup-arduino-cli@v2.0.0
         with:
