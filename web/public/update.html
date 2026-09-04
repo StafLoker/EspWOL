@@ -126,6 +126,17 @@
       .msg.ok {
         color: var(--online);
       }
+      .back {
+        display: block;
+        margin-top: 1rem;
+        font-size: 0.8125rem;
+        color: var(--fg-muted);
+        text-align: center;
+        text-decoration: none;
+      }
+      .back:hover {
+        color: var(--fg);
+      }
     </style>
   </head>
   <body>
@@ -149,6 +160,7 @@
         ></progress>
         <p class="msg" id="status" role="status" aria-live="polite"></p>
       </form>
+      <a class="back" href="/">Go to home</a>
     </main>
     <script>
       const form = document.getElementById('form')
