@@ -13,7 +13,7 @@ static bool is_valid_mac(const String &mac) {
   if (mac.length() != 17)
     return false;
 
-  for (int i = 0; i < mac.length(); i++) {
+  for (unsigned int i = 0; i < mac.length(); i++) {
     if (i % 3 == 2) {
       if (mac[i] != ':')
         return false;
