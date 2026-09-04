@@ -41,7 +41,7 @@
 - **Network Configuration**: Switch seamlessly between static IP and DHCP modes with automatic restart.
 - **Host Ping Utility**: Test connectivity by pinging specified hosts with automatic status updates.
 - **Periodic Ping & Auto-Wake**: Configure periodic pings with automatic WoL for offline hosts.
-- **Database Export/Import**: Export and import host databases in CSV or JSON format.
+- **Database Export/Import**: Export and import host databases in CSV format.
 
 ### User experience
 
@@ -124,7 +124,9 @@ Once a device is already running v3, later updates can be uploaded from the brow
 3. **Reconfigure**:
 
    - Set up WiFi connection.
-   - Login with default credentials: `glavniy` / `Lep#Chick43`
+   - Login with default credentials:
+     - **Username**: `glavniy` 
+     - **Password**: `Lep#Chick43`
    - Import your host database via the Import function.
    - Reconfigure your settings and update credentials.
 
@@ -149,7 +151,9 @@ Once a device is already running v3, later updates can be uploaded from the brow
    - Open the IP address in a web browser.
 
 3. **Login**:
-   - The browser asks for credentials. Default: `glavniy` / `Lep#Chick43`
+   - The browser asks for credentials. Default: 
+     - **Username**: `glavniy` 
+     - **Password**: `Lep#Chick43`
    - Change these credentials immediately in Settings → Account.
 
 ## Troubleshooting

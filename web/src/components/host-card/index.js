@@ -3,7 +3,7 @@ import './style.css'
 
 export class HostCard extends HTMLElement {
   static get observedAttributes() {
-    return ['name', 'ip', 'mac', 'online', 'pinging', 'ping-result']
+    return ['name', 'ip', 'mac', 'online', 'pinging', 'waking', 'ping-result']
   }
 
   connectedCallback() {
@@ -21,37 +21,32 @@ export class HostCard extends HTMLElement {
   render() {
     const name = esc(this.getAttribute('name'))
     const ip = esc(this.getAttribute('ip'))
-    const mac = esc(this.getAttribute('mac'))
     const online = this.getAttribute('online') === '1'
     const pinging = this.getAttribute('pinging') === '1'
+    const waking = this.getAttribute('waking') === '1'
     const pr = this.getAttribute('ping-result')
 
     const glow = pr === 'ok' ? 'ping-success-glow' : pr === 'fail' ? 'ping-fail-glow' : ''
 
     this.innerHTML = `
       <article class="host-card" aria-label="${name}">
-        <div class="host-card-top">
-          <button type="button" data-act="wake"
-            class="status-indicator ${online ? 'status-online' : 'status-offline'} ${glow}"
-            aria-label="Wake ${name}">
-            ${icon('power_settings_new')}
-          </button>
-          <div class="host-card-info">
-            <h3>${name}</h3>
-            <p class="host-ip">${ip}</p>
-            <p class="host-mac">${mac}</p>
-            <p class="sr-only">Status: ${online ? 'online' : 'offline'}</p>
-          </div>
+        <button type="button" data-act="wake"
+          class="status-indicator ${online ? 'status-online' : 'status-offline'} ${glow} ${waking ? 'is-waking' : ''}"
+          title="Wake ${name}" aria-label="Wake ${name}">
+          ${icon('power_settings_new')}
+        </button>
+        <div class="host-card-info">
+          <h3>${name}</h3>
+          <p class="host-ip">${ip}</p>
+          <p class="sr-only">Status: ${online ? 'online' : 'offline'}</p>
         </div>
         <div class="host-card-actions">
-          <button data-act="ping" class="action-button" aria-label="Ping ${name}" ${pinging ? 'disabled' : ''}>
-            ${icon('network_ping', pinging ? 'is-pinging' : '')}
+          <button data-act="ping" class="action-button ${pinging ? 'is-pinging' : ''}"
+            title="Ping ${name}" aria-label="Ping ${name}" ${pinging ? 'disabled' : ''}>
+            ${icon('network_ping')}
           </button>
-          <button data-act="edit" class="action-button" aria-label="Edit ${name}">
+          <button data-act="edit" class="action-button" title="Edit ${name}" aria-label="Edit ${name}">
             ${icon('edit')}
-          </button>
-          <button data-act="delete" class="action-button action-button-danger" aria-label="Delete ${name}">
-            ${icon('delete')}
           </button>
         </div>
       </article>`

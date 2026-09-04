@@ -35,6 +35,9 @@ const TABS = [
   ['system', 'System'],
 ]
 
+// v3 headers: name,mac,ip,autoWake (autoWake: "true"/"1").
+// v2 export headers: Name, MAC Address, IP Address, Periodic ping (periodic
+// ping is a seconds interval, e.g. "0" or "3600" — non-zero means auto-wake).
 function parseCsv(text) {
   const lines = text
     .split('\n')
@@ -48,10 +51,11 @@ function parseCsv(text) {
       const h = {}
       headers.forEach((k, i) => {
         if (k === 'name') h.name = vals[i]
-        else if (k === 'mac') h.mac = (vals[i] || '').toUpperCase()
-        else if (k === 'ip') h.ip = vals[i]
+        else if (k === 'mac' || k === 'mac address') h.mac = (vals[i] || '').toUpperCase()
+        else if (k === 'ip' || k === 'ip address') h.ip = vals[i]
         else if (k === 'autowake' || k === 'auto_wake')
           h.autoWake = vals[i]?.toLowerCase() === 'true' || vals[i] === '1'
+        else if (k === 'periodic ping') h.autoWake = Number(vals[i]) > 0
       })
       return h
     })
@@ -151,10 +155,10 @@ function hostsTab() {
       <div class="row row-stack">
         <div>
           <p class="row-label">Import</p>
-          <p class="hint">CSV (name,mac,ip,autoWake) or JSON array.</p>
+          <p class="hint">CSV export file, from EspWOL v2 or v3.</p>
         </div>
         <div class="row-controls">
-          <input id="file" type="file" accept=".csv,.json" class="hidden" />
+          <input id="file" type="file" accept=".csv" class="hidden" />
           <button id="pick" class="btn-secondary btn-file">
             <span id="pick-label">Choose file</span>
           </button>
@@ -278,8 +282,8 @@ async function importHosts() {
   if (!f) return
   try {
     const text = await f.text()
-    const arr = f.name.endsWith('.json') ? JSON.parse(text) : parseCsv(text)
-    if (!Array.isArray(arr) || !arr.length) throw new Error('Nothing to import.')
+    const arr = parseCsv(text)
+    if (!arr.length) throw new Error('Nothing to import.')
     const res = await api.importHosts(arr)
     toast(
       `Imported ${res.data?.imported_count ?? 0}, ignored ${res.data?.ignored_count ?? 0}`,

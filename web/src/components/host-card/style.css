@@ -6,7 +6,10 @@
 }
 
 .host-card {
-  display: block;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 0.75rem;
   padding: 1.25rem;
   border: 1px solid var(--border);
   border-radius: 0.75rem;
@@ -18,15 +21,11 @@
   border-color: var(--border-strong);
 }
 
-.host-card-top {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-}
-
 .host-card-info {
-  flex: 1;
+  grid-column: 2;
+  grid-row: 1;
   min-width: 0;
+  align-self: center;
 }
 
 .host-card-info h3 {
@@ -35,44 +34,40 @@
   white-space: nowrap;
 }
 
-.host-ip,
-.host-mac {
-  font-family: var(--mono);
-}
-
 .host-ip {
   margin-top: 0.125rem;
   font-size: 0.875rem;
+  font-family: var(--mono);
   color: var(--fg-muted);
 }
 
-.host-mac {
-  font-size: 0.75rem;
-  color: var(--fg-subtle);
-}
-
 .host-card-actions {
+  grid-column: 2;
+  grid-row: 2;
   display: flex;
   justify-content: flex-end;
   gap: 0.25rem;
   margin-top: 1rem;
 }
 
+/* Wake button: spans both rows, same height as name + ip together. */
 .status-indicator {
+  grid-column: 1;
+  grid-row: 1 / span 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 3.5rem;
+  align-self: stretch;
   flex-shrink: 0;
   border: 0;
-  border-radius: 9999px;
+  border-radius: 0.65rem;
   cursor: pointer;
   transition: background-color 0.15s;
 }
 
 .status-indicator i {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
 }
 
 .status-online {
@@ -91,8 +86,27 @@
   background: var(--border);
 }
 
-.is-pinging {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+/* Ping in flight: action button blinks yellow */
+.action-button.is-pinging {
+  color: #facc15;
+  animation: blink 0.9s ease-in-out infinite;
+}
+
+/* Wake packet in flight: status dot blinks blue */
+.status-indicator.is-waking {
+  background: rgb(96 165 250 / 0.2);
+  color: #60a5fa;
+  animation: blink 0.9s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
 
 /* The ring that flashes out of the status dot when a ping resolves */

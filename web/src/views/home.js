@@ -21,6 +21,7 @@ let state = {
   loading: true,
   search: '',
   ping: {}, // id -> 'ok' | 'fail' | 'pending'
+  waking: {}, // id -> true while a WOL packet is in flight
 }
 let refreshTimer = null
 
@@ -71,9 +72,10 @@ function listHtml() {
         .map((h) => {
           const pr = state.ping[h.id]
           return `<li><host-card data-id="${h.id}"
-            name="${esc(h.name)}" ip="${esc(h.ip)}" mac="${esc(h.mac)}"
+            name="${esc(h.name)}" ip="${esc(h.ip)}"
             online="${h.status ? '1' : '0'}"
             pinging="${pr === 'pending' ? '1' : '0'}"
+            waking="${state.waking[h.id] ? '1' : '0'}"
             ping-result="${pr === 'ok' || pr === 'fail' ? pr : ''}"></host-card></li>`
         })
         .join('')}
@@ -94,10 +96,9 @@ function paint() {
   for (const card of el.querySelectorAll('host-card')) {
     const id = Number(card.dataset.id)
     const host = () => state.hosts.find((h) => h.id === id)
-    card.addEventListener('wake', () => wake(id))
+    card.addEventListener('wake', () => confirmWake(host()))
     card.addEventListener('ping', () => ping(id))
     card.addEventListener('edit', () => openDialog(host()))
-    card.addEventListener('delete', () => confirmDelete(host()))
   }
 }
 
@@ -119,16 +120,39 @@ async function load() {
   }
 }
 
+function confirmWake(host) {
+  if (!host) return
+  if (!host.status) return wake(host.id)
+
+  const { el, close } = openModal(
+    'Send WOL packet?',
+    `<p class="dialog-text">
+      <strong>${esc(host.name)}</strong> already appears online. Send a magic packet anyway?
+    </p>
+    <div class="dialog-actions">
+      <button class="btn-ghost" data-close>Cancel</button>
+      <button class="btn-primary" data-yes>Send</button>
+    </div>`,
+  )
+  el.querySelector('[data-yes]').addEventListener('click', () => {
+    close()
+    wake(host.id)
+  })
+}
+
 async function wake(id) {
+  state.waking[id] = true
+  paint()
   try {
     await api.wakeHost(id)
     toast('Magic packet sent')
     const h = state.hosts.find((x) => x.id === id)
     if (h) h.status = true
-    paint()
   } catch (e) {
     toast(e.message, false)
   }
+  delete state.waking[id]
+  paint()
 }
 
 async function ping(id) {
@@ -179,11 +203,19 @@ function openDialog(host) {
       </div>
       <p class="err error" role="alert"></p>
       <div class="dialog-actions">
+        ${isEdit ? '<button type="button" class="btn-danger" data-delete>Delete</button>' : ''}
         <button type="button" class="btn-ghost" data-close>Cancel</button>
         <button type="submit" class="btn-primary">${isEdit ? 'Save' : 'Add host'}</button>
       </div>
     </form>`,
   )
+
+  if (isEdit) {
+    el.querySelector('[data-delete]').addEventListener('click', () => {
+      close()
+      confirmDelete(host)
+    })
+  }
 
   const form = el.querySelector('form')
   form.mac.addEventListener('input', () => {
@@ -260,4 +292,5 @@ export function unmountHome() {
   refreshTimer = null
   state.loading = true
   state.ping = {}
+  state.waking = {}
 }

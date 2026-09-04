@@ -61,6 +61,11 @@
   gap: 0.5rem;
 }
 
+/* Edit form: Delete sits apart, on the opposite side from Cancel/Save */
+.dialog-actions:has([data-delete]) {
+  justify-content: space-between;
+}
+
 @keyframes fade {
   from {
     opacity: 0;
