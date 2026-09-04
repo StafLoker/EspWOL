@@ -6,7 +6,7 @@
 #define PING_COUNT_QUICK 2  // status probe on add/edit and the periodic sweep
 #define PING_COUNT_CHECK 3  // explicit "ping this host" from the UI
 
-const char VERSION[] PROGMEM = "3.0.0";
+const char VERSION[] PROGMEM = "3.0.1";
 const char SETTINS_FILE_PATH[] PROGMEM = "/settings.json";
 
 const char ROUTE_SETTINGS[] PROGMEM = "/api/settings";

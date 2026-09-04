@@ -120,11 +120,7 @@ static void ping_step() {
 void setup() {
   WiFi.hostname(FPSTR(HOSTNAME));
 
-  // Initialize file system
-  if (!LittleFS.begin()) {
-    LittleFS.format();
-    LittleFS.begin();
-  }
+  LittleFS.begin();
 
   // Load data at startup
   hosts_load();

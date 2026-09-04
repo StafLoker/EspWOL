@@ -13,9 +13,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build
-    timeout-minutes: 20
+  build-web:
+    name: Build web
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -41,6 +41,40 @@ jobs:
       - name: Build (regenerates the PROGMEM page headers)
         working-directory: web
         run: pnpm run build
+
+      - name: Upload generated headers
+        uses: actions/upload-artifact@v7
+        with:
+          name: firmware-headers
+          path: firmware/EspWOL/*.h
+          if-no-files-found: error
+          retention-days: 7
+
+  build-firmware:
+    name: Build firmware (${{ matrix.name }})
+    needs: build-web
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # 4MB boards (D1 mini, NodeMCU, ESP-12E/F): 2MB filesystem, ~1019KB OTA
+          - name: 4M2M
+            fqbn: esp8266:esp8266:d1_mini:eesz=4M2M
+            ota_slot: 1044464
+          # 1MB boards (ESP-01S, D1 mini Lite): 64KB filesystem, ~470KB OTA
+          - name: 1M64
+            fqbn: esp8266:esp8266:generic:eesz=1M64
+            ota_slot: 481280
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Take the headers built by build-web
+        uses: actions/download-artifact@v8
+        with:
+          name: firmware-headers
+          path: firmware/EspWOL/
 
       - name: Setup Arduino CLI
         uses: arduino/setup-arduino-cli@v2.0.0
@@ -79,16 +113,34 @@ jobs:
       - name: Compile ESP8266 firmware
         run: |
           arduino-cli compile \
-            --fqbn esp8266:esp8266:generic \
+            --fqbn ${{ matrix.fqbn }} \
             --warnings more \
             --clean \
             --output-dir bin \
             firmware/EspWOL/EspWOL.ino
 
+      # arduino-cli reports the same 1MB ceiling whatever the layout, so it never
+      # fails a build that cannot be flashed over the air. An OTA needs the new
+      # image to fit the spare sketch slot; check that here instead.
+      - name: Check the image fits its OTA slot
+        env:
+          OTA_SLOT: ${{ matrix.ota_slot }}
+        run: |
+          SIZE=$(stat -c%s bin/EspWOL.ino.bin)
+          echo "image: $SIZE bytes, OTA slot: $OTA_SLOT bytes"
+          if [ "$SIZE" -gt "$OTA_SLOT" ]; then
+            echo "::error::Image is $SIZE bytes and does not fit the ${{ matrix.name }} OTA slot of $OTA_SLOT bytes."
+            exit 1
+          fi
+          HEADROOM=$(( OTA_SLOT - SIZE ))
+          if [ "$HEADROOM" -lt 20480 ]; then
+            echo "::warning::Only $HEADROOM bytes spare in the ${{ matrix.name }} OTA slot."
+          fi
+
       - name: Upload firmware
         uses: actions/upload-artifact@v7
         with:
-          name: firmware
+          name: firmware-${{ matrix.name }}
           path: bin/EspWOL.ino.bin
           if-no-files-found: error
           retention-days: 7
