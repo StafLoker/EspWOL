@@ -1,76 +1,82 @@
 #include "memory.h"
 
-MemoryInfo getMemoryInfo() {
+static MemoryInfo memory_get_info() {
   MemoryInfo info;
+  uint32_t available_heap, available_flash;
+  uint32_t max_hosts_ram, max_hosts_flash, max_hosts_calc;
+  FSInfo fs_info;
 
   // RAM Info
-  info.freeHeap = ESP.getFreeHeap();
-  info.totalHeap = 81920;  // ESP8266 RAM for user ~80KB de RAM
-  info.heapUsagePercent = ((info.totalHeap - info.freeHeap) * 100) / info.totalHeap;
+  info.free_heap = ESP.getFreeHeap();
+  info.total_heap = 81920;  // ESP8266 RAM for user ~80KB de RAM
+  info.heap_usage_percent = ((info.total_heap - info.free_heap) * 100) / info.total_heap;
 
-  // Flash Info
-  FSInfo fsInfo;
-  LittleFS.begin();
-  LittleFS.info(fsInfo);
-  LittleFS.end();
-  info.freeFlash = fsInfo.totalBytes - fsInfo.usedBytes;
-  info.totalFlash = fsInfo.totalBytes;
-  info.flashUsagePercent = (fsInfo.usedBytes * 100) / fsInfo.totalBytes;
+  // Flash Info.
+  if (LittleFS.info(fs_info) && fs_info.totalBytes > 0) {
+    info.free_flash = fs_info.totalBytes - fs_info.usedBytes;
+    info.total_flash = fs_info.totalBytes;
+    info.flash_usage_percent = (fs_info.usedBytes * 100) / fs_info.totalBytes;
+  } else {
+    info.free_flash = 0;
+    info.total_flash = 0;
+    info.flash_usage_percent = 100;
+  }
 
   // Hosts info actual
-  info.hostsCount = hosts.size();
+  info.hosts_count = hosts.size();
 
-  uint32_t availableHeapForHosts = (info.freeHeap > MIN_FREE_HEAP) ? (info.freeHeap - MIN_FREE_HEAP) : 0;
-  uint32_t availableFlashForHosts = (info.freeFlash > MIN_FREE_FLASH) ? (info.freeFlash - MIN_FREE_FLASH) : 0;
+  available_heap = (info.free_heap > MIN_FREE_HEAP) ? (info.free_heap - MIN_FREE_HEAP) : 0;
+  available_flash = (info.free_flash > MIN_FREE_FLASH) ? (info.free_flash - MIN_FREE_FLASH) : 0;
 
-  availableHeapForHosts = (availableHeapForHosts * (100 - SAFETY_MARGIN_PERCENT)) / 100;
-  availableFlashForHosts = (availableFlashForHosts * (100 - SAFETY_MARGIN_PERCENT)) / 100;
+  available_heap = (available_heap * (100 - SAFETY_MARGIN_PERCENT)) / 100;
+  available_flash = (available_flash * (100 - SAFETY_MARGIN_PERCENT)) / 100;
 
-  uint32_t maxHostsRAM = availableHeapForHosts / HOST_RAM_SIZE;
-  uint32_t maxHostsFlash = availableFlashForHosts / HOST_FLASH_SIZE;
+  max_hosts_ram = available_heap / HOST_RAM_SIZE;
+  max_hosts_flash = available_flash / HOST_FLASH_SIZE;
 
-  uint32_t maxHostsCalculated = (maxHostsRAM < maxHostsFlash) ? maxHostsRAM : maxHostsFlash;
-  if (maxHostsCalculated > HARD_MAX_HOSTS) maxHostsCalculated = HARD_MAX_HOSTS;
+  max_hosts_calc = (max_hosts_ram < max_hosts_flash) ? max_hosts_ram : max_hosts_flash;
+  if (max_hosts_calc > HARD_MAX_HOSTS) max_hosts_calc = HARD_MAX_HOSTS;
 
-  info.maxHosts = maxHostsCalculated;
+  info.max_hosts = max_hosts_calc;
 
-  info.hasEnoughMemory = (info.freeHeap >= MIN_FREE_HEAP) && (info.freeFlash >= MIN_FREE_FLASH);
+  info.has_enough_memory = (info.free_heap >= MIN_FREE_HEAP) && (info.free_flash >= MIN_FREE_FLASH);
 
   return info;
 }
 
-bool hasEnoughMemoryForHost() {
-  MemoryInfo info = getMemoryInfo();
+bool memory_can_add_host() {
+  MemoryInfo info = memory_get_info();
 
-  return info.hasEnoughMemory && (info.hostsCount < info.maxHosts);
+  return info.has_enough_memory && (info.hosts_count < info.max_hosts);
 }
 
-JsonObject createMemoryMetadata(JsonDocument &doc) {
-  MemoryInfo info = getMemoryInfo();
+JsonObject memory_add_metadata(JsonDocument &doc) {
+  MemoryInfo info = memory_get_info();
+  JsonObject metadata, memory, storage, hosts_info;
 
-  JsonObject metadata = doc.createNestedObject(F("metadata"));
+  metadata = doc[F("metadata")].to<JsonObject>();
+  memory = metadata[F("memory")].to<JsonObject>();
+  storage = metadata[F("storage")].to<JsonObject>();
+  hosts_info = metadata[F("hosts")].to<JsonObject>();
 
   // RAM Info
-  JsonObject memory = metadata.createNestedObject(F("memory"));
-  memory[F("freeHeap")] = info.freeHeap;
-  memory[F("totalHeap")] = info.totalHeap;
-  memory[F("heapUsagePercent")] = info.heapUsagePercent;
+  memory[F("freeHeap")] = info.free_heap;
+  memory[F("totalHeap")] = info.total_heap;
+  memory[F("heapUsagePercent")] = info.heap_usage_percent;
 
   // Flash Info
-  JsonObject storage = metadata.createNestedObject(F("storage"));
-  storage[F("freeFlash")] = info.freeFlash;
-  storage[F("totalFlash")] = info.totalFlash;
-  storage[F("flashUsagePercent")] = info.flashUsagePercent;
+  storage[F("freeFlash")] = info.free_flash;
+  storage[F("totalFlash")] = info.total_flash;
+  storage[F("flashUsagePercent")] = info.flash_usage_percent;
 
-   // Hosts info
-  JsonObject hostsInfo = metadata.createNestedObject(F("hosts"));
-  hostsInfo[F("count")] = info.hostsCount;
-  hostsInfo[F("maxAllowed")] = info.maxHosts;
-  hostsInfo[F("remaining")] = info.maxHosts - info.hostsCount;
+  // Hosts info
+  hosts_info[F("count")] = info.hosts_count;
+  hosts_info[F("maxAllowed")] = info.max_hosts;
+  hosts_info[F("remaining")] = (info.max_hosts > info.hosts_count) ? (info.max_hosts - info.hosts_count) : 0;
 
   // General
-  metadata[F("hasEnoughMemory")] = info.hasEnoughMemory;
-  metadata[F("canAddMoreHosts")] = hasEnoughMemoryForHost();
+  metadata[F("hasEnoughMemory")] = info.has_enough_memory;
+  metadata[F("canAddMoreHosts")] = memory_can_add_host();
 
   return metadata;
 }

@@ -13,19 +13,19 @@ const PAGES = [
   {
     file: 'index.html',
     header: 'index_page.h',
-    symbol: 'indexHtmlPage',
+    symbol: 'INDEX_PAGE_HTML',
     guard: 'INDEX_PAGE_H',
   },
   {
     file: '404.html',
     header: 'not_found_page.h',
-    symbol: 'notFoundHtmlPage',
+    symbol: 'NOT_FOUND_PAGE_HTML',
     guard: 'NOT_FOUND_PAGE_H',
   },
   {
     file: 'update.html',
     header: 'update_page.h',
-    symbol: 'updateHtmlPage',
+    symbol: 'UPDATE_PAGE_HTML',
     guard: 'UPDATE_PAGE_H',
   },
 ]
@@ -121,7 +121,7 @@ for (const { file, header, symbol, guard } of PAGES) {
 const uint8_t ${symbol}[] PROGMEM = {
 ${toByteArray(gz)}
 };
-const unsigned int ${symbol}Len = ${gz.length};
+const unsigned int ${symbol}_LEN = ${gz.length};
 
 #endif
 `
