@@ -98,7 +98,7 @@ static void settings_get_all() {
   network = doc[F("network")].to<JsonObject>();
 
   about[F("version")] = FPSTR(VERSION);
-  about[F("hostname")] = wifiManager.getWiFiHostname();
+  about[F("hostname")] = wifi_manager.getWiFiHostname();
 
   doc[F("pingPeriod")] = settings.ping_period_ms;
 
@@ -157,7 +157,7 @@ static void settings_update_ping_period() {
   settings.ping_period_ms = ping_period_ms * 1000;
   settings_save();
 
-  ping_apply_period();
+  ping_apply_period_config();
 
   response_doc[F("pingPeriod")] = settings.ping_period_ms / 1000;
   server_send_json(200, true, F("Ping period updated"), response_doc);
@@ -306,7 +306,7 @@ static void settings_update_user() {
 static void settings_reset_wifi() {
   server_send_json(200, true, F("WiFi settings have been reset successfully."));
   delay(300);
-  wifiManager.resetSettings();
+  wifi_manager.resetSettings();
   ESP.restart();
 }
 
@@ -325,7 +325,7 @@ static void settings_handle_about() {
 
   if (auth_ok()) {
     doc[F("version")] = FPSTR(VERSION);
-    doc[F("hostname")] = wifiManager.getWiFiHostname();
+    doc[F("hostname")] = wifi_manager.getWiFiHostname();
     server_send_json(200, true, F("App general information"), doc);
   }
 }

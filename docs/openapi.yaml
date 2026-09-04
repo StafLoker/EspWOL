@@ -6,7 +6,7 @@ info:
     settings.
   version: 3.0.0
 servers:
-  - url: http://wol.local
+  - url: http://espwol.local
     description: Server
 security:
   - basicAuth: []
@@ -24,7 +24,7 @@ tags:
   - name: System
     description: System information and firmware updates
 paths:
-  /hosts:
+  /api/hosts:
     get:
       tags:
         - Hosts
@@ -140,7 +140,7 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /hosts/ping:
+  /api/hosts/ping:
     post:
       tags:
         - Network Operations
@@ -176,7 +176,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "405":
           $ref: "#/components/responses/MissingId"
-  /hosts/wake:
+  /api/hosts/wake:
     post:
       tags:
         - Network Operations
@@ -212,7 +212,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "405":
           $ref: "#/components/responses/MissingId"
-  /hosts/import:
+  /api/hosts/import:
     post:
       tags:
         - Data Management
@@ -254,7 +254,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiResponse"
-  /settings:
+  /api/settings:
     get:
       tags:
         - Settings
@@ -274,7 +274,7 @@ paths:
                         $ref: "#/components/schemas/Settings"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /settings/about:
+  /api/settings/about:
     get:
       tags:
         - System
@@ -294,7 +294,7 @@ paths:
                         $ref: "#/components/schemas/AboutInfo"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /settings/network:
+  /api/settings/network:
     get:
       tags:
         - Settings
@@ -348,7 +348,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "405":
           $ref: "#/components/responses/MethodNotAllowed"
-  /account:
+  /api/account:
     get:
       tags:
         - Account
@@ -399,7 +399,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "405":
           $ref: "#/components/responses/MethodNotAllowed"
-  /settings/ping_period:
+  /api/settings/ping_period:
     get:
       tags:
         - Settings
@@ -474,7 +474,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "405":
           $ref: "#/components/responses/MethodNotAllowed"
-  /settings/reset_wifi:
+  /api/settings/reset_wifi:
     post:
       tags:
         - Settings
@@ -840,7 +840,7 @@ components:
         hostname:
           type: string
           examples:
-            - wol
+            - espwol
       required:
         - version
         - hostname

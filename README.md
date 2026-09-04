@@ -53,7 +53,7 @@
 ### Other
 
 - **Web OTA Updates**: Upload a new `.bin` from the browser at `/update`, protected by the same credentials.
-- **mDNS Support**: Access the web interface using `wol.local` domain name.
+- **mDNS Support**: Access the web interface using `espwol.local` domain name.
 - **WiFi Manager**: Built-in WiFi configuration portal, themed to match the main UI.
 
 ## Requirements
@@ -138,12 +138,14 @@ Once a device is already running v3, later updates can be uploaded from the brow
 
 1. **First Boot**:
 
-   - Power the ESP8266. If no WiFi is configured, it will create an access point named `WOL-ESP8266`.
+   - Power the ESP8266. If no WiFi is configured, it will create a password-protected access point:
+     - **SSID**: `EspWOL AP`
+     - **Password**: `wol#AP326s`
    - Connect to this network and configure your WiFi credentials.
 
 2. **Access Web Interface**:
 
-   - After WiFi setup, find the device IP address (check your router or use `wol.local` if mDNS is enabled).
+   - After WiFi setup, find the device IP address (check your router or use `espwol.local` if mDNS is enabled).
    - Open the IP address in a web browser.
 
 3. **Login**:

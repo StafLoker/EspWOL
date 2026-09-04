@@ -1,3 +1,5 @@
+const API_PREFIX = '/api'
+
 class ApiError extends Error {
   constructor(message, status) {
     super(message)
@@ -39,23 +41,23 @@ async function request(method, url, body) {
 
 export const api = {
   // hosts
-  getHosts: () => request('GET', '/hosts'),
-  addHost: (h) => request('POST', '/hosts', h),
-  updateHost: (id, h) => request('PUT', `/hosts?id=${id}`, h),
-  deleteHost: (id) => request('DELETE', `/hosts?id=${id}`),
-  importHosts: (arr) => request('POST', '/hosts/import', arr),
-  wakeHost: (id) => request('POST', `/hosts/wake?id=${id}`),
-  pingHost: (id) => request('POST', `/hosts/ping?id=${id}`),
+  getHosts: () => request('GET', `${API_PREFIX}/hosts`),
+  addHost: (h) => request('POST', `${API_PREFIX}/hosts`, h),
+  updateHost: (id, h) => request('PUT', `${API_PREFIX}/hosts?id=${id}`, h),
+  deleteHost: (id) => request('DELETE', `${API_PREFIX}/hosts?id=${id}`),
+  importHosts: (arr) => request('POST', `${API_PREFIX}/hosts/import`, arr),
+  wakeHost: (id) => request('POST', `${API_PREFIX}/hosts/wake?id=${id}`),
+  pingHost: (id) => request('POST', `${API_PREFIX}/hosts/ping?id=${id}`),
 
   // settings
-  getSettings: () => request('GET', '/settings'),
-  updateNetwork: (n) => request('PUT', '/settings/network', n),
-  getAuth: () => request('GET', '/account'),
-  updateAuth: (a) => request('PUT', '/account', a),
-  getAbout: () => request('GET', '/settings/about'),
+  getSettings: () => request('GET', `${API_PREFIX}/settings`),
+  updateNetwork: (n) => request('PUT', `${API_PREFIX}/settings/network`, n),
+  getAuth: () => request('GET', `${API_PREFIX}/account`),
+  updateAuth: (a) => request('PUT', `${API_PREFIX}/account`, a),
+  getAbout: () => request('GET', `${API_PREFIX}/settings/about`),
   updatePingPeriod: (pingPeriod) =>
-    request('PUT', '/settings/ping_period', { pingPeriod }),
-  resetWiFi: () => request('POST', '/settings/reset_wifi'),
+    request('PUT', `${API_PREFIX}/settings/ping_period`, { pingPeriod }),
+  resetWiFi: () => request('POST', `${API_PREFIX}/settings/reset_wifi`),
 }
 
 export { ApiError }

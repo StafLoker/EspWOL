@@ -10,9 +10,10 @@
 
 #define ENABLE_mDNS 1  // 1 to enable, != 1 to disable
 
-// Set at first boot before WiFi exists; not part of any handler module.
-const char HOSTNAME[] PROGMEM = "wol";
-const char AP_SSID[] = "WOL-ESP8266";
+const char HOSTNAME[] PROGMEM = "espwol";
+
+const char AP_SSID[] = "EspWOL AP";
+const char AP_PASSWORD[] = "wol#AP326s";
 
 /* Network */
 #include <ESP8266WiFi.h>
@@ -52,7 +53,7 @@ const char AP_SSID[] = "WOL-ESP8266";
 ESP8266WebServer server(80);
 WiFiUDP UDP;
 WakeOnLan wol(UDP);
-WiFiManager wifiManager;
+WiFiManager wifi_manager;
 
 /* === APP VARS === */
 
@@ -70,7 +71,7 @@ struct Settings settings = {
 
 // A period of 0 means "disabled". GTimer fires on every tick() when its period
 // is 0, so the timer has to be stopped rather than just given a 0 period.
-void ping_apply_period() {
+void ping_apply_period_config() {
   if (settings.ping_period_ms == 0) {
     ping_timer.stop();
   } else {
@@ -118,9 +119,7 @@ void setup() {
   wifi_apply_ip_config();
 
   wifi_setup_portal();
-  wifiManager.autoConnect(AP_SSID);  // Auto connect
-
-  ping_all_hosts();
+  wifi_manager.autoConnect(AP_SSID, AP_PASSWORD);  // Auto connect
 
 #if ENABLE_mDNS == 1
   // Set up mDNS responder
@@ -129,11 +128,13 @@ void setup() {
   MDNS.addService("http", "tcp", 80);
 #endif
 
+  ping_apply_period_config();
+
   server_setup();
 
   server.begin();
 
-  ping_apply_period();
+  ping_all_hosts();
 }
 
 void loop() {

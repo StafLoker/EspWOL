@@ -12,11 +12,11 @@
 const char VERSION[] PROGMEM = "3.0.0";
 const char SETTINS_FILE_PATH[] PROGMEM = "/settings.json";
 
-const char ROUTE_SETTINGS[] PROGMEM = "/settings";
-const char ROUTE_SETTINGS_NETWORK[] PROGMEM = "/settings/network";
-const char ROUTE_SETTINGS_ABOUT[] PROGMEM = "/settings/about";
-const char ROUTE_SETTINGS_PING[] PROGMEM = "/settings/ping_period";
-const char ROUTE_SETTINGS_RESET_WIFI[] PROGMEM = "/settings/reset_wifi";
+const char ROUTE_SETTINGS[] PROGMEM = "/api/settings";
+const char ROUTE_SETTINGS_NETWORK[] PROGMEM = "/api/settings/network";
+const char ROUTE_SETTINGS_ABOUT[] PROGMEM = "/api/settings/about";
+const char ROUTE_SETTINGS_PING[] PROGMEM = "/api/settings/ping_period";
+const char ROUTE_SETTINGS_RESET_WIFI[] PROGMEM = "/api/settings/reset_wifi";
 
 const std::unordered_set<unsigned long> VALID_PING_VALUES = {
   0, 60, 300, 600, 900, 1800, 2700, 3600, 10800, 21600, 43200, 86400

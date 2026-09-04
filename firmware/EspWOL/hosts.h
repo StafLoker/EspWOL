@@ -13,10 +13,10 @@ struct Host {
 
 const char HOSTS_FILE_PATH[] PROGMEM = "/hosts.json";
 
-const char ROUTE_HOSTS[] PROGMEM = "/hosts";
-const char ROUTE_HOSTS_IMPORT[] PROGMEM = "/hosts/import";
-const char ROUTE_HOSTS_WAKE[] PROGMEM = "/hosts/wake";
-const char ROUTE_HOSTS_PING[] PROGMEM = "/hosts/ping";
+const char ROUTE_HOSTS[] PROGMEM = "/api/hosts";
+const char ROUTE_HOSTS_IMPORT[] PROGMEM = "/api/hosts/import";
+const char ROUTE_HOSTS_WAKE[] PROGMEM = "/api/hosts/wake";
+const char ROUTE_HOSTS_PING[] PROGMEM = "/api/hosts/ping";
 
 const char MSG_HOST_NOT_FOUND[] PROGMEM = "Host not found";
 const char MSG_DUPLICATE_HOST[] PROGMEM = "Duplicate host";
