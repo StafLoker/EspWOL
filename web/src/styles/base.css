@@ -60,13 +60,16 @@ select {
   border-radius: var(--radius);
 }
 
-.material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
-  font-size: 1.125rem;
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
   line-height: 1;
-  display: inline-block;
-  direction: ltr;
-  white-space: nowrap;
+}
+
+.icon svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  display: block;
 }
 
 /* Screen-reader-only, and the skip link that reveals itself on focus */

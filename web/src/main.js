@@ -1,4 +1,5 @@
 import './style.css'
+import { icon } from './util.js'
 import './components/host-card'
 import { renderHome, mountHome, unmountHome } from './views/home.js'
 import { renderSettings, mountSettings, unmountSettings } from './views/settings.js'
@@ -38,7 +39,7 @@ function shell(inner, nav) {
         </div>
         <a href="#/account" class="icon-button ${nav === 'account' ? 'icon-button-active' : ''}"
           aria-label="Account" ${nav === 'account' ? 'aria-current="page"' : ''}>
-          <i class="material-symbols-outlined" aria-hidden="true">person</i>
+          ${icon('person')}
         </a>
       </div>
     </header>

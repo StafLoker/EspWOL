@@ -1,5 +1,5 @@
 import { api } from '../api.js'
-import { esc, isValidIp } from '../util.js'
+import { esc, isValidIp, icon } from '../util.js'
 import { toast } from '../components/toast'
 import { openModal } from '../components/modal'
 
@@ -196,7 +196,7 @@ function systemTab() {
         </div>
         <a href="${REPO_URL}" target="_blank" rel="noopener noreferrer" class="btn-secondary">
           GitHub
-          <i class="material-symbols-outlined" aria-hidden="true">open_in_new</i>
+          ${icon('open_in_new')}
           <span class="sr-only">(opens in a new tab)</span>
         </a>
       </div>

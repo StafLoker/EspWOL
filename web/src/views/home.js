@@ -1,5 +1,5 @@
 import { api } from '../api.js'
-import { esc, isValidIp } from '../util.js'
+import { esc, isValidIp, icon } from '../util.js'
 import { toast } from '../components/toast'
 import { openModal } from '../components/modal'
 
@@ -33,12 +33,12 @@ export function renderHome() {
       </div>
       <div class="page-actions">
         <div class="search">
-          <i class="material-symbols-outlined" aria-hidden="true">search</i>
+          ${icon('search')}
           <input id="search" type="search" aria-label="Search hosts" placeholder="Search"
             value="${esc(state.search)}" class="input" />
         </div>
         <button id="add" class="btn-primary">
-          <i class="material-symbols-outlined" aria-hidden="true">add</i> Add
+          ${icon('add')} Add
         </button>
       </div>
     </div>

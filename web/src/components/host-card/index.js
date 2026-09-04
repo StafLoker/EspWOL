@@ -1,4 +1,4 @@
-import { esc } from '../../util.js'
+import { esc, icon } from '../../util.js'
 import './style.css'
 
 export class HostCard extends HTMLElement {
@@ -34,7 +34,7 @@ export class HostCard extends HTMLElement {
           <button type="button" data-act="wake"
             class="status-indicator ${online ? 'status-online' : 'status-offline'} ${glow}"
             aria-label="Wake ${name}">
-            <i class="material-symbols-outlined" aria-hidden="true">power_settings_new</i>
+            ${icon('power_settings_new')}
           </button>
           <div class="host-card-info">
             <h3>${name}</h3>
@@ -45,13 +45,13 @@ export class HostCard extends HTMLElement {
         </div>
         <div class="host-card-actions">
           <button data-act="ping" class="action-button" aria-label="Ping ${name}" ${pinging ? 'disabled' : ''}>
-            <i class="material-symbols-outlined ${pinging ? 'is-pinging' : ''}" aria-hidden="true">network_ping</i>
+            ${icon('network_ping', pinging ? 'is-pinging' : '')}
           </button>
           <button data-act="edit" class="action-button" aria-label="Edit ${name}">
-            <i class="material-symbols-outlined" aria-hidden="true">edit</i>
+            ${icon('edit')}
           </button>
           <button data-act="delete" class="action-button action-button-danger" aria-label="Delete ${name}">
-            <i class="material-symbols-outlined" aria-hidden="true">delete</i>
+            ${icon('delete')}
           </button>
         </div>
       </article>`
