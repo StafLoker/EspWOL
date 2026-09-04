@@ -4,7 +4,7 @@ info:
   description: |
     API for managing network hosts, Wake-on-LAN, ping operations, and system
     settings.
-  version: 3.0.0
+  version: 3.0.1
 servers:
   - url: http://espwol.local
     description: Server
@@ -832,7 +832,7 @@ components:
         version:
           type: string
           examples:
-            - 3.0.0
+            - 3.0.1
         hostname:
           type: string
           examples:

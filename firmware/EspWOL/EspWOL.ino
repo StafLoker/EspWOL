@@ -3,7 +3,7 @@
   Author: StafLoker
   Author website: https://stafloker.name
   Project repo: https://github.com/StafLoker/EspWOL
-  Version: 3.0.0
+  Version: 3.0.1
 */
 
 #include <Arduino.h>

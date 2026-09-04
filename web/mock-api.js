@@ -165,7 +165,7 @@ const routes = {
     {
       success: true,
       message: 'Settings',
-      data: { about: { version: '3.0.0', hostname: 'espwol' }, ...settings },
+      data: { about: { version: '3.0.1', hostname: 'espwol' }, ...settings },
     },
   ],
 
@@ -174,7 +174,7 @@ const routes = {
     {
       success: true,
       message: 'App general information',
-      data: { version: '3.0.0', hostname: 'espwol' },
+      data: { version: '3.0.1', hostname: 'espwol' },
     },
   ],
 
