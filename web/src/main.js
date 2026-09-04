@@ -19,10 +19,10 @@ const routes = {
 function route() {
   const hash = location.hash.replace(/^#/, '')
   if (hash && !routes[hash]) {
-    location.replace('/404.html')
+    location.replace(hash)
     return null
   }
-  return routes[hash] || routes['/']
+  return routes[hash || '/']
 }
 
 function shell(inner, nav) {
