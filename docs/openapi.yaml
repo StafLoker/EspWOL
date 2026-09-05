@@ -4,7 +4,7 @@ info:
   description: |
     API for managing network hosts, Wake-on-LAN, ping operations, and system
     settings.
-  version: 3.0.1
+  version: 3.0.2
 servers:
   - url: http://espwol.local
     description: Server
@@ -54,7 +54,7 @@ paths:
       summary: Add new host
       description: |
         Adds a new host. The host is pinged once on creation, so the returned
-        `status` reflects its reachability at that moment.
+        `up` reflects its reachability at that moment.
       requestBody:
         required: true
         content:
@@ -336,12 +336,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: "#/components/schemas/ApiResponse"
-                  - type: object
-                    properties:
-                      data:
-                        $ref: "#/components/schemas/NetworkSettings"
+                $ref: "#/components/schemas/ApiResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -607,7 +602,7 @@ components:
             is found offline.
           examples:
             - true
-        status:
+        up:
           type: boolean
           description: Last known reachability, refreshed by ping and by the sweep
           examples:
@@ -618,7 +613,7 @@ components:
         - mac
         - ip
         - autoWake
-        - status
+        - up
     HostInput:
       type: object
       properties:
@@ -832,7 +827,7 @@ components:
         version:
           type: string
           examples:
-            - 3.0.1
+            - 3.0.2
         hostname:
           type: string
           examples:

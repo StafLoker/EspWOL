@@ -15,7 +15,7 @@ let hosts = [
     mac: 'AA:EE:EA:97:3D:3A',
     ip: '192.168.1.8',
     autoWake: true,
-    status: true,
+    up: true,
   },
   {
     id: 2,
@@ -23,7 +23,7 @@ let hosts = [
     mac: 'AA:BB:CC:DD:EE:FF',
     ip: '192.168.1.20',
     autoWake: false,
-    status: false,
+    up: false,
   },
   {
     id: 3,
@@ -31,7 +31,7 @@ let hosts = [
     mac: '11:22:33:44:55:66',
     ip: '192.168.1.31',
     autoWake: false,
-    status: true,
+    up: true,
   },
 ]
 
@@ -89,7 +89,7 @@ const routes = {
     if (hosts.some((h) => h.mac === body.mac))
       return [409, { success: false, message: 'Duplicate host' }]
 
-    const host = { id: nextId++, ...body, status: Math.random() > 0.5 }
+    const host = { id: nextId++, ...body, up: Math.random() > 0.5 }
     hosts.push(host)
     return [
       200,
@@ -117,12 +117,12 @@ const routes = {
   'POST /api/hosts/ping': (q) => {
     const host = hosts.find((h) => h.id === Number(q.id))
     if (!host) return [400, { success: false, message: 'Host not found' }]
-    host.status = Math.random() > 0.35
+    host.up = Math.random() > 0.35
     return [
       200,
       {
-        success: host.status,
-        message: host.status ? 'Host is online' : 'Host is offline',
+        success: host.up,
+        message: host.up ? 'Host is online' : 'Host is offline',
       },
     ]
   },
@@ -130,7 +130,7 @@ const routes = {
   'POST /api/hosts/wake': (q) => {
     const host = hosts.find((h) => h.id === Number(q.id))
     if (!host) return [400, { success: false, message: 'Host not found' }]
-    host.status = true
+    host.up = true
     return [200, { success: true, message: 'WOL packet sent' }]
   },
 
@@ -141,7 +141,7 @@ const routes = {
       if (!entry.name || !entry.mac || !entry.ip) continue
       if (hosts.some((h) => h.mac === entry.mac)) continue
       if (hosts.length >= MAX_HOSTS) break
-      hosts.push({ id: nextId++, autoWake: false, ...entry, status: false })
+      hosts.push({ id: nextId++, autoWake: false, ...entry, up: false })
       imported++
     }
     return [

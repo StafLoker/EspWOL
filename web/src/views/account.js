@@ -86,12 +86,12 @@ async function submit(form) {
   if (!ok) return
 
   try {
-    await api.updateAuth({ username: u, password: p })
-    username = u
+    const res = await api.updateAuth({ username: u, password: p })
+    username = res.data.username
     form.password.value = ''
     form.confirm.value = ''
     err.textContent = ''
-    document.getElementById('whoami').textContent = u
+    document.getElementById('whoami').textContent = username
     toast('Credentials updated')
   } catch (ex) {
     err.textContent = ex.message

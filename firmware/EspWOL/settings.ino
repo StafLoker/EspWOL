@@ -68,32 +68,34 @@ void settings_load() {
 // GENERAL / ABOUT
 // =============================================================================
 
-static void settings_get_all() {
+static void settings_handle_get() {
   JsonDocument doc;
   JsonObject about, network;
 
-  about = doc[F("about")].to<JsonObject>();
-  network = doc[F("network")].to<JsonObject>();
+  if (auth_ok()) {
+    about = doc[F("about")].to<JsonObject>();
+    network = doc[F("network")].to<JsonObject>();
 
-  about[F("version")] = FPSTR(VERSION);
-  about[F("hostname")] = wifi_manager.getWiFiHostname();
+    about[F("version")] = FPSTR(VERSION);
+    about[F("hostname")] = wifi_manager.getWiFiHostname();
 
-  doc[F("pingPeriod")] = settings.ping_period_ms;
+    doc[F("pingPeriod")] = settings.ping_period_ms;
 
-  network[F("enable")] = settings.network_config.enable;
-  if (settings.network_config.enable) {
-    network[F("ip")] = settings.network_config.ip.toString();
-    network[F("networkMask")] = settings.network_config.network_mask.toString();
-    network[F("gateway")] = settings.network_config.gateway.toString();
-    network[F("dns")] = settings.network_config.dns.toString();
-  } else {
-    network[F("ip")] = WiFi.localIP().toString();
-    network[F("networkMask")] = WiFi.subnetMask().toString();
-    network[F("gateway")] = WiFi.gatewayIP().toString();
-    network[F("dns")] = WiFi.dnsIP().toString();
+    network[F("enable")] = settings.network_config.enable;
+    if (settings.network_config.enable) {
+      network[F("ip")] = settings.network_config.ip.toString();
+      network[F("networkMask")] = settings.network_config.network_mask.toString();
+      network[F("gateway")] = settings.network_config.gateway.toString();
+      network[F("dns")] = settings.network_config.dns.toString();
+    } else {
+      network[F("ip")] = WiFi.localIP().toString();
+      network[F("networkMask")] = WiFi.subnetMask().toString();
+      network[F("gateway")] = WiFi.gatewayIP().toString();
+      network[F("dns")] = WiFi.dnsIP().toString();
+    }
+
+    server_send_json(200, true, F("Settings"), doc);
   }
-
-  server_send_json(200, true, F("Settings"), doc);
 }
 
 // =============================================================================
@@ -163,7 +165,7 @@ static void settings_get_network() {
 }
 
 static void settings_update_network() {
-  JsonDocument doc, response_doc;
+  JsonDocument doc;
   String ip_str, networkMask_str, gateway_str, dns_str;
   IPAddress ip, network_mask, gateway, dns;
 
@@ -218,20 +220,7 @@ static void settings_update_network() {
   settings_save();
   wifi_apply_ip_config();
 
-  response_doc[F("enable")] = settings.network_config.enable;
-  if (settings.network_config.enable) {
-    response_doc[F("ip")] = settings.network_config.ip.toString();
-    response_doc[F("networkMask")] = settings.network_config.network_mask.toString();
-    response_doc[F("gateway")] = settings.network_config.gateway.toString();
-    response_doc[F("dns")] = settings.network_config.dns.toString();
-  } else {
-    response_doc[F("ip")] = WiFi.localIP().toString();
-    response_doc[F("networkMask")] = WiFi.subnetMask().toString();
-    response_doc[F("gateway")] = WiFi.gatewayIP().toString();
-    response_doc[F("dns")] = WiFi.dnsIP().toString();
-  }
-
-  server_send_json(200, true, F("Network settings updated"), response_doc);
+  server_send_json(200, true, F("Network settings updated"));
   delay(300);
   ESP.restart();
 }
@@ -240,22 +229,18 @@ static void settings_update_network() {
 // WIFI RESET
 // =============================================================================
 
-static void settings_reset_wifi() {
-  server_send_json(200, true, F("WiFi settings have been reset successfully."));
-  delay(300);
-  wifi_manager.resetSettings();
-  ESP.restart();
+static void settings_handle_reset_wifi() {
+  if (auth_ok()) {
+    server_send_json(200, true, F("WiFi settings have been reset successfully."));
+    delay(300);
+    wifi_manager.resetSettings();
+    ESP.restart();
+  }
 }
 
 // =============================================================================
 // ROUTE HANDLERS
 // =============================================================================
-
-static void settings_handle_get() {
-  if (auth_ok()) {
-    settings_get_all();
-  }
-}
 
 static void settings_handle_about() {
   JsonDocument doc;
@@ -288,12 +273,6 @@ static void settings_handle_network() {
     } else {
       server_send_json(405, false, FPSTR(MSG_METHOD_NOT_ALLOWED));
     }
-  }
-}
-
-static void settings_handle_reset_wifi() {
-  if (auth_ok()) {
-    settings_reset_wifi();
   }
 }
 

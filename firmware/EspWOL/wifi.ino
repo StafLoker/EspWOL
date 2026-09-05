@@ -4,6 +4,14 @@
 // Held for as long as the portal runs; WiFiManager keeps a pointer into it.
 static String portal_style;
 
+void wifi_apply_ip_config() {
+  if (settings.network_config.enable) {
+    wifi_manager.setSTAStaticIPConfig(settings.network_config.ip, settings.network_config.gateway, settings.network_config.network_mask, settings.network_config.dns);
+  } else {
+    wifi_station_dhcpc_start();
+  }
+}
+
 void wifi_setup_portal() {
   wifi_manager.setTitle(F("EspWOL"));
   wifi_manager.setScanDispPerc(true);        // percentages read better than the icon sprite
@@ -16,12 +24,4 @@ void wifi_setup_portal() {
     portal_style = FPSTR(PORTAL_STYLE);  // flash -> RAM, once, only in portal mode
     wm->setCustomHeadElement(portal_style.c_str());
   });
-}
-
-void wifi_apply_ip_config() {
-  if (settings.network_config.enable) {
-    wifi_manager.setSTAStaticIPConfig(settings.network_config.ip, settings.network_config.gateway, settings.network_config.network_mask, settings.network_config.dns);
-  } else {
-    wifi_station_dhcpc_start();
-  }
 }

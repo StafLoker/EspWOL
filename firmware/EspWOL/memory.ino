@@ -51,8 +51,8 @@ bool memory_can_add_host() {
 }
 
 JsonObject memory_add_metadata(JsonDocument &doc) {
-  MemoryInfo info = memory_get_info();
   JsonObject metadata, memory, storage, hosts_info;
+  MemoryInfo info = memory_get_info();
 
   metadata = doc[F("metadata")].to<JsonObject>();
   memory = metadata[F("memory")].to<JsonObject>();

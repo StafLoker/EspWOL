@@ -75,7 +75,7 @@ function listHtml() {
         .map(
           (h) => `<li><host-card data-id="${h.id}"
             name="${esc(h.name)}" ip="${esc(h.ip)}"
-            online="${h.status ? '1' : '0'}"
+            online="${h.up ? '1' : '0'}"
             pinging="${state.ping[h.id] ? '1' : '0'}"
             waking="${state.waking[h.id] ? '1' : '0'}"></host-card></li>`,
         )
@@ -105,16 +105,20 @@ function paint() {
   }
 }
 
+function applyLimits(res) {
+  const m = res.metadata || {}
+  state.limits = {
+    current: m.hosts?.count ?? state.hosts.length,
+    max: m.hosts?.maxAllowed ?? 0,
+    canAddMore: m.canAddMoreHosts ?? true,
+  }
+}
+
 async function load() {
   try {
     const res = await api.getHosts()
     state.hosts = res.data || []
-    const m = res.metadata || {}
-    state.limits = {
-      current: m.hosts?.count ?? state.hosts.length,
-      max: m.hosts?.maxAllowed ?? 0,
-      canAddMore: m.canAddMoreHosts ?? true,
-    }
+    applyLimits(res)
   } catch (e) {
     toast(e.message, false)
   } finally {
@@ -125,7 +129,7 @@ async function load() {
 
 function confirmWake(host) {
   if (!host) return
-  if (!host.status) return wake(host.id)
+  if (!host.up) return wake(host.id)
 
   const { el, close } = openModal(
     'Send WOL packet?',
@@ -159,7 +163,7 @@ async function wake(id) {
     await api.wakeHost(id)
     toast('Magic packet sent')
     const h = state.hosts.find((x) => x.id === id)
-    if (h) h.status = true
+    if (h) h.up = true
   } catch (e) {
     toast(e.message, false)
   }
@@ -177,7 +181,7 @@ async function ping(id) {
   try {
     const res = await api.pingHost(id)
     const h = state.hosts.find((x) => x.id === id)
-    if (h) h.status = res.success
+    if (h) h.up = res.success
     toast(res.success ? 'Host is online' : 'Host is offline', res.success)
   } catch (e) {
     toast(e.message, false)
@@ -277,11 +281,15 @@ function openDialog(host) {
     if (!ok) return
 
     try {
-      if (isEdit) await api.updateHost(host.id, data)
-      else await api.addHost(data)
+      const res = isEdit ? await api.updateHost(host.id, data) : await api.addHost(data)
+      const saved = res.data
+      const i = state.hosts.findIndex((x) => x.id === saved.id)
+      if (i >= 0) state.hosts[i] = saved
+      else state.hosts.push(saved)
+      applyLimits(res)
       close()
       toast(isEdit ? 'Host updated' : 'Host added')
-      load()
+      paint()
     } catch (ex) {
       err.textContent = ex.message
     }
