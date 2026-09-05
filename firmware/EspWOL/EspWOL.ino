@@ -3,7 +3,7 @@
   Author: StafLoker
   Author website: https://stafloker.name
   Project repo: https://github.com/StafLoker/EspWOL
-  Version: 3.0.1
+  Version: 3.0.2
 */
 
 #include <Arduino.h>
@@ -44,7 +44,7 @@
 #include "memory.h"
 #include "ping.h"
 
-const char VERSION[] PROGMEM = "3.0.1";
+const char VERSION[] PROGMEM = "3.0.2";
 
 const char HOSTNAME[] PROGMEM = "espwol";
 
