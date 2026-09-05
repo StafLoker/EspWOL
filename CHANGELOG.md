@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Host field `status` renamed to `up`** in the API, web interface, and firmware, to avoid confusion with non-boolean "status" values (e.g. `healthy`)
 - `PUT /settings/network` no longer returns the network config in its response, since the device restarts immediately after and nothing reads it
-- Ping sweep logic extracted from `EspWOL.ino` into its own `ping.h`/`ping.ino` module
+- Ping sweep logic extracted from `EspWOL.ino` into its own `ping_sweep.h`/`ping_sweep.ino` module
 - Duplicate-host check and password/MAC validation rewritten so their loops express the stop condition in the loop header, instead of exiting early from inside the loop body
 
 ## [3.0.1] - 2026-09-04

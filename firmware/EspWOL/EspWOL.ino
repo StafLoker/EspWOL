@@ -42,7 +42,7 @@
 #include "ota_handler.h"
 #include "wifi.h"
 #include "memory.h"
-#include "ping.h"
+#include "ping_sweep.h"
 
 const char VERSION[] PROGMEM = "3.0.2";
 
