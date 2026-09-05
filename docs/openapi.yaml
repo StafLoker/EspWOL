@@ -4,9 +4,9 @@ info:
   description: |
     API for managing network hosts, Wake-on-LAN, ping operations, and system
     settings.
-  version: 3.0.0
+  version: 3.0.1
 servers:
-  - url: http://wol.local
+  - url: http://espwol.local
     description: Server
 security:
   - basicAuth: []
@@ -24,7 +24,7 @@ tags:
   - name: System
     description: System information and firmware updates
 paths:
-  /hosts:
+  /api/hosts:
     get:
       tags:
         - Hosts
@@ -140,7 +140,7 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /hosts/ping:
+  /api/hosts/ping:
     post:
       tags:
         - Network Operations
@@ -176,7 +176,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "405":
           $ref: "#/components/responses/MissingId"
-  /hosts/wake:
+  /api/hosts/wake:
     post:
       tags:
         - Network Operations
@@ -212,7 +212,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "405":
           $ref: "#/components/responses/MissingId"
-  /hosts/import:
+  /api/hosts/import:
     post:
       tags:
         - Data Management
@@ -254,7 +254,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiResponse"
-  /settings:
+  /api/settings:
     get:
       tags:
         - Settings
@@ -274,7 +274,7 @@ paths:
                         $ref: "#/components/schemas/Settings"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /settings/about:
+  /api/settings/about:
     get:
       tags:
         - System
@@ -294,7 +294,7 @@ paths:
                         $ref: "#/components/schemas/AboutInfo"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /settings/network:
+  /api/settings/network:
     get:
       tags:
         - Settings
@@ -348,7 +348,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "405":
           $ref: "#/components/responses/MethodNotAllowed"
-  /account:
+  /api/account:
     get:
       tags:
         - Account
@@ -399,16 +399,12 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "405":
           $ref: "#/components/responses/MethodNotAllowed"
-  /settings/ping_period:
+  /api/settings/ping_period:
     get:
       tags:
         - Settings
       summary: Get the periodic ping interval
-      description: |
-        Retrieves the interval of the periodic ping sweep.
-
-        Note that this route returns the value in **milliseconds**, while the
-        `PUT` accepts it in **seconds**.
+      description: Retrieves the interval of the periodic ping sweep, in **milliseconds**.
       responses:
         "200":
           description: Ping period
@@ -435,9 +431,9 @@ paths:
         - Settings
       summary: Update the periodic ping interval
       description: |
-        Sets the interval of the periodic ping sweep, in **seconds**. Only the
-        listed values are accepted; 0 disables the sweep. The response echoes
-        the value back in seconds.
+        Sets the interval of the periodic ping sweep, in **milliseconds**. Only
+        the listed values are accepted; 0 disables the sweep. The response
+        echoes the value back in milliseconds.
       requestBody:
         required: true
         content:
@@ -446,7 +442,7 @@ paths:
               type: object
               properties:
                 pingPeriod:
-                  $ref: "#/components/schemas/PingPeriodSeconds"
+                  $ref: "#/components/schemas/PingPeriod"
               required:
                 - pingPeriod
       responses:
@@ -463,7 +459,7 @@ paths:
                         type: object
                         properties:
                           pingPeriod:
-                            $ref: "#/components/schemas/PingPeriodSeconds"
+                            $ref: "#/components/schemas/PingPeriod"
         "400":
           description: Missing body, invalid JSON, or invalid ping period value
           content:
@@ -474,7 +470,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "405":
           $ref: "#/components/responses/MethodNotAllowed"
-  /settings/reset_wifi:
+  /api/settings/reset_wifi:
     post:
       tags:
         - Settings
@@ -794,25 +790,25 @@ components:
           type: boolean
           examples:
             - true
-    PingPeriodSeconds:
+    PingPeriod:
       type: integer
       format: int64
-      description: Interval in seconds; 0 disables the periodic ping sweep.
+      description: Interval in milliseconds; 0 disables the periodic ping sweep.
       enum:
         - 0
-        - 60
-        - 300
-        - 600
-        - 900
-        - 1800
-        - 2700
-        - 3600
-        - 10800
-        - 21600
-        - 43200
-        - 86400
+        - 60000
+        - 300000
+        - 600000
+        - 900000
+        - 1800000
+        - 2700000
+        - 3600000
+        - 10800000
+        - 21600000
+        - 43200000
+        - 86400000
       examples:
-        - 60
+        - 60000
     Settings:
       type: object
       properties:
@@ -836,11 +832,11 @@ components:
         version:
           type: string
           examples:
-            - 3.0.0
+            - 3.0.1
         hostname:
           type: string
           examples:
-            - wol
+            - espwol
       required:
         - version
         - hostname

@@ -2,6 +2,43 @@
 
 Thank you for contributing to this project!
 
+## Table of Contents
+
+- [Git Flow](#git-flow)
+- [Commit Conventions](#commit-conventions)
+- [Code style](#code-style)
+- [Pre-commit hooks](#pre-commit-hooks)
+
+
+## Git Flow
+
+We use a **main → dev → feature** branching strategy.
+
+```
+main
+└── dev
+    ├── feature/login-screen
+    ├── fix/null-pointer
+    └── chore/update-deps
+```
+
+### Branch Rules
+
+| Branch      | Purpose                   |
+| ----------- | ------------------------- |
+| `main`      | Production-ready code     |
+| `dev`       | Integration branch        |
+| `feature/*` | New features              |
+| `fix/*`     | Bug fixes                 |
+| `chore/*`   | Maintenance, deps, config |
+| `docs/*`    | Documentation             |
+
+### Rules
+
+- **Never push directly to `main` or `dev`** (With exceptions)
+- Always branch off `dev`
+
+
 ## Commit Conventions
 
 We follow **[Conventional Commits](https://www.conventionalcommits.org/)**.
@@ -14,16 +51,16 @@ We follow **[Conventional Commits](https://www.conventionalcommits.org/)**.
 
 ### Types
 
-| Type       | When to use                              |
-| ---------- | ------------------------------------------ |
-| `feat`     | New feature                                |
-| `fix`      | Bug fix                                    |
-| `chore`    | Maintenance, deps, config                  |
-| `docs`     | Documentation only                         |
-| `refactor` | Code restructure, no behavior change       |
-| `test`     | Adding or updating tests                   |
-| `style`    | Formatting, whitespace                     |
-| `ci`       | CI/CD changes                              |
+| Type       | When to use                          |
+| ---------- | ------------------------------------ |
+| `feat`     | New feature                          |
+| `fix`      | Bug fix                              |
+| `chore`    | Maintenance, deps, config            |
+| `docs`     | Documentation only                   |
+| `refactor` | Code restructure, no behavior change |
+| `test`     | Adding or updating tests             |
+| `style`    | Formatting, whitespace               |
+| `ci`       | CI/CD changes                        |
 
 ### Examples
 
@@ -41,15 +78,15 @@ These rules apply to any language used in the project, regardless of each langua
 
 ### Naming C/C++
 
-| Kind                    | Convention             | Example                                          | Note                              |
-| ----------------------- | ---------------------- | ------------------------------------------------ | --------------------------------- |
-| Public functions        | `snake_case`           | `cfgparser_load_ini`, `cfgparser_validate_url`   | Module prefix required            |
-| Internal functions      | `snake_case`           | `trim_left`, `parse_kv`, `find_field`            | No prefix, not exposed in `.h`    |
-| Structs and typedefs    | `PascalCase`           | `ConfigField`, `EnumValues`, `IntRange`          |                                   |
-| Enums (type)            | `PascalCase`           | `ConfigType`, `CfgparserFormat`                  |                                   |
-| Enums (values)          | `SCREAMING_SNAKE_CASE` | `CFGPARSER_TYPE_INT`, `CFGPARSER_FORMAT_INI`     |                                   |
-| Macros and constants    | `SCREAMING_SNAKE_CASE` | `CFGPARSER_SUCCESS`, `CFGPARSER_MAX_LINE_LENGTH` | Module prefix required            |
-| Variables and parameters| `snake_case`           | `field_count`, `temp_path`, `sec_name`           |                                   |
+| Kind                     | Convention             | Example                                          | Note                           |
+| ------------------------ | ---------------------- | ------------------------------------------------ | ------------------------------ |
+| Public functions         | `snake_case`           | `cfgparser_load_ini`, `cfgparser_validate_url`   | Module prefix required         |
+| Internal functions       | `snake_case`           | `trim_left`, `parse_kv`, `find_field`            | No prefix, not exposed in `.h` |
+| Structs and typedefs     | `PascalCase`           | `ConfigField`, `EnumValues`, `IntRange`          |                                |
+| Enums (type)             | `PascalCase`           | `ConfigType`, `CfgparserFormat`                  |                                |
+| Enums (values)           | `SCREAMING_SNAKE_CASE` | `CFGPARSER_TYPE_INT`, `CFGPARSER_FORMAT_INI`     |                                |
+| Macros and constants     | `SCREAMING_SNAKE_CASE` | `CFGPARSER_SUCCESS`, `CFGPARSER_MAX_LINE_LENGTH` | Module prefix required         |
+| Variables and parameters | `snake_case`           | `field_count`, `temp_path`, `sec_name`           |                                |
 
 ### File / Function Length
 
@@ -101,3 +138,15 @@ Always document the public interface with the language's standard mechanism (Dox
 ### Avoid Fragmenting Into Many Small Files
 
 If the actual content fits in one or a few cohesive files, don't create one file per function/handler/component just out of habit. Split when size or responsibility justifies it, not mechanically.
+
+
+## Pre-commit hooks
+
+This repo uses [pre-commit](https://pre-commit.com/) to regenerate the firmware's PROGMEM headers (`firmware/EspWOL/*.h`) from `web/` automatically before each commit, so they never drift out of sync.
+
+Install once per clone:
+
+```
+pip install pre-commit
+pre-commit install
+```

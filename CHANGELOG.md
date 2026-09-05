@@ -5,7 +5,32 @@ All notable changes to EspWOL will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.0] - Unreleased
+## [3.0.1] - 2026-09-04
+
+### Fixed
+- **Uploading a firmware image at `/update` wiped the host database, settings and credentials.** Release binaries were built for `esp8266:esp8266:generic`, whose default flash layout is 1MB with a 64KB filesystem, not the 4MB (FS:2MB) layout of the LOLIN(WEMOS) D1 mini this firmware targets. After the update the firmware looked for the filesystem at an offset where it does not live, `LittleFS.begin()` failed, and startup formatted the flash it could not mount. Release builds now pin an explicit layout per binary, and startup no longer formats a filesystem it cannot mount
+
+### Changed
+- **Releases now ship one binary per flash layout**, named after the layout it was built for, replacing the single `EspWOL-generic-<tag>.bin`:
+  - `EspWOL-4M2M-<tag>.bin` for 4MB boards (LOLIN(WEMOS) D1 mini, NodeMCU, ESP-12E/F), with a 2MB filesystem
+  - `EspWOL-1M64-<tag>.bin` for 1MB boards (ESP-01S, D1 mini Lite), with a 64KB filesystem
+- The release pipeline checks that each image fits the over-the-air slot of its layout, so a build too large to update over `/update` fails in CI instead of on the device
+- CI builds the web interface once and hands the generated headers to the firmware jobs, rather than rebuilding it for every layout
+
+### Which binary to download
+Pick the one matching the flash size your board is flashed with; the layout an
+image was built for decides whether it finds the filesystem. `EspWOL-4M2M` is
+the right choice for a D1 mini or NodeMCU. On 1MB boards the image leaves only
+about 7KB spare in the update slot, so `/update` may stop fitting as the
+firmware grows.
+
+### Note for existing 3.0.0 devices
+The filesystem on a device running 3.0.0 was written under the wrong layout, so
+the first 3.0.1 image will not find it either. Flash 3.0.1 over USB once with
+*Erase Flash: All Flash Contents*; updates over `/update` keep their data from
+then on.
+
+## [3.0.0] - 2026-09-04
 
 Breaking release. The REST API was reorganized and the host model changed, so
 v2 clients and stored databases are not compatible without migration.

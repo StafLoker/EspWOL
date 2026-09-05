@@ -3,7 +3,8 @@
 .btn-primary,
 .btn-secondary,
 .btn-ghost,
-.btn-danger {
+.btn-danger,
+.btn-danger-ghost {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -25,7 +26,8 @@
 .btn-primary:disabled,
 .btn-secondary:disabled,
 .btn-ghost:disabled,
-.btn-danger:disabled {
+.btn-danger:disabled,
+.btn-danger-ghost:disabled {
   pointer-events: none;
   opacity: 0.4;
 }
@@ -61,6 +63,17 @@
 }
 .btn-danger:hover {
   background: #ef4444;
+}
+
+/* Destructive but secondary: sits next to a primary action, so it stays quiet
+   until hovered instead of competing with it. */
+.btn-danger-ghost {
+  background: none;
+  color: var(--danger);
+}
+.btn-danger-ghost:hover {
+  background: rgb(248 113 113 / 0.12);
+  color: #fca5a5;
 }
 
 /* The file picker truncates the chosen filename instead of stretching the row */
@@ -113,11 +126,6 @@
 .action-button:disabled {
   pointer-events: none;
   opacity: 0.4;
-}
-
-.action-button-danger:hover {
-  background: rgb(69 10 10 / 0.4);
-  color: var(--danger);
 }
 
 @media (min-width: 640px) {

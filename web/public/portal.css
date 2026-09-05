@@ -8,8 +8,7 @@
   color-scheme: dark;
 }
 
-body,
-body.invert {
+body {
   background: #18181b;
   color: #e4e4e7;
   font-family:
@@ -28,24 +27,18 @@ body.invert {
   text-align: left;
 }
 
-h1,
-h3,
-body.invert h1 {
+h1 {
   text-align: left;
-  font-weight: 500;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   color: #e4e4e7;
-}
-
-h1,
-body.invert h1 {
-  font-size: 1.125rem;
+  font-size: 1.75rem;
   margin: 0 0 0.25rem;
 }
 
 h3 {
-  font-size: 0.8125rem;
-  color: #8b8b93;
+  font-size: 1rem;
+  color: #a1a1aa;
   margin: 0 0 1.5rem;
   font-weight: 400;
 }
@@ -164,8 +157,7 @@ br {
   border-color: #3f3f46;
 }
 
-.wrap > div > a,
-body.invert .wrap > div > a {
+.wrap > div > a {
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -182,14 +174,11 @@ body.invert .wrap > div > a {
   text-decoration: none;
 }
 
-a,
-body.invert a {
+a {
   color: #e4e4e7;
 }
 
-/* RSSI: the sprite is dark artwork, so invert it for a dark surface.
-   body.invert already inverts it; match that selector so this does not
-   stack a second inversion on top. */
+/* RSSI shown as a percentage (setScanDispPerc), not the icon sprite */
 
 .q {
   float: none;
@@ -203,17 +192,10 @@ body.invert a {
   margin: 0;
 }
 
-body.invert .q[role='img'] {
-  -webkit-filter: invert(1);
-  filter: invert(1);
-  opacity: 0.6;
-}
-
 /* Status callouts. /wifi and the save/erase results title with <strong>,
    /info uses <h4>. */
 
-.msg,
-body.invert .msg {
+.msg {
   display: block;
   background: #212124;
   color: #e4e4e7;

@@ -16,9 +16,14 @@ const routes = {
   '/account': { render: renderAccount, mount: mountAccount, nav: 'account' },
 }
 
-function path() {
-  const h = location.hash.replace(/^#/, '')
-  return routes[h] ? h : '/'
+function route() {
+  const hash = location.hash.replace(/^#/, '')
+
+  if (hash.startsWith('/') && !routes[hash]) {
+    location.replace(hash)
+    return null
+  }
+  return routes[hash.startsWith('/') ? hash : '/']
 }
 
 function shell(inner, nav) {
@@ -52,9 +57,10 @@ let active = null
 async function render(moveFocus) {
   if (active?.unmount) active.unmount()
 
-  const route = routes[path()]
-  active = route
-  app.innerHTML = shell(route.render(), route.nav)
+  const current = route()
+  if (!current) return // redirecting to /404.html
+  active = current
+  app.innerHTML = shell(current.render(), current.nav)
 
   // A hash change does not move focus on its own. Send it to the new view's
   // heading - not to <main>, which would make a screen reader read the whole
@@ -68,11 +74,13 @@ async function render(moveFocus) {
   }
 
   try {
-    await route.mount()
+    await current.mount()
   } catch (e) {
     console.error(e)
   }
 }
 
-window.addEventListener('hashchange', () => render(true))
+window.addEventListener('hashchange', () => {
+  if (location.hash.startsWith('#/') || location.hash === '') render(true)
+})
 render(false)

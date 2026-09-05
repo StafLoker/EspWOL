@@ -1,15 +1,16 @@
 #ifndef AUTH_H
 #define AUTH_H
 
+#define MAX_USERNAME_LENGTH 20
+#define MAX_PASSWORD_LENGTH 32
+
 const char USER_FILE_PATH[] PROGMEM = "/user.json";
 
-const char ROUTE_ACCOUNT[] PROGMEM = "/account";
+const char ROUTE_ACCOUNT[] PROGMEM = "/api/account";
 
-// Default credentials, used until changed via /account.
 const char INIT_USER_USERNAME[] PROGMEM = "glavniy";
 const char INIT_USER_PASSWORD[] PROGMEM = "Lep#Chick43";
 
-// Shown in the browser's Basic Auth dialog and used as the credential cache key.
 const char AUTH_REALM[] PROGMEM = "EspWOL";
 const char MSG_AUTH_REQUIRED[] PROGMEM = "Authentication required";
 
@@ -18,14 +19,17 @@ struct User {
   String password;
 };
 
-// HTTP Basic Auth plus the credential file it checks against. Shared by every
-// request handler, so it lives on its own rather than inside one of them.
+// Reads the credentials from flash into the global `user`. Call once at startup.
+void auth_load_user();
 
-User auth_load_user();
-void auth_save_user(User& user);
+// Persists the credentials and updates the global `user`.
+void auth_save_user(User& new_user);
 
 // Returns true when the request carries valid credentials. Otherwise sends the
 // 401 challenge and returns false, so callers just `if (!auth_ok()) return;`.
 bool auth_ok();
+
+// Registers /account.
+void auth_setup_routes();
 
 #endif

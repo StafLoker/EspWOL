@@ -41,16 +41,21 @@ jobs:
       - name: Download firmware
         uses: actions/download-artifact@v8
         with:
-          name: firmware
-          path: bin/
+          pattern: firmware-*
+          path: artifacts/
 
-      - name: Name the binary after the tag
+      - name: Name each binary after its layout and the tag
         run: |
-          if [ ! -f bin/EspWOL.ino.bin ]; then
-            echo "::error::bin/EspWOL.ino.bin missing from the CI artifact."
-            exit 1
-          fi
-          mv bin/EspWOL.ino.bin "bin/EspWOL-generic-${{ steps.version.outputs.tag }}.bin"
+          mkdir -p bin
+          for layout in 4M2M 1M64; do
+            src="artifacts/firmware-$layout/EspWOL.ino.bin"
+            if [ ! -f "$src" ]; then
+              echo "::error::$src missing from the CI artifacts."
+              exit 1
+            fi
+            cp "$src" "bin/EspWOL-$layout-${{ steps.version.outputs.tag }}.bin"
+          done
+          ls -l bin/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
@@ -64,11 +69,5 @@ jobs:
             ## Changelog
 
             ${{ steps.changelog.outputs.notes }}
-
-            ## Install
-
-            Flash `EspWOL-generic-${{ steps.version.outputs.tag }}.bin` with
-            [esptool](https://github.com/espressif/esptool), or upload it from an
-            already-running device at **Settings → Firmware → Open updater**.
           files: bin/*.bin
           fail_on_unmatched_files: true

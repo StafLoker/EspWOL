@@ -5,8 +5,15 @@
   gap: 0.75rem;
 }
 
+/* The circle sets the height of the first row; name and ip sit centred on its
+   axis. */
 .host-card {
-  display: block;
+  --dial-size: 4rem;
+
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: var(--dial-size) auto;
+  column-gap: 1rem;
   padding: 1.25rem;
   border: 1px solid var(--border);
   border-radius: 0.75rem;
@@ -18,15 +25,14 @@
   border-color: var(--border-strong);
 }
 
-.host-card-top {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-}
-
 .host-card-info {
-  flex: 1;
+  grid-column: 2;
+  grid-row: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.375rem;
 }
 
 .host-card-info h3 {
@@ -35,44 +41,41 @@
   white-space: nowrap;
 }
 
-.host-ip,
-.host-mac {
-  font-family: var(--mono);
-}
-
 .host-ip {
-  margin-top: 0.125rem;
   font-size: 0.875rem;
+  font-family: var(--mono);
   color: var(--fg-muted);
 }
 
-.host-mac {
-  font-size: 0.75rem;
-  color: var(--fg-subtle);
-}
-
 .host-card-actions {
+  grid-column: 2;
+  grid-row: 2;
   display: flex;
   justify-content: flex-end;
   gap: 0.25rem;
-  margin-top: 1rem;
+  margin-top: 0.375rem;
 }
 
+/* Wake button: the circle whose size defines the first row's height. */
 .status-indicator {
+  grid-column: 1;
+  grid-row: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: var(--dial-size);
+  height: var(--dial-size);
   flex-shrink: 0;
   border: 0;
   border-radius: 9999px;
   cursor: pointer;
-  transition: background-color 0.15s;
+  transition:
+    background-color 0.15s,
+    opacity 0.15s;
 }
 
 .status-indicator i {
-  font-size: 1.25rem;
+  font-size: 1.75rem;
 }
 
 .status-online {
@@ -91,30 +94,26 @@
   background: var(--border);
 }
 
-.is-pinging {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+/* Ping in flight: action button blinks yellow */
+.action-button.is-pinging {
+  color: #facc15;
+  animation: blink 0.9s ease-in-out infinite;
 }
 
-/* The ring that flashes out of the status dot when a ping resolves */
-.ping-success-glow,
-.ping-fail-glow {
-  animation: pingGlow 2s ease-out;
+/* Wake packet in flight: status dot blinks blue */
+.status-indicator.is-waking {
+  background: rgb(96 165 250 / 0.2);
+  color: #60a5fa;
+  animation: blink 0.9s ease-in-out infinite;
 }
 
-.ping-success-glow {
-  --glow: 74, 222, 128;
-}
-
-.ping-fail-glow {
-  --glow: 248, 113, 113;
-}
-
-@keyframes pingGlow {
-  0% {
-    box-shadow: 0 0 0 0 rgb(var(--glow) / 0.5);
-  }
+@keyframes blink {
+  0%,
   100% {
-    box-shadow: 0 0 0 14px rgb(var(--glow) / 0);
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
   }
 }
 

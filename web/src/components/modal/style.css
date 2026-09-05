@@ -59,6 +59,16 @@
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.dialog-form .dialog-actions,
+.form-panel .dialog-actions {
+  margin-top: 0.5rem;
+}
+
+.dialog-actions [data-delete] {
+  margin-right: auto;
 }
 
 @keyframes fade {

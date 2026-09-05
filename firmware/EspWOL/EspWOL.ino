@@ -3,16 +3,12 @@
   Author: StafLoker
   Author website: https://stafloker.name
   Project repo: https://github.com/StafLoker/EspWOL
-  Version: 3.0.0
+  Version: 3.0.1
 */
 
 #include <Arduino.h>
 
 #define ENABLE_mDNS 1  // 1 to enable, != 1 to disable
-
-// Set at first boot before WiFi exists; not part of any handler module.
-const char HOSTNAME[] PROGMEM = "wol";
-const char AP_SSID[] = "WOL-ESP8266";
 
 /* Network */
 #include <ESP8266WiFi.h>
@@ -47,14 +43,21 @@ const char AP_SSID[] = "WOL-ESP8266";
 #include "wifi.h"
 #include "memory.h"
 
+const char HOSTNAME[] PROGMEM = "espwol";
+
+const char AP_SSID[] = "EspWOL AP";
+const char AP_PASSWORD[] = "wol#AP326s";
+
 /* === LIB VARS === */
 
 ESP8266WebServer server(80);
 WiFiUDP UDP;
 WakeOnLan wol(UDP);
-WiFiManager wifiManager;
+WiFiManager wifi_manager;
 
 /* === APP VARS === */
+
+User user = { FPSTR(INIT_USER_USERNAME), FPSTR(INIT_USER_PASSWORD) };
 
 // Map for storing hosts
 std::map<int, Host> hosts;
@@ -66,11 +69,17 @@ struct Settings settings = {
   .network_config = {}
 };
 
+// A sweep in progress, and the last host it handled. Tracking the id rather
+// than an iterator keeps this valid when a host is added or deleted mid-sweep.
+static bool ping_sweep_active = false;
+static int ping_next_id = 0;
+
+
 /* === FUNCTIONS === */
 
 // A period of 0 means "disabled". GTimer fires on every tick() when its period
 // is 0, so the timer has to be stopped rather than just given a 0 period.
-void ping_apply_period() {
+void ping_apply_period_config() {
   if (settings.ping_period_ms == 0) {
     ping_timer.stop();
   } else {
@@ -79,22 +88,28 @@ void ping_apply_period() {
   }
 }
 
-// Function to ping all hosts periodically
-void ping_all_hosts() {
+// Pings one host, updating its status and waking it when it is due.
+static void ping_one(Host &host) {
   IPAddress ip;
-  bool ping_result;
 
-  for (auto &pair : hosts) {
-    int index = pair.first;
-    Host &host = pair.second;
+  ip.fromString(host.ip);
+  host.status = Ping.ping(ip, PING_COUNT_QUICK);
 
-    ip.fromString(host.ip);
-    ping_result = Ping.ping(ip, PING_COUNT_QUICK);
-    hosts[index].status = ping_result;
+  // If host is offline and auto_wake is enabled, send WOL packet
+  if (!host.status && host.auto_wake) {
+    wol.sendMagicPacket(host.mac.c_str());
+  }
+}
 
-    // If host is offline and auto_wake is enabled, send WOL packet
-    if (!ping_result && host.auto_wake) {
-      wol.sendMagicPacket(host.mac.c_str());
+static void ping_step() {
+  if (ping_sweep_active) {
+    auto it = hosts.upper_bound(ping_next_id);
+
+    if (it == hosts.end()) {
+      ping_sweep_active = false;
+    } else {
+      ping_next_id = it->first;
+      ping_one(it->second);
     }
   }
 }
@@ -105,22 +120,17 @@ void ping_all_hosts() {
 void setup() {
   WiFi.hostname(FPSTR(HOSTNAME));
 
-  // Initialize file system
-  if (!LittleFS.begin()) {
-    LittleFS.format();
-    LittleFS.begin();
-  }
+  LittleFS.begin();
 
   // Load data at startup
   hosts_load();
   settings_load();
+  auth_load_user();
 
   wifi_apply_ip_config();
 
   wifi_setup_portal();
-  wifiManager.autoConnect(AP_SSID);  // Auto connect
-
-  ping_all_hosts();
+  wifi_manager.autoConnect(AP_SSID, AP_PASSWORD);  // Auto connect
 
 #if ENABLE_mDNS == 1
   // Set up mDNS responder
@@ -129,11 +139,14 @@ void setup() {
   MDNS.addService("http", "tcp", 80);
 #endif
 
+  ping_apply_period_config();
+
   server_setup();
 
   server.begin();
 
-  ping_apply_period();
+  ping_sweep_active = true;
+  ping_next_id = 0;
 }
 
 void loop() {
@@ -146,8 +159,11 @@ void loop() {
   ota_loop();
 
   if (ping_timer) {
-    ping_all_hosts();
+    ping_sweep_active = true;
+    ping_next_id = 0;  // ids start at 1, so this restarts the sweep
   }
+
+  ping_step();
 
   delay(1);  // Reduce power consumption by 60% with a delay https://hackaday.com/2022/10/28/esp8266-web-server-saves-60-power-with-a-1-ms-delay/
 }

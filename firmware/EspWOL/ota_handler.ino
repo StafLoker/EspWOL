@@ -5,7 +5,8 @@
 static bool ota_should_reboot = false;
 static unsigned long ota_reboot_at = 0;
 
-static bool ota_authorized = false;
+static bool ota_upload_started = false;
+static bool ota_auth_failed = false;
 
 static void ota_handle_page() {
   if (!auth_ok()) return;
@@ -16,38 +17,38 @@ static void ota_handle_page() {
 static void ota_handle_upload() {
   HTTPUpload &upload = server.upload();
   uint32_t max_sketch_space;
-  User user;
 
   switch (upload.status) {
     case UPLOAD_FILE_START:
-      // Check credentials without answering: writing a response mid-body would
-      // corrupt the upload. ota_handle_result sends the 401 afterwards.
-      user = auth_load_user();
-      ota_authorized = server.authenticate(user.username.c_str(), user.password.c_str());
-      if (!ota_authorized) return;
+      ota_auth_failed = false;
+
+      if (!server.authenticate(user.username.c_str(), user.password.c_str())) {
+        ota_auth_failed = true;
+        return;
+      }
 
       WiFiUDP::stopAll();
+
+      Update.clearError();
+
       max_sketch_space = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
       Update.runAsync(true);
-      // A failed begin() leaves Update in an error state, which
-      // ota_handle_result reports; the writes below are skipped.
-      Update.begin(max_sketch_space, U_FLASH);
+
+      ota_upload_started = Update.begin(max_sketch_space, U_FLASH);
       break;
 
     case UPLOAD_FILE_WRITE:
-      if (ota_authorized && !Update.hasError()) {
+      if (ota_upload_started && !Update.hasError()) {
         Update.write(upload.buf, upload.currentSize);
       }
       break;
     case UPLOAD_FILE_END:
-      // end(true) fails when fewer bytes arrived than the firmware header
-      // announced, which is how a truncated upload is caught.
-      if (ota_authorized) {
+      if (ota_upload_started) {
         Update.end(true);
       }
       break;
     case UPLOAD_FILE_ABORTED:
-      if (ota_authorized) {
+      if (ota_upload_started) {
         Update.end();
       }
   }
@@ -56,20 +57,20 @@ static void ota_handle_upload() {
 
 static void ota_handle_result() {
   StreamString err;
-  bool authorized;
 
-  // ota_authorized is only set at UPLOAD_FILE_START. Clear it here so a later
-  // request that carries no upload body cannot inherit the previous one's
-  // authorization.
-  authorized = ota_authorized;
-  ota_authorized = false;
+  if (ota_auth_failed) {
+    ota_auth_failed = false;
+    auth_ok();  // sends the 401 challenge
+    return;
+  }
 
-  if (!authorized) {
-    if (!auth_ok()) return;  // sends the 401 challenge
-    // Authenticated, but no firmware arrived.
+  if (!ota_upload_started && !Update.hasError()) {
+    if (!auth_ok()) return;
     server.send(400, F("text/plain"), F("No firmware uploaded"));
     return;
   }
+
+  ota_upload_started = false;
 
   if (Update.hasError()) {
     Update.printError(err);
@@ -87,12 +88,12 @@ static void ota_handle_result() {
 void ota_loop() {
   if (ota_should_reboot && millis() >= ota_reboot_at) {
     ota_should_reboot = false;
+    ota_reboot_at = 0;
     ESP.restart();
   }
 }
 
 void ota_setup_routes() {
   server.on(FPSTR(ROUTE_UPDATE), HTTP_GET, ota_handle_page);
-  // The upload handler runs first (per chunk), then the result handler once done.
   server.on(FPSTR(ROUTE_UPDATE), HTTP_POST, ota_handle_result, ota_handle_upload);
 }

@@ -1,11 +1,37 @@
 export const isValidIp = (ip) =>
   /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d?\d)$/.test(ip)
 
+/** Escapes a value for interpolation into an HTML template string. */
 export const esc = (s) =>
   String(s ?? '').replace(
     /[&<>"']/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
   )
+
+/**
+ * Flags one input as invalid and writes its message into the element with id
+ * `errorId`. An empty message clears both the styling and the message again.
+ */
+export function setFieldError(input, errorId, message) {
+  const box = document.getElementById(errorId)
+  input.classList.toggle('input-invalid', !!message)
+  input.setAttribute('aria-invalid', String(!!message))
+  if (box) box.textContent = message || ''
+}
+
+/**
+ * Applies a batch of field checks at once, so every problem shows on the same
+ * submit rather than one per attempt, then focuses the first field that failed.
+ * @param {Array<[HTMLInputElement, string, string]>} checks one
+ *   [input, errorId, message] triple per field; an empty message means it passed
+ * @returns {boolean} true when every check passed
+ */
+export function validateFields(checks) {
+  for (const [input, errorId, message] of checks) setFieldError(input, errorId, message)
+  const firstBad = checks.find(([, , message]) => message)
+  if (firstBad) firstBad[0].focus()
+  return !firstBad
+}
 
 const ICON_PATHS = {
   person:
@@ -15,8 +41,6 @@ const ICON_PATHS = {
   network_ping:
     'M12 22 8 18l4-4 1.4 1.425L11.825 17H20v2h-8.175l1.575 1.575ZM4 15v-2h2v2Zm4 0v-2h2v2Zm4 0v-2h2v2ZM4 11V5h16v6h-2V7H6v4Z',
   edit: 'M5 19h1.4l8.625-8.625-1.4-1.4L5 17.6ZM3 21v-4.25L16.2 3.575q.3-.275.663-.425.362-.15.762-.15.4 0 .775.15.375.15.65.45L20.425 5q.3.275.437.65.138.375.138.75 0 .4-.138.763-.137.362-.437.662L7.25 21ZM19 6.4 17.6 5Zm-3.525 2.125-.7-.7 1.4 1.4Z',
-  delete:
-    'M7 21q-.825 0-1.412-.587Q5 19.825 5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413Q17.825 21 17 21ZM17 6H7v13h10ZM9 17h2V8H9Zm4 0h2V8h-2ZM7 6v13Z',
   search:
     'M19.6 21 13.3 14.7q-.75.6-1.725.95-.975.35-2.075.35-2.725 0-4.612-1.887Q3 12.225 3 9.5q0-2.725 1.888-4.613Q6.775 3 9.5 3t4.613 1.887Q16 6.775 16 9.5q0 1.1-.35 2.075-.35.975-.95 1.725l6.3 6.3ZM9.5 14q1.875 0 3.188-1.312Q14 11.375 14 9.5q0-1.875-1.312-3.188Q11.375 5 9.5 5 7.625 5 6.312 6.312 5 7.625 5 9.5q0 1.875 1.312 3.188Q7.625 14 9.5 14Z',
   add: 'M11 13H5v-2h6V5h2v6h6v2h-6v6h-2Z',
@@ -24,7 +48,9 @@ const ICON_PATHS = {
     'M5 21q-.825 0-1.412-.587Q3 19.825 3 19V5q0-.825.588-1.412Q4.175 3 5 3h7v2H5v14h14v-7h2v7q0 .825-.587 1.413Q19.825 21 19 21Zm4.7-5.3-1.4-1.4L17.6 5H14V3h7v7h-2V6.4Z',
 }
 
-// Renders one icon. `cls` is appended to the wrapper so callers can still hang
-// state classes (e.g. is-pinging) on it.
+/**
+ * Renders one inline SVG icon as an HTML string. `cls` is appended to the
+ * wrapper so callers can hang state classes (e.g. is-pinging) on it.
+ */
 export const icon = (name, cls = '') =>
   `<i class="icon ${cls}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="${ICON_PATHS[name]}"/></svg></i>`

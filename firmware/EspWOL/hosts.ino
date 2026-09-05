@@ -4,7 +4,6 @@
 // INPUT VALIDATION
 // =============================================================================
 
-// IPv4 check via IPAddress::fromString - four octets 0-255, three dots, nothing else.
 static bool is_valid_host_ip(const String &ip) {
   IPAddress parsed;
   return parsed.fromString(ip);
@@ -14,7 +13,7 @@ static bool is_valid_mac(const String &mac) {
   if (mac.length() != 17)
     return false;
 
-  for (int i = 0; i < mac.length(); i++) {
+  for (unsigned int i = 0; i < mac.length(); i++) {
     if (i % 3 == 2) {
       if (mac[i] != ':')
         return false;
@@ -336,11 +335,6 @@ static void hosts_handle_import() {
 
     arr = doc.as<JsonArray>();
 
-    if (arr.size() > 0 && !memory_can_add_host()) {
-      server_send_json(507, false, FPSTR(MSG_MAX_HOSTS_REACHED));
-      return;
-    }
-
     for (JsonVariant v : arr) {
       String name, mac, ip;
       bool auto_wake;
@@ -354,7 +348,7 @@ static void hosts_handle_import() {
       mac = v[F("mac")].as<String>();
       ip = v[F("ip")].as<String>();
 
-      if (name.isEmpty() || !is_valid_mac(mac) || !is_valid_host_ip(ip)) {
+      if (name.isEmpty() || name.length() > MAX_HOST_NAME_LENGTH || !is_valid_mac(mac) || !is_valid_host_ip(ip)) {
         ignored_count++;
         continue;
       }
