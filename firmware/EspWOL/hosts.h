@@ -2,13 +2,14 @@
 #define HOSTS_H
 
 #define MAX_HOST_NAME_LENGTH 32
+#define PING_COUNT_CHECK 3  // explicit "ping this host" from the UI
 
 struct Host {
   String name;
   String mac;
   String ip;
   bool auto_wake = false;
-  bool status = false;
+  bool up = false;
 };
 
 const char HOSTS_FILE_PATH[] PROGMEM = "/hosts.json";

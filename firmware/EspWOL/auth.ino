@@ -6,24 +6,25 @@
 
 static bool is_valid_password(const String& password) {
   bool has_upper = false, has_lower = false, has_non_letter = false;
+  char c;
+  int i;
 
   if (password.length() < 8 || password.length() > MAX_PASSWORD_LENGTH) {
     return false;
   }
 
-  for (char c : password) {
+  for (i = 0; i < (int)password.length() && !(has_upper && has_lower && has_non_letter); i++) {
+    c = password[i];
+
     if (isUpperCase(c))
       has_upper = true;
     else if (isLowerCase(c))
       has_lower = true;
     else if (isDigit(c) || isPunct(c))
       has_non_letter = true;
-
-    if (has_upper && has_lower && has_non_letter)
-      return true;
   }
 
-  return false;
+  return has_upper && has_lower && has_non_letter;
 }
 
 void auth_load_user() {
@@ -45,8 +46,8 @@ void auth_load_user() {
 }
 
 void auth_save_user(User& new_user) {
-  File file = LittleFS.open(FPSTR(USER_FILE_PATH), "w");
   JsonDocument doc;
+  File file = LittleFS.open(FPSTR(USER_FILE_PATH), "w");
 
   if (file) {
     doc[F("username")] = new_user.username;

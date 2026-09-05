@@ -10,18 +10,17 @@ static bool is_valid_host_ip(const String &ip) {
 }
 
 static bool is_valid_mac(const String &mac) {
+  bool valid = true;
+  unsigned int i;
+
   if (mac.length() != 17)
     return false;
 
-  for (unsigned int i = 0; i < mac.length(); i++) {
-    if (i % 3 == 2) {
-      if (mac[i] != ':')
-        return false;
-    } else if (!isHexadecimalDigit(mac[i])) {
-      return false;
-    }
+  for (i = 0; i < mac.length() && valid; i++) {
+    valid = (i % 3 == 2) ? mac[i] == ':' : isHexadecimalDigit(mac[i]);
   }
-  return true;
+
+  return valid;
 }
 
 // =============================================================================
@@ -39,35 +38,29 @@ static int hosts_generate_id() {
 }
 
 static bool hosts_is_duplicate(const Host &new_host, int exclude_id = -1) {
-  for (const auto &pair : hosts) {
-    const Host &existing_host = pair.second;
-    const int current_id = pair.first;
+  int i;
+  auto it = hosts.begin();
 
-    if (current_id == exclude_id) {
-      continue;
-    }
+  for (i = 0; i < (int)hosts.size() && (it->first == exclude_id || (it->second.mac != new_host.mac && it->second.ip != new_host.ip)); i++, ++it)
+    ;
 
-    if (existing_host.mac == new_host.mac || existing_host.ip == new_host.ip) {
-      return true;
-    }
-  }
-  return false;
+  return i < (int)hosts.size();
 }
 
 // Fills name/mac/ip/auto_wake from the request body. On any problem it answers
 // the client and returns false, so callers just `if (!...) return;`.
-static bool hosts_validate_data(const JsonDocument &doc, String &name, String &mac, String &ip, bool &auto_wake) {
+static bool hosts_validate_data(const JsonDocument &doc, Host &host) {
   if (doc[F("name")].isNull() || doc[F("mac")].isNull() || doc[F("ip")].isNull() || doc[F("autoWake")].isNull()) {
     server_send_json(400, false, FPSTR(MSG_MISSING_FIELDS));
     return false;
   }
 
-  name = doc[F("name")].as<String>();
-  mac = doc[F("mac")].as<String>();
-  ip = doc[F("ip")].as<String>();
-  auto_wake = doc[F("autoWake")].as<bool>();
+  host.name = doc[F("name")].as<String>();
+  host.mac = doc[F("mac")].as<String>();
+  host.ip = doc[F("ip")].as<String>();
+  host.auto_wake = doc[F("autoWake")].as<bool>();
 
-  if (name.isEmpty() || name.length() > MAX_HOST_NAME_LENGTH || !is_valid_mac(mac) || !is_valid_host_ip(ip)) {
+  if (host.name.isEmpty() || host.name.length() > MAX_HOST_NAME_LENGTH || !is_valid_mac(host.mac) || !is_valid_host_ip(host.ip)) {
     server_send_json(400, false, FPSTR(MSG_INVALID_FORMAT));
     return false;
   }
@@ -82,7 +75,7 @@ static JsonObject hosts_to_json(JsonDocument &doc, int id, const Host &host) {
   obj[F("mac")] = host.mac;
   obj[F("ip")] = host.ip;
   obj[F("autoWake")] = host.auto_wake;
-  obj[F("status")] = host.status;
+  obj[F("up")] = host.up;
   return obj;
 }
 
@@ -144,9 +137,7 @@ static void hosts_save() {
 
 static void hosts_add() {
   JsonDocument doc, response_doc;
-  String name, mac, ip;
-  IPAddress ip_address;
-  bool auto_wake;
+  Host new_host = { .up = false };
   int id;
 
   if (!server.hasArg(FPSTR(ARG_PLAIN))) {
@@ -164,25 +155,20 @@ static void hosts_add() {
     return;
   }
 
-  if (!hosts_validate_data(doc, name, mac, ip, auto_wake))
+  if (!hosts_validate_data(doc, new_host))
     return;
 
-  Host host = { name, mac, ip, auto_wake, false };
-
-  if (hosts_is_duplicate(host)) {
+  if (hosts_is_duplicate(new_host)) {
     server_send_json(409, false, FPSTR(MSG_DUPLICATE_HOST));
     return;
   }
 
-  ip_address.fromString(host.ip);
-  host.status = Ping.ping(ip_address, PING_COUNT_QUICK);
-
   id = hosts_generate_id();
-  hosts[id] = host;
+  hosts[id] = new_host;
 
   hosts_save();
 
-  hosts_to_json(response_doc, id, host);
+  hosts_to_json(response_doc, id, new_host);
   server_send_json(200, true, F("Host added"), response_doc, true);
 }
 
@@ -204,7 +190,7 @@ static void hosts_get_list() {
     obj[F("mac")] = host.mac;
     obj[F("ip")] = host.ip;
     obj[F("autoWake")] = host.auto_wake;
-    obj[F("status")] = host.status;
+    obj[F("up")] = host.up;
   }
 
   server_send_json(200, true, F("Your hosts"), doc, true);
@@ -228,9 +214,7 @@ static void hosts_get_one(int id) {
 
 static void hosts_edit(int id) {
   JsonDocument doc, response_doc;
-  String name, mac, ip;
-  IPAddress ip_address;
-  bool auto_wake;
+  Host new_host = { .up = false };
 
   if (!server.hasArg(FPSTR(ARG_PLAIN))) {
     server_send_json(400, false, FPSTR(MSG_MISSING_BODY));
@@ -247,18 +231,13 @@ static void hosts_edit(int id) {
     return;
   }
 
-  if (!hosts_validate_data(doc, name, mac, ip, auto_wake))
+  if (!hosts_validate_data(doc, new_host))
     return;
-
-  Host new_host = { name, mac, ip, auto_wake, false };
 
   if (hosts_is_duplicate(new_host, id)) {
     server_send_json(409, false, FPSTR(MSG_DUPLICATE_HOST));
     return;
   }
-
-  ip_address.fromString(new_host.ip);
-  new_host.status = Ping.ping(ip_address, PING_COUNT_QUICK);
 
   hosts[id] = new_host;
 
@@ -336,26 +315,23 @@ static void hosts_handle_import() {
     arr = doc.as<JsonArray>();
 
     for (JsonVariant v : arr) {
-      String name, mac, ip;
-      bool auto_wake;
+      Host host  = { .up = false };
 
       if (!memory_can_add_host() || v[F("name")].isNull() || v[F("mac")].isNull() || v[F("ip")].isNull()) {
         ignored_count++;
         continue;
       }
 
-      name = v[F("name")].as<String>();
-      mac = v[F("mac")].as<String>();
-      ip = v[F("ip")].as<String>();
+      host.name = v[F("name")].as<String>();
+      host.mac = v[F("mac")].as<String>();
+      host.ip = v[F("ip")].as<String>();
 
-      if (name.isEmpty() || name.length() > MAX_HOST_NAME_LENGTH || !is_valid_mac(mac) || !is_valid_host_ip(ip)) {
+      if (host.name.isEmpty() || host.name.length() > MAX_HOST_NAME_LENGTH || !is_valid_mac(host.mac) || !is_valid_host_ip(host.ip)) {
         ignored_count++;
         continue;
       }
 
-      auto_wake = v[F("autoWake")] | false;
-
-      Host host = { name, mac, ip, auto_wake, false };
+      host.auto_wake = v[F("autoWake")] | false;
 
       if (hosts_is_duplicate(host)) {
         ignored_count++;
@@ -384,43 +360,45 @@ static void hosts_handle_import() {
 }
 
 static void hosts_handle_wake() {
-  if (!auth_ok()) return;
+  if (auth_ok()) {
+    if (!server.hasArg(FPSTR(ARG_ID))) {
+      server_send_json(405, false, FPSTR(MSG_METHOD_NOT_ALLOWED));
+      return;
+    }
 
-  if (!server.hasArg(FPSTR(ARG_ID))) {
-    server_send_json(405, false, FPSTR(MSG_METHOD_NOT_ALLOWED));
-    return;
+    auto it = hosts.find(server.arg(FPSTR(ARG_ID)).toInt());
+    if (it == hosts.end()) {
+      server_send_json(400, false, FPSTR(MSG_HOST_NOT_FOUND));
+      return;
+    }
+
+    bool sent = wol.sendMagicPacket(it->second.mac.c_str());
+    server_send_json(200, sent, sent ? F("WOL packet sent") : F("Failed to send WOL packet"));
   }
-
-  auto it = hosts.find(server.arg(FPSTR(ARG_ID)).toInt());
-  if (it == hosts.end()) {
-    server_send_json(400, false, FPSTR(MSG_HOST_NOT_FOUND));
-    return;
-  }
-
-  bool sent = wol.sendMagicPacket(it->second.mac.c_str());
-  server_send_json(200, sent, sent ? F("WOL packet sent") : F("Failed to send WOL packet"));
 }
 
 static void hosts_handle_ping() {
-  if (!auth_ok()) return;
-
-  if (!server.hasArg(FPSTR(ARG_ID))) {
-    server_send_json(405, false, FPSTR(MSG_METHOD_NOT_ALLOWED));
-    return;
-  }
-
-  auto it = hosts.find(server.arg(FPSTR(ARG_ID)).toInt());
-  if (it == hosts.end()) {
-    server_send_json(400, false, FPSTR(MSG_HOST_NOT_FOUND));
-    return;
-  }
-
-  Host &host = it->second;
+  Host *host;
   IPAddress ip;
-  ip.fromString(host.ip);
 
-  host.status = Ping.ping(ip, PING_COUNT_CHECK);
-  server_send_json(200, host.status, host.status ? F("Host is online") : F("Host is offline"));
+  if (auth_ok()) {
+    if (!server.hasArg(FPSTR(ARG_ID))) {
+      server_send_json(405, false, FPSTR(MSG_METHOD_NOT_ALLOWED));
+      return;
+    }
+
+    auto it = hosts.find(server.arg(FPSTR(ARG_ID)).toInt());
+    if (it == hosts.end()) {
+      server_send_json(400, false, FPSTR(MSG_HOST_NOT_FOUND));
+      return;
+    }
+
+    host = &(it->second);
+    ip.fromString(host->ip);
+
+    host->up = Ping.ping(ip, PING_COUNT_CHECK);
+    server_send_json(200, host->up, host->up ? F("Host is online") : F("Host is offline"));
+  }
 }
 
 // =============================================================================
